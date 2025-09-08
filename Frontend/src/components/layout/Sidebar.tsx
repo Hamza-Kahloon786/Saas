@@ -146,11 +146,15 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   return (
     <>
-      {/* Mobile overlay */}
+      {/* Mobile overlay - enhanced with better animation and touch handling */}
       {isOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="fixed inset-0 bg-gray-600/75" onClick={onClose} />
-          <div className="relative flex w-full max-w-xs flex-col h-full" style={{ backgroundColor: '#0038FF' }}>
+          <div 
+            className="fixed inset-0 bg-gray-600/75 transition-opacity duration-300 ease-in-out" 
+            onClick={onClose}
+            style={{ touchAction: 'none' }} // Prevent scroll behind overlay
+          />
+          <div className="relative flex w-full max-w-xs sm:max-w-sm flex-col h-full animate-slide-in-left safe-area-inset-left" style={{ backgroundColor: '#0038FF' }}>
             <SidebarContent
               onClose={onClose}
               navigation={navigation}
@@ -164,8 +168,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         </div>
       )}
 
-      {/* Desktop */}
-      <div className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 lg:z-40" style={{ backgroundColor: '#0038FF' }}>
+      {/* Desktop - responsive width and positioning */}
+      <div className="hidden lg:flex lg:w-64 xl:w-72 2xl:w-80 lg:flex-col lg:fixed lg:inset-y-0 lg:z-40 transition-all duration-300 ease-in-out" style={{ backgroundColor: '#0038FF' }}>
         <SidebarContent
           navigation={navigation}
           hasRole={hasRole}
@@ -199,30 +203,37 @@ function SidebarContent({
   const { user } = useAuthStore()
 
   return (
-    <div className="flex flex-col flex-grow pt-5 pb-4 overflow-y-auto shadow-lg" style={{ backgroundColor: '#0038FF' }}>
-      {/* Header */}
-      <div className="flex items-center justify-between px-4">
-        <div className="flex items-center">
+    <div className="flex flex-col flex-grow pt-3 sm:pt-5 pb-4 overflow-y-auto shadow-lg safe-area-inset-top safe-area-inset-bottom" style={{ backgroundColor: '#0038FF' }}>
+      {/* Header - responsive sizing */}
+      <div className="flex items-center justify-between px-3 sm:px-4">
+        <div className="flex items-center min-w-0 flex-1">
           <img 
             src="/logo.png" 
             alt="Storm AI Logo" 
-            className="h-16 w-16 rounded-lg"
+            className="h-12 w-12 sm:h-14 sm:w-14 lg:h-16 lg:w-16 rounded-lg flex-shrink-0"
           />
-          <span className="ml-3 text-xl font-bold tracking-tight text-white">Storm AI</span>
+          <span className="ml-2 sm:ml-3 text-lg sm:text-xl font-bold tracking-tight text-white truncate">
+            <span className="hidden sm:inline">Storm AI</span>
+            <span className="sm:hidden">Storm</span>
+          </span>
         </div>
         {onClose && (
-          <button onClick={onClose} className="lg:hidden p-2 rounded-md hover:bg-blue-700">
-            <XMarkIcon className="h-6 w-6 text-white" />
+          <button 
+            onClick={onClose} 
+            className="lg:hidden p-2 rounded-md hover:bg-blue-700 transition-colors duration-200 touch-friendly flex-shrink-0"
+            aria-label="Close sidebar"
+          >
+            <XMarkIcon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
           </button>
         )}
       </div>
 
-      {/* User pill */}
-      <div className="mt-6 px-4">
-        <div className="bg-blue-800/30 rounded-lg p-3">
-          <div className="flex items-center">
-            <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center">
-              <span className="text-white text-sm">
+      {/* User pill - responsive design */}
+      <div className="mt-4 sm:mt-6 px-3 sm:px-4">
+        <div className="bg-blue-800/30 rounded-lg p-2 sm:p-3">
+          <div className="flex items-center min-w-0">
+            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+              <span className="text-white text-xs sm:text-sm font-medium">
                 {(user?.name || user?.email || 'U')
                   .split(' ')
                   .map((n: string) => n[0])
@@ -230,16 +241,16 @@ function SidebarContent({
                   .toUpperCase()}
               </span>
             </div>
-            <div className="ml-3 min-w-0">
-              <p className="text-sm font-medium text-white truncate">{user?.name || user?.email}</p>
+            <div className="ml-2 sm:ml-3 min-w-0 flex-1">
+              <p className="text-xs sm:text-sm font-medium text-white truncate">{user?.name || user?.email}</p>
               <p className="text-xs text-blue-200 truncate capitalize">{user?.role}</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Nav */}
-      <nav className="mt-8 flex-1 px-2 space-y-1">
+      {/* Navigation - responsive with touch-friendly targets */}
+      <nav className="mt-6 sm:mt-8 flex-1 px-2 space-y-1 overflow-y-auto">
         {navigation.map((item) => {
           if (!hasRole(item.roles)) return null
 
@@ -250,22 +261,22 @@ function SidebarContent({
               <div key={item.name}>
                 <button
                   onClick={() => toggle(item.name)}
-                  className={`group w-full flex items-center justify-between px-2 py-2 text-sm rounded-md
+                  className={`group w-full flex items-center justify-between px-2 py-2.5 sm:py-2 text-xs sm:text-sm rounded-md transition-all duration-200 touch-friendly
                     ${active ? 'bg-white/10 text-white border-r-2 border-white'
-                             : 'text-blue-100 hover:bg-white/5 hover:text-white'}`}
+                             : 'text-blue-100 hover:bg-white/5 hover:text-white active:bg-white/10'}`}
                 >
-                  <div className="flex items-center">
-                    <item.icon className={`mr-3 h-5 w-5 ${active ? 'text-white' : 'text-blue-200'}`} />
-                    {item.name}
+                  <div className="flex items-center min-w-0 flex-1">
+                    <item.icon className={`mr-2 sm:mr-3 h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0 ${active ? 'text-white' : 'text-blue-200'}`} />
+                    <span className="truncate font-medium">{item.name}</span>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    {open ? <ChevronDownIcon className="h-4 w-4 text-blue-200" />
-                          : <ChevronRightIcon className="h-4 w-4 text-blue-200" />}
+                  <div className="flex items-center space-x-2 flex-shrink-0">
+                    {open ? <ChevronDownIcon className="h-3 w-3 sm:h-4 sm:w-4 text-blue-200" />
+                          : <ChevronRightIcon className="h-3 w-3 sm:h-4 sm:w-4 text-blue-200" />}
                   </div>
                 </button>
 
                 {open && (
-                  <div className="mt-1 space-y-1">
+                  <div className="mt-1 space-y-1 animate-slide-in-down">
                     {item.children.map((child) => {
                       if (!hasRole(child.roles)) return null
                       return (
@@ -274,19 +285,19 @@ function SidebarContent({
                           to={child.href!}
                           onClick={onClose}
                           className={({ isActive }) =>
-                            `group flex items-center justify-between pl-11 pr-2 py-2 text-sm rounded-md ${
+                            `group flex items-center justify-between pl-8 sm:pl-11 pr-2 py-2.5 sm:py-2 text-xs sm:text-sm rounded-md transition-all duration-200 touch-friendly ${
                               isActive
                                 ? 'bg-white/20 text-white font-medium border-r-2 border-white'
-                                : 'text-blue-100 hover:bg-white/5 hover:text-white'
+                                : 'text-blue-100 hover:bg-white/5 hover:text-white active:bg-white/10'
                             }`
                           }
                         >
-                          <div className="flex items-center min-w-0">
-                            <child.icon className="mr-3 h-4 w-4 text-blue-200" />
+                          <div className="flex items-center min-w-0 flex-1">
+                            <child.icon className="mr-2 sm:mr-3 h-3 w-3 sm:h-4 sm:w-4 text-blue-200 flex-shrink-0" />
                             <span className="truncate">{child.name}</span>
                           </div>
                           {child.badge && (
-                            <span className="ml-auto bg-white/20 text-white text-xs font-medium px-2 py-0.5 rounded-full">
+                            <span className="ml-auto bg-white/20 text-white text-xs font-medium px-1.5 py-0.5 sm:px-2 rounded-full flex-shrink-0">
                               {child.badge}
                             </span>
                           )}
@@ -305,19 +316,19 @@ function SidebarContent({
               to={item.href!}
               onClick={onClose}
               className={({ isActive }) =>
-                `group flex items-center justify-between px-2 py-2 text-sm rounded-md ${
+                `group flex items-center justify-between px-2 py-2.5 sm:py-2 text-xs sm:text-sm rounded-md transition-all duration-200 touch-friendly ${
                   isActive
                     ? 'bg-white/10 text-white border-r-2 border-white'
-                    : 'text-blue-100 hover:bg-white/5 hover:text-white'
+                    : 'text-blue-100 hover:bg-white/5 hover:text-white active:bg-white/10'
                 }`
               }
             >
-              <div className="flex items-center min-w-0">
-                <item.icon className="mr-3 h-5 w-5 text-blue-200" />
-                <span className="truncate">{item.name}</span>
+              <div className="flex items-center min-w-0 flex-1">
+                <item.icon className="mr-2 sm:mr-3 h-4 w-4 sm:h-5 sm:w-5 text-blue-200 flex-shrink-0" />
+                <span className="truncate font-medium">{item.name}</span>
               </div>
               {item.badge && (
-                <span className="ml-auto bg-white/20 text-white text-xs font-medium px-2 py-0.5 rounded-full">
+                <span className="ml-auto bg-white/20 text-white text-xs font-medium px-1.5 py-0.5 sm:px-2 rounded-full flex-shrink-0">
                   {item.badge}
                 </span>
               )}
@@ -326,7 +337,11 @@ function SidebarContent({
         })}
       </nav>
 
-      <div className="px-4 pb-2 text-center text-xs text-blue-200">Storm AI v1.0.0</div>
+      {/* Footer - responsive */}
+      <div className="px-3 sm:px-4 pb-2 text-center text-xs text-blue-200 safe-area-inset-bottom">
+        <span className="hidden sm:inline">Storm AI v1.0.0</span>
+        <span className="sm:hidden">v1.0.0</span>
+      </div>
     </div>
   )
 }
