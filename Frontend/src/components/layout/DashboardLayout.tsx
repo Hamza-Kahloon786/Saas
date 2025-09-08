@@ -118,26 +118,26 @@ export default function DashboardLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col safe-area-inset-top safe-area-inset-bottom">
       {/* Sidebar */}
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       
-      {/* Main content area - flex layout to push footer down */}
-      <div className="flex-1 flex flex-col lg:pl-64">
+      {/* Main content area - responsive flex layout */}
+      <div className="flex-1 flex flex-col lg:pl-64 xl:pl-72 2xl:pl-80 transition-all duration-300 ease-in-out">
         {/* Header */}
         <Header onMenuClick={() => setSidebarOpen(true)} />
         
-        {/* System Health Warning */}
+        {/* System Health Warning - responsive */}
         {systemHealth && !systemHealth.healthy && (
-          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
-            <div className="flex items-center">
+          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3 sm:p-4 mx-2 sm:mx-0 mt-2 sm:mt-0 rounded-r-md sm:rounded-none">
+            <div className="flex items-start sm:items-center">
               <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                <svg className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-400 mt-0.5 sm:mt-0" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                 </svg>
               </div>
-              <div className="ml-3">
-                <p className="text-sm text-yellow-700">
+              <div className="ml-2 sm:ml-3">
+                <p className="text-xs sm:text-sm text-yellow-700 leading-tight">
                   System maintenance in progress. Some features may be temporarily unavailable.
                 </p>
               </div>
@@ -145,26 +145,26 @@ export default function DashboardLayout() {
           </div>
         )}
 
-        {/* Breadcrumbs */}
+        {/* Breadcrumbs - responsive */}
         {breadcrumbs.length > 1 && (
-          <nav className="bg-white border-b border-gray-200 px-6 py-3">
-            <ol className="flex items-center space-x-2 text-sm">
+          <nav className="bg-white border-b border-gray-200 px-3 py-2 sm:px-6 sm:py-3 overflow-x-auto">
+            <ol className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm min-w-max">
               {breadcrumbs.map((crumb, index) => (
-                <li key={crumb.name} className="flex items-center">
+                <li key={crumb.name} className="flex items-center flex-shrink-0">
                   {index > 0 && (
-                    <svg className="h-4 w-4 text-gray-400 mx-2" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 mx-1 sm:mx-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
                     </svg>
                   )}
                   {crumb.href ? (
                     <a
                       href={crumb.href}
-                      className="text-gray-500 hover:text-gray-700 font-medium"
+                      className="text-gray-500 hover:text-gray-700 font-medium whitespace-nowrap touch-friendly flex items-center"
                     >
                       {crumb.name}
                     </a>
                   ) : (
-                    <span className="text-gray-900 font-medium">{crumb.name}</span>
+                    <span className="text-gray-900 font-medium whitespace-nowrap">{crumb.name}</span>
                   )}
                 </li>
               ))}
@@ -172,31 +172,31 @@ export default function DashboardLayout() {
           </nav>
         )}
         
-        {/* Main content - flex-1 to take remaining space */}
+        {/* Main content - responsive with proper overflow handling */}
         <main className="flex-1 overflow-auto focus:outline-none">
           <div className="relative">
-            {/* Page Content with extra bottom padding for footer */}
-            <div className="min-h-full pb-32">
-              <div className="p-6">
-                <Outlet />
+            {/* Page Content - responsive padding and spacing */}
+            <div className="min-h-full pb-20 sm:pb-32">
+              <div className="p-3 sm:p-4 md:p-6 lg:p-8 max-w-full">
+                <div className="w-full overflow-x-auto">
+                  <Outlet />
+                </div>
               </div>
             </div>
 
-            {/* Scroll to top button */}
+            {/* Scroll to top button - responsive positioning */}
             <ScrollToTopButton />
           </div>
         </main>
       </div>
 
-      {/* Footer - positioned at bottom, outside main content */}
-      <div className="lg:pl-64">
+      {/* Footer - responsive positioning */}
+      <div className="lg:pl-64 xl:pl-72 2xl:pl-80 transition-all duration-300 ease-in-out">
         <Footer />
       </div>
 
-      {/* Keyboard shortcuts help modal */}
+      {/* Modals and overlays */}
       <KeyboardShortcutsModal />
-
-      {/* Connection status indicator */}
       <ConnectionStatus />
     </div>
   )
@@ -237,10 +237,10 @@ function ScrollToTopButton() {
       {isVisible && (
         <button
           onClick={scrollToTop}
-          className="fixed bottom-24 right-6 z-30 p-3 bg-white text-gray-600 rounded-full shadow-lg hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 border border-gray-200"
+          className="fixed bottom-20 right-3 sm:bottom-24 sm:right-6 z-30 p-2 sm:p-3 bg-white text-gray-600 rounded-full shadow-lg hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 border border-gray-200 touch-friendly"
           aria-label="Scroll to top"
         >
-          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
           </svg>
         </button>
@@ -287,8 +287,8 @@ function KeyboardShortcutsModal() {
   ]
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+    <div className="modal-responsive">
+      <div className="flex items-center justify-center min-h-screen pt-4 px-3 pb-20 text-center sm:block sm:p-0">
         <div className="fixed inset-0 transition-opacity" aria-hidden="true">
           <div 
             className="absolute inset-0 bg-gray-500 opacity-75" 
@@ -296,19 +296,19 @@ function KeyboardShortcutsModal() {
           ></div>
         </div>
         
-        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-          <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+        <div className="modal-content-responsive inline-block align-bottom text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg">
+          <div className="bg-white">
             <div className="text-center">
-              <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+              <h3 className="heading-responsive-sm mb-4">
                 Keyboard Shortcuts
               </h3>
-              <div className="space-y-3">
+              <div className="space-y-2 sm:space-y-3">
                 {shortcuts.map((shortcut, index) => (
-                  <div key={index} className="flex items-center justify-between">
-                    <span className="text-sm text-gray-700">{shortcut.description}</span>
-                    <div className="flex items-center space-x-1">
+                  <div key={index} className="flex items-center justify-between gap-3">
+                    <span className="text-xs sm:text-sm text-gray-700 text-left flex-1">{shortcut.description}</span>
+                    <div className="flex items-center space-x-1 flex-shrink-0">
                       {shortcut.keys.map((key, keyIndex) => (
-                        <span key={keyIndex} className="inline-flex items-center px-2 py-1 bg-gray-100 text-gray-600 text-xs font-mono rounded">
+                        <span key={keyIndex} className="inline-flex items-center px-1.5 py-0.5 sm:px-2 sm:py-1 bg-gray-100 text-gray-600 text-xs font-mono rounded">
                           {key}
                         </span>
                       ))}
@@ -322,7 +322,7 @@ function KeyboardShortcutsModal() {
           <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
             <button
               onClick={() => setIsOpen(false)}
-              className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:mt-0 sm:w-auto sm:text-sm"
+              className="btn-responsive btn-secondary w-full sm:w-auto"
             >
               Close
             </button>
@@ -366,13 +366,14 @@ function ConnectionStatus() {
   // Show connection status indicator
   if (!isOnline && showOfflineMessage) {
     return (
-      <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
-        <div className="bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center space-x-2">
-          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="fixed top-2 left-1/2 transform -translate-x-1/2 z-50 px-3 sm:px-0 sm:top-4">
+        <div className="bg-red-500 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg shadow-lg flex items-center space-x-2 max-w-sm">
+          <svg className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
           </svg>
-          <span className="text-sm font-medium">
-            You're offline. Some features may not work properly.
+          <span className="text-xs sm:text-sm font-medium">
+            <span className="hidden sm:inline">You're offline. Some features may not work properly.</span>
+            <span className="sm:hidden">Offline mode</span>
           </span>
         </div>
       </div>
@@ -382,13 +383,14 @@ function ConnectionStatus() {
   // Show reconnection indicator
   if (isOnline && showOfflineMessage === false && !navigator.onLine) {
     return (
-      <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
-        <div className="bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center space-x-2">
-          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="fixed top-2 left-1/2 transform -translate-x-1/2 z-50 px-3 sm:px-0 sm:top-4">
+        <div className="bg-green-500 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg shadow-lg flex items-center space-x-2 max-w-sm">
+          <svg className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <span className="text-sm font-medium">
-            Back online! All features are now available.
+          <span className="text-xs sm:text-sm font-medium">
+            <span className="hidden sm:inline">Back online! All features are now available.</span>
+            <span className="sm:hidden">Back online!</span>
           </span>
         </div>
       </div>
