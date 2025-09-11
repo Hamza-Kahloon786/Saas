@@ -1,230 +1,358 @@
-# =============================================================================
-# app/api/v1/endpoints/integrations.py
-# =============================================================================
-from typing import Any, List, Optional, Dict
-from fastapi import APIRouter, Depends, HTTPException
+# backend/app/api/v1/endpoints/integrations.py
+from typing import List, Optional
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from motor.motor_asyncio import AsyncIOMotorDatabase
-from bson import ObjectId
-from datetime import datetime
 
 from app.core.database import get_database
-from app.services.integration_service import IntegrationService
 from app.dependencies.auth import get_current_user, require_role
+from app.services.integration_service import IntegrationService
+from app.schemas.integration import (
+    IntegrationProviderResponse, IntegrationResponse, IntegrationConfigRequest,
+    WebhookCreateRequest, WebhookResponse, ApiKeyCreateRequest, ApiKeyResponse,
+    TestResultResponse, SyncResultResponse, IntegrationLogResponse
+)
+from app.models.user import UserRole
 
 router = APIRouter()
 
-@router.get("/")
+async def get_integration_service(db: AsyncIOMotorDatabase = Depends(get_database)) -> IntegrationService:
+    """Dependency to get integration service"""
+    return IntegrationService(db)
+
+# Provider endpoints
+@router.get("/providers", response_model=List[IntegrationProviderResponse])
+async def get_available_providers(
+    integration_service: IntegrationService = Depends(get_integration_service),
+    current_user: dict = Depends(get_current_user)
+):
+    """Get all available integration providers"""
+    try:
+        providers = await integration_service.get_providers()
+        return [IntegrationProviderResponse(**provider.dict()) for provider in providers]
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get providers: {str(e)}"
+        )
+
+@router.get("/providers/{provider_id}", response_model=IntegrationProviderResponse)
+async def get_provider(
+    provider_id: str,
+    integration_service: IntegrationService = Depends(get_integration_service),
+    current_user: dict = Depends(get_current_user)
+):
+    """Get specific integration provider"""
+    try:
+        provider = await integration_service.get_provider(provider_id)
+        if not provider:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Provider not found"
+            )
+        return IntegrationProviderResponse(**provider.dict())
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get provider: {str(e)}"
+        )
+
+# Integration management endpoints
+@router.get("", response_model=List[IntegrationResponse])
 async def get_integrations(
-    db: AsyncIOMotorDatabase = Depends(get_database),
-    current_user: dict = Depends(get_current_user),
-) -> Any:
-    """Get all available integrations"""
-    integrations = await db.integrations.find({
-        "company_id": ObjectId(current_user["company_id"])
-    }).to_list(length=None)
-    
-    # Convert ObjectIds to strings
-    for integration in integrations:
-        integration["id"] = str(integration["_id"])
-        integration["company_id"] = str(integration["company_id"])
-    
-    return integrations
+    integration_service: IntegrationService = Depends(get_integration_service),
+    current_user: dict = Depends(get_current_user)
+):
+    """Get all integrations for the company"""
+    try:
+        integrations = await integration_service.get_integrations(current_user["company_id"])
+        return [IntegrationResponse(**integration.dict()) for integration in integrations]
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get integrations: {str(e)}"
+        )
 
-@router.post("/")
-async def create_integration(
-    *,
-    db: AsyncIOMotorDatabase = Depends(get_database),
-    current_user: dict = Depends(require_role("admin")),
-    name: str,
-    type: str,
-    config: Dict[str, Any],
-    is_active: bool = True
-) -> Any:
-    """Create new integration (admin only)"""
-    integration_service = IntegrationService(db)
-    
-    integration = await integration_service.create_integration(
-        company_id=str(current_user["company_id"]),
-        name=name,
-        integration_type=type,
-        config=config,
-        is_active=is_active
-    )
-    
-    return integration
-
-@router.put("/{integration_id}")
-async def update_integration(
-    *,
-    db: AsyncIOMotorDatabase = Depends(get_database),
+@router.get("/{integration_id}", response_model=IntegrationResponse)
+async def get_integration(
     integration_id: str,
-    current_user: dict = Depends(require_role("admin")),
-    name: Optional[str] = None,
-    config: Optional[Dict[str, Any]] = None,
-    is_active: Optional[bool] = None
-) -> Any:
-    """Update integration (admin only)"""
-    if not ObjectId.is_valid(integration_id):
-        raise HTTPException(status_code=400, detail="Invalid integration ID")
-    
-    integration_service = IntegrationService(db)
-    
-    integration = await integration_service.update_integration(
-        integration_id=integration_id,
-        company_id=str(current_user["company_id"]),
-        name=name,
-        config=config,
-        is_active=is_active
-    )
-    
-    if not integration:
-        raise HTTPException(status_code=404, detail="Integration not found")
-    
-    return integration
+    integration_service: IntegrationService = Depends(get_integration_service),
+    current_user: dict = Depends(get_current_user)
+):
+    """Get specific integration"""
+    try:
+        integration = await integration_service.get_integration(integration_id, current_user["company_id"])
+        if not integration:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Integration not found"
+            )
+        return IntegrationResponse(**integration.dict())
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get integration: {str(e)}"
+        )
+
+@router.post("/{provider_id}/configure", response_model=IntegrationResponse)
+async def configure_integration(
+    provider_id: str,
+    config: IntegrationConfigRequest,
+    integration_service: IntegrationService = Depends(get_integration_service),
+    current_user: dict = Depends(require_role([UserRole.ADMIN, UserRole.MANAGER]))
+):
+    """Configure new integration or update existing one"""
+    try:
+        # Check if integration already exists for this provider
+        existing_integrations = await integration_service.get_integrations(current_user["company_id"])
+        existing_integration = next(
+            (i for i in existing_integrations if i.provider_id == provider_id), 
+            None
+        )
+        
+        if existing_integration:
+            # Update existing integration
+            integration = await integration_service.update_integration_config(
+                existing_integration.id, 
+                current_user["company_id"], 
+                config
+            )
+        else:
+            # Create new integration
+            integration = await integration_service.create_integration(
+                current_user["company_id"],
+                provider_id,
+                config,
+                current_user["id"]
+            )
+        
+        return IntegrationResponse(**integration.dict())
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to configure integration: {str(e)}"
+        )
+
+@router.put("/{integration_id}/config", response_model=IntegrationResponse)
+async def update_integration_config(
+    integration_id: str,
+    config: IntegrationConfigRequest,
+    integration_service: IntegrationService = Depends(get_integration_service),
+    current_user: dict = Depends(require_role([UserRole.ADMIN, UserRole.MANAGER]))
+):
+    """Update integration configuration"""
+    try:
+        integration = await integration_service.update_integration_config(
+            integration_id, 
+            current_user["company_id"], 
+            config
+        )
+        return IntegrationResponse(**integration.dict())
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update integration config: {str(e)}"
+        )
 
 @router.delete("/{integration_id}")
 async def delete_integration(
-    *,
-    db: AsyncIOMotorDatabase = Depends(get_database),
     integration_id: str,
-    current_user: dict = Depends(require_role("admin")),
-) -> Any:
-    """Delete integration (admin only)"""
-    if not ObjectId.is_valid(integration_id):
-        raise HTTPException(status_code=400, detail="Invalid integration ID")
-    
-    result = await db.integrations.delete_one({
-        "_id": ObjectId(integration_id),
-        "company_id": ObjectId(current_user["company_id"])
-    })
-    
-    if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Integration not found")
-    
-    return {"message": "Integration deleted successfully"}
+    integration_service: IntegrationService = Depends(get_integration_service),
+    current_user: dict = Depends(require_role([UserRole.ADMIN, UserRole.MANAGER]))
+):
+    """Delete integration"""
+    try:
+        success = await integration_service.delete_integration(integration_id, current_user["company_id"])
+        if not success:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Integration not found"
+            )
+        return {"message": "Integration deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete integration: {str(e)}"
+        )
 
-@router.post("/{integration_id}/test")
+@router.post("/{integration_id}/test", response_model=TestResultResponse)
 async def test_integration(
-    *,
-    db: AsyncIOMotorDatabase = Depends(get_database),
     integration_id: str,
-    current_user: dict = Depends(get_current_user),
-) -> Any:
+    integration_service: IntegrationService = Depends(get_integration_service),
+    current_user: dict = Depends(get_current_user)
+):
     """Test integration connection"""
-    if not ObjectId.is_valid(integration_id):
-        raise HTTPException(status_code=400, detail="Invalid integration ID")
-    
-    integration_service = IntegrationService(db)
-    
-    result = await integration_service.test_integration(
-        integration_id=integration_id,
-        company_id=str(current_user["company_id"])
-    )
-    
-    return result
+    try:
+        result = await integration_service.test_integration(integration_id, current_user["company_id"])
+        return result
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to test integration: {str(e)}"
+        )
 
-@router.post("/quickbooks/sync")
-async def sync_quickbooks(
-    db: AsyncIOMotorDatabase = Depends(get_database),
-    current_user: dict = Depends(get_current_user),
-) -> Any:
-    """Sync with QuickBooks"""
-    integration_service = IntegrationService(db)
-    
-    result = await integration_service.sync_quickbooks(
-        company_id=str(current_user["company_id"])
-    )
-    
-    return result
+@router.post("/{integration_id}/sync", response_model=SyncResultResponse)
+async def sync_integration(
+    integration_id: str,
+    integration_service: IntegrationService = Depends(get_integration_service),
+    current_user: dict = Depends(get_current_user)
+):
+    """Sync integration data"""
+    try:
+        result = await integration_service.sync_integration(integration_id, current_user["company_id"])
+        return result
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to sync integration: {str(e)}"
+        )
 
-@router.post("/google-calendar/sync")
-async def sync_google_calendar(
-    db: AsyncIOMotorDatabase = Depends(get_database),
-    current_user: dict = Depends(get_current_user),
-) -> Any:
-    """Sync with Google Calendar"""
-    integration_service = IntegrationService(db)
-    
-    result = await integration_service.sync_google_calendar(
-        company_id=str(current_user["company_id"])
-    )
-    
-    return result
+@router.get("/{integration_id}/logs", response_model=List[IntegrationLogResponse])
+async def get_integration_logs(
+    integration_id: str,
+    limit: int = Query(50, le=100),
+    integration_service: IntegrationService = Depends(get_integration_service),
+    current_user: dict = Depends(get_current_user)
+):
+    """Get integration logs"""
+    try:
+        logs = await integration_service.get_integration_logs(integration_id, current_user["company_id"], limit)
+        return [IntegrationLogResponse(**log.dict()) for log in logs]
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get integration logs: {str(e)}"
+        )
 
-@router.post("/zapier/webhook")
-async def zapier_webhook(
-    *,
-    db: AsyncIOMotorDatabase = Depends(get_database),
-    webhook_data: Dict[str, Any],
-    api_key: str = None
-) -> Any:
-    """Handle Zapier webhook"""
-    # Verify API key
-    if not api_key:
-        raise HTTPException(status_code=401, detail="API key required")
-    
-    # Find company by API key
-    company = await db.companies.find_one({"api_key": api_key})
-    if not company:
-        raise HTTPException(status_code=401, detail="Invalid API key")
-    
-    integration_service = IntegrationService(db)
-    
-    result = await integration_service.handle_zapier_webhook(
-        company_id=str(company["_id"]),
-        webhook_data=webhook_data
-    )
-    
-    return result
+# Webhook endpoints
+@router.get("/webhooks", response_model=List[WebhookResponse])
+async def get_webhooks(
+    integration_service: IntegrationService = Depends(get_integration_service),
+    current_user: dict = Depends(get_current_user)
+):
+    """Get all webhooks for the company"""
+    try:
+        webhooks = await integration_service.get_webhooks(current_user["company_id"])
+        return [WebhookResponse(**webhook.dict()) for webhook in webhooks]
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get webhooks: {str(e)}"
+        )
 
-@router.get("/available")
-async def get_available_integrations(
-    current_user: dict = Depends(get_current_user),
-) -> Any:
-    """Get list of available integrations"""
-    available_integrations = [
-        {
-            "name": "QuickBooks",
-            "type": "accounting",
-            "description": "Sync customers, invoices, and payments",
-            "icon": "quickbooks-icon.png",
-            "features": ["Customer sync", "Invoice sync", "Payment tracking"]
-        },
-        {
-            "name": "Google Calendar",
-            "type": "calendar",
-            "description": "Sync job schedules with Google Calendar",
-            "icon": "google-calendar-icon.png",
-            "features": ["Two-way sync", "Real-time updates", "Team calendars"]
-        },
-        {
-            "name": "Stripe",
-            "type": "payment",
-            "description": "Accept online payments and track transactions",
-            "icon": "stripe-icon.png",
-            "features": ["Online payments", "Recurring billing", "Payment tracking"]
-        },
-        {
-            "name": "Zapier",
-            "type": "automation",
-            "description": "Connect with 5000+ apps through Zapier",
-            "icon": "zapier-icon.png",
-            "features": ["Custom workflows", "Trigger actions", "Data sync"]
-        },
-        {
-            "name": "Mailchimp",
-            "type": "marketing",
-            "description": "Email marketing and customer communication",
-            "icon": "mailchimp-icon.png",
-            "features": ["Email campaigns", "Customer segmentation", "Automation"]
-        },
-        {
-            "name": "Google Maps",
-            "type": "mapping",
-            "description": "Route optimization and location services",
-            "icon": "google-maps-icon.png",
-            "features": ["Route optimization", "GPS tracking", "Address validation"]
-        }
-    ]
-    
-    return available_integrations
+@router.post("/webhooks", response_model=WebhookResponse)
+async def create_webhook(
+    webhook_data: WebhookCreateRequest,
+    integration_service: IntegrationService = Depends(get_integration_service),
+    current_user: dict = Depends(require_role([UserRole.ADMIN, UserRole.MANAGER]))
+):
+    """Create new webhook"""
+    try:
+        webhook = await integration_service.create_webhook(
+            current_user["company_id"], 
+            webhook_data
+        )
+        return WebhookResponse(**webhook.dict())
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create webhook: {str(e)}"
+        )
+
+@router.delete("/webhooks/{webhook_id}")
+async def delete_webhook(
+    webhook_id: str,
+    integration_service: IntegrationService = Depends(get_integration_service),
+    current_user: dict = Depends(require_role([UserRole.ADMIN, UserRole.MANAGER]))
+):
+    """Delete webhook"""
+    try:
+        success = await integration_service.delete_webhook(webhook_id, current_user["company_id"])
+        if not success:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Webhook not found"
+            )
+        return {"message": "Webhook deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete webhook: {str(e)}"
+        )
+
+# API Key endpoints
+@router.get("/api-keys", response_model=List[ApiKeyResponse])
+async def get_api_keys(
+    integration_service: IntegrationService = Depends(get_integration_service),
+    current_user: dict = Depends(require_role([UserRole.ADMIN, UserRole.MANAGER]))
+):
+    """Get all API keys for the company"""
+    try:
+        api_keys = await integration_service.get_api_keys(current_user["company_id"], mask_keys=True)
+        return [ApiKeyResponse(**api_key.dict()) for api_key in api_keys]
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get API keys: {str(e)}"
+        )
+
+@router.post("/api-keys", response_model=ApiKeyResponse)
+async def create_api_key(
+    api_key_data: ApiKeyCreateRequest,
+    integration_service: IntegrationService = Depends(get_integration_service),
+    current_user: dict = Depends(require_role([UserRole.ADMIN]))
+):
+    """Create new API key"""
+    try:
+        api_key = await integration_service.create_api_key(
+            current_user["company_id"],
+            api_key_data,
+            current_user["id"]
+        )
+        # Return the full key only once upon creation
+        return ApiKeyResponse(**api_key.dict())
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create API key: {str(e)}"
+        )
+
+@router.delete("/api-keys/{api_key_id}")
+async def delete_api_key(
+    api_key_id: str,
+    integration_service: IntegrationService = Depends(get_integration_service),
+    current_user: dict = Depends(require_role([UserRole.ADMIN]))
+):
+    """Delete API key"""
+    try:
+        success = await integration_service.delete_api_key(api_key_id, current_user["company_id"])
+        if not success:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="API key not found"
+            )
+        return {"message": "API key deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete API key: {str(e)}"
+        )

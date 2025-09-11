@@ -1062,7 +1062,7 @@ export default function Jobs() {
                     <div className="flex items-center flex-1">
                       <div className="flex-shrink-0">
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                          statusColors[job.status].replace('text-', 'text-white bg-').replace('bg-', 'bg-').replace('-100', '-500')
+                          (statusColors[job.status] || 'bg-gray-100 text-gray-800').replace('text-', 'text-white bg-').replace('bg-', 'bg-').replace('-100', '-500')
                         }`}>
                           {getStatusIcon(job.status)}
                         </div>
@@ -1078,7 +1078,7 @@ export default function Jobs() {
                               <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                                 statusColors[job.status]
                               }`}>
-                                {job.status.replace('_', ' ')}
+                                {(job.status || 'unknown').replace('_', ' ')}
                               </span>
                               <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                                 priorityColors[job.priority]
@@ -1252,7 +1252,7 @@ export default function Jobs() {
                     <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       statusColors[selectedJob.status]
                     }`}>
-                      {selectedJob.status.replace('_', ' ')}
+                      {(selectedJob.status || 'unknown').replace('_', ' ')}
                     </span>
                   </div>
                   <div>

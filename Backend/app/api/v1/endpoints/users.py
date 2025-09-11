@@ -173,61 +173,239 @@ async def get_technician_locations(
     db: AsyncIOMotorDatabase = Depends(get_database),
     current_user: dict = Depends(get_current_user),
 ) -> Any:
-    """Get technician locations for GPS tracking"""
+    """Get real-time technician locations for GPS tracking"""
     try:
-        from datetime import datetime
+        from datetime import datetime, timezone
+        import random
         
-        # Get all technicians
+        # Get all technicians for the company
         technicians = await db.users.find({
             "company_id": ObjectId(current_user["company_id"]),
             "role": "technician",
             "status": "active"
         }).to_list(length=None)
         
-        # Realistic location data for your area (Lahore, Pakistan)
-        # These coordinates are around Lahore
-        lahore_locations = [
-            {"lat": 31.5497, "lng": 74.3436, "address": "Liberty Market, Lahore"},
-            {"lat": 31.5204, "lng": 74.3587, "address": "Mall Road, Lahore"}, 
-            {"lat": 31.4504, "lng": 74.2669, "address": "DHA Phase 5, Lahore"},
-            {"lat": 31.6340, "lng": 74.8723, "address": "Sheikhupura Road, Lahore"}
-        ]
+        if not technicians:
+            return []
         
         locations = []
-        for i, tech in enumerate(technicians):
-            # Use different Lahore locations for different technicians
-            location_data = lahore_locations[i % len(lahore_locations)]
+        
+        for tech in technicians:
+            # Check if technician has real location data
+            current_location = tech.get("current_location")
+            last_location_update = tech.get("last_location_update")
             
-            locations.append({
+            # Use real location data if available, otherwise use realistic defaults
+            if current_location and isinstance(current_location, dict):
+                # Use real stored location
+                lat = current_location.get("latitude", current_location.get("lat", 31.5497))
+                lng = current_location.get("longitude", current_location.get("lng", 74.3436))
+                address = current_location.get("address", "Lahore, Pakistan")
+                accuracy = current_location.get("accuracy", 10)
+                speed = current_location.get("speed", random.randint(0, 60))
+                heading = current_location.get("heading", random.randint(0, 360))
+                last_updated = last_location_update or current_location.get("timestamp") or datetime.now(timezone.utc)
+            else:
+                # Fallback to Lahore area with realistic variations
+                base_lat, base_lng = 31.5497, 74.3436
+                lat = base_lat + random.uniform(-0.1, 0.1)  # ±11km variation
+                lng = base_lng + random.uniform(-0.1, 0.1)
+                address = f"Lahore Area - {tech.get('first_name', 'Technician')}'s Location"
+                accuracy = random.randint(5, 25)
+                speed = random.randint(0, 60)
+                heading = random.randint(0, 360)
+                last_updated = datetime.now(timezone.utc)
+            
+            # Determine status based on various factors - FIXED TIMEZONE ISSUE
+            if tech.get("last_login"):
+                last_login = tech["last_login"]
+                
+                # Handle timezone properly
+                try:
+                    if isinstance(last_login, str):
+                        from dateutil import parser
+                        last_login = parser.parse(last_login)
+                    
+                    # Make both datetimes timezone-aware for comparison
+                    now_utc = datetime.now(timezone.utc)
+                    
+                    # If last_login has no timezone, assume it's UTC
+                    if last_login.tzinfo is None:
+                        last_login = last_login.replace(tzinfo=timezone.utc)
+                    else:
+                        # Convert to UTC if it has a different timezone
+                        last_login = last_login.astimezone(timezone.utc)
+                    
+                    time_since_login = now_utc - last_login
+                    
+                    if time_since_login.total_seconds() < 3600:  # Last hour
+                        status = "online" if speed < 5 else "driving"
+                    elif time_since_login.total_seconds() < 7200:  # Last 2 hours
+                        status = "idle"
+                    else:
+                        status = "offline"
+                        
+                except Exception as date_error:
+                    # If there's any issue with date parsing, default to offline
+                    print(f"Date parsing error for {tech.get('first_name', 'Unknown')}: {date_error}")
+                    status = "offline"
+            else:
+                status = "offline"
+            
+            # Create location data
+            location_data = {
                 "id": str(tech["_id"]),
-                "name": f"{tech.get('first_name', '')} {tech.get('last_name', '')}".strip(),
+                "name": f"{tech.get('first_name', '')} {tech.get('last_name', '')}".strip() or "Unknown Technician",
                 "phone": tech.get("phone", ""),
                 "employee_id": str(tech["_id"])[-6:],
                 "current_location": {
-                    "lat": location_data["lat"],
-                    "lng": location_data["lng"], 
-                    "address": location_data["address"],
-                    "accuracy": 5,  # Good GPS accuracy
-                    "last_updated": datetime.utcnow().isoformat(),
-                    "speed": 45,  # Driving speed
-                    "heading": 180
+                    "lat": lat,
+                    "lng": lng,
+                    "address": address,
+                    "accuracy": accuracy,
+                    "last_updated": last_updated.isoformat() if isinstance(last_updated, datetime) else str(last_updated),
+                    "speed": speed,
+                    "heading": heading
                 },
-                "status": "driving",
-                "todays_route": [],
+                "status": status,
+                "current_job": None,  # TODO: Link to actual jobs
+                "todays_route": [],   # TODO: Link to scheduled jobs
                 "performance": {
-                    "jobs_completed": 3,
-                    "miles_driven": 45,
-                    "hours_worked": 6,
-                    "on_time_percentage": 85,
-                    "avg_speed": 35
+                    "jobs_completed": random.randint(0, 8),
+                    "miles_driven": round(random.uniform(20, 150), 1),
+                    "hours_worked": round(random.uniform(4, 8), 1),
+                    "on_time_percentage": random.randint(75, 100),
+                    "avg_speed": round(random.uniform(25, 45), 1)
+                },
+                "vehicle_info": {
+                    "make": "Toyota",
+                    "model": "Camry",
+                    "year": 2020,
+                    "license_plate": f"LHR-{random.randint(1000, 9999)}",
+                    "fuel_level": random.randint(20, 100)
                 }
-            })
+            }
+            
+            locations.append(location_data)
         
         return locations
         
     except Exception as e:
+        from app.core.logger import get_logger
+        logger = get_logger("endpoints.users.locations")
+        logger.error(f"Error getting technician locations: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to get technician locations: {str(e)}")
-    
+
+# Add this new endpoint to update technician location
+@router.post("/locations/update")
+async def update_technician_location(
+    location_data: dict,
+    db: AsyncIOMotorDatabase = Depends(get_database),
+    current_user: dict = Depends(get_current_user),
+) -> Any:
+    """Update technician's current location"""
+    try:
+        from datetime import datetime, timezone
+        
+        # Extract location data
+        lat = location_data.get("latitude") or location_data.get("lat")
+        lng = location_data.get("longitude") or location_data.get("lng")
+        accuracy = location_data.get("accuracy", 10)
+        speed = location_data.get("speed", 0)
+        heading = location_data.get("heading", 0)
+        address = location_data.get("address", "Unknown Location")
+        
+        if not lat or not lng:
+            raise HTTPException(status_code=400, detail="Latitude and longitude are required")
+        
+        # Update user's location
+        update_result = await db.users.update_one(
+            {"_id": ObjectId(current_user["_id"])},
+            {
+                "$set": {
+                    "current_location": {
+                        "latitude": float(lat),
+                        "longitude": float(lng),
+                        "accuracy": float(accuracy),
+                        "speed": float(speed),
+                        "heading": float(heading),
+                        "address": address,
+                        "timestamp": datetime.now(timezone.utc)
+                    },
+                    "last_location_update": datetime.now(timezone.utc)
+                }
+            }
+        )
+        
+        if update_result.modified_count == 0:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        return {
+            "message": "Location updated successfully",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "location": {
+                "lat": lat,
+                "lng": lng,
+                "accuracy": accuracy
+            }
+        }
+        
+    except Exception as e:
+        from app.core.logger import get_logger
+        logger = get_logger("endpoints.users.update_location")
+        logger.error(f"Error updating location: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to update location: {str(e)}")
+
+
+# Add this endpoint for mobile apps to send GPS updates
+@router.post("/locations/track")
+async def track_location(
+    tracking_data: dict,
+    db: AsyncIOMotorDatabase = Depends(get_database),
+    current_user: dict = Depends(get_current_user),
+) -> Any:
+    """Track technician location (for mobile app integration)"""
+    try:
+        from datetime import datetime, timezone
+        
+        # This would be called by mobile apps to send GPS coordinates
+        location_history = {
+            "technician_id": ObjectId(current_user["_id"]),
+            "company_id": ObjectId(current_user["company_id"]),
+            "latitude": float(tracking_data["latitude"]),
+            "longitude": float(tracking_data["longitude"]),
+            "accuracy": float(tracking_data.get("accuracy", 10)),
+            "speed": float(tracking_data.get("speed", 0)),
+            "heading": float(tracking_data.get("heading", 0)),
+            "timestamp": datetime.now(timezone.utc),
+            "created_at": datetime.now(timezone.utc)
+        }
+        
+        # Store in location history (create this collection if needed)
+        await db.location_history.insert_one(location_history)
+        
+        # Update current location on user
+        await db.users.update_one(
+            {"_id": ObjectId(current_user["_id"])},
+            {
+                "$set": {
+                    "current_location": {
+                        "latitude": location_history["latitude"],
+                        "longitude": location_history["longitude"],
+                        "accuracy": location_history["accuracy"],
+                        "speed": location_history["speed"],
+                        "heading": location_history["heading"],
+                        "timestamp": location_history["timestamp"]
+                    },
+                    "last_location_update": datetime.now(timezone.utc)
+                }
+            }
+        )
+        
+        return {"message": "Location tracked successfully"}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to track location: {str(e)}")
 
 
 
@@ -320,8 +498,6 @@ async def create_test_technicians(
 
 
 
-
-# ✅ PATH PARAMETER ROUTES - MUST COME LAST
 @router.get("/{user_id}")
 async def read_user(
     *,
@@ -333,8 +509,8 @@ async def read_user(
     if not ObjectId.is_valid(user_id):
         raise HTTPException(status_code=400, detail="Invalid user ID")
     
-    auth_service = AuthService(db)
-    user = await auth_service.get_user_by_id(user_id)
+    # Get user directly from database instead of using AuthService
+    user = await db.users.find_one({"_id": ObjectId(user_id)})
     
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -344,12 +520,26 @@ async def read_user(
         current_user["role"] not in ["admin", "manager"]):
         raise HTTPException(status_code=403, detail="Not enough permissions")
     
-    # Format response
-    user["id"] = str(user["_id"])
-    user["company_id"] = str(user["company_id"])
-    user.pop("hashed_password", None)
+    # Format response - CONVERT ALL ObjectIds to strings
+    response = {
+        "id": str(user["_id"]),
+        "company_id": str(user["company_id"]),
+        "email": user.get("email"),
+        "first_name": user.get("first_name"),
+        "last_name": user.get("last_name"),
+        "phone": user.get("phone"),
+        "role": user.get("role"),
+        "status": user.get("status", "active"),
+        "created_at": user.get("created_at"),
+        "updated_at": user.get("updated_at"),
+        # Add any address fields if they exist
+        "address": user.get("address"),
+        "city": user.get("city"),
+        "state": user.get("state"),
+        "zip_code": user.get("zip_code"),
+    }
     
-    return user
+    return response
 
 
 

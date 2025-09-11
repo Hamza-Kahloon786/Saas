@@ -126,25 +126,7 @@ export default function DashboardLayout() {
       <div className="flex-1 flex flex-col lg:pl-64 xl:pl-72 2xl:pl-80 transition-all duration-300 ease-in-out">
         {/* Header */}
         <Header onMenuClick={() => setSidebarOpen(true)} />
-        
-        {/* System Health Warning - responsive */}
-        {systemHealth && !systemHealth.healthy && (
-          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3 sm:p-4 mx-2 sm:mx-0 mt-2 sm:mt-0 rounded-r-md sm:rounded-none">
-            <div className="flex items-start sm:items-center">
-              <div className="flex-shrink-0">
-                <svg className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-400 mt-0.5 sm:mt-0" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div className="ml-2 sm:ml-3">
-                <p className="text-xs sm:text-sm text-yellow-700 leading-tight">
-                  System maintenance in progress. Some features may be temporarily unavailable.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
+  
         {/* Breadcrumbs - responsive */}
         {breadcrumbs.length > 1 && (
           <nav className="bg-white border-b border-gray-200 px-3 py-2 sm:px-6 sm:py-3 overflow-x-auto">

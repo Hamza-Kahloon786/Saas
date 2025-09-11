@@ -2,6 +2,7 @@
 from __future__ import annotations
 from typing import Any, Dict, List, Union
 from datetime import datetime, timedelta
+import asyncio
 
 from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorDatabase
@@ -75,6 +76,7 @@ async def create_invoice(
 ) -> Dict[str, Any]:
     """
     Create an invoice from either a Pydantic model or a plain dict and return a JSON-safe dict.
+    Automatically sends payment portal email to customer.
     """
     # Normalize input to a dict
     if isinstance(invoice_in, BaseModel):
@@ -89,7 +91,20 @@ async def create_invoice(
     contact_id = data.get("contact_id") or data.get("customer_id")
     oid_contact = _as_objid(contact_id)
     if oid_contact is None:
-        raise ValueError("contact_id is required and must be a valid ObjectId string")
+        raise ValueError("customer_id is required and must be a valid ObjectId string")
+
+    # Verify customer exists and get their email
+    customer = await db.users.find_one({
+        "_id": oid_contact,
+        "role": "customer",
+        "company_id": ObjectId(current_user["company_id"])
+    })
+    
+    if not customer:
+        raise ValueError("Customer not found")
+    
+    if not customer.get("email"):
+        raise ValueError("Customer has no email address")
 
     # Company & creator
     company_oid = _as_objid(current_user.get("company_id"))
@@ -134,7 +149,7 @@ async def create_invoice(
         "invoice_number": invoice_number,
         "title": data.get("title") or data.get("service_type") or "Service Invoice",
         "description": data.get("description", ""),
-        "status": data.get("status") or "draft",
+        "status": "pending",  # Start with pending status
         "line_items": items,
         "subtotal": subtotal,
         "discount_amount": discount,
@@ -154,4 +169,157 @@ async def create_invoice(
 
     result = await db.invoices.insert_one(doc)
     doc["_id"] = result.inserted_id
-    return _serialize_invoice(doc)
+
+    # Prepare customer info for email
+    customer_name = f"{customer.get('first_name', '')} {customer.get('last_name', '')}".strip() or "there"
+    
+    # Generate payment portal URL
+    payment_url = f"https://app.stormai.net/payment/{result.inserted_id}"  # Adjust domain as needed
+    
+    # Create email content
+    subject = f"Invoice {invoice_number} - Payment Required"
+    
+    # Generate line items for email
+    line_items_html = ""
+    for item in items:
+        line_items_html += f"""
+        <tr>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;">{item['description']}</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">{item['quantity']}</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${item['unit_price']:,.2f}</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${item['total']:,.2f}</td>
+        </tr>
+        """
+
+    html_content = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
+        <div style="background: #f8f9fa; padding: 20px; text-align: center;">
+            <h1 style="color: #333; margin: 0;">Storm AI Services</h1>
+            <p style="color: #666; margin: 5px 0 0 0;">Invoice & Payment Portal</p>
+        </div>
+        
+        <div style="padding: 30px;">
+            <p style="font-size: 16px; color: #333;">Hello {customer_name},</p>
+            
+            <p style="color: #666; line-height: 1.6;">
+                Your service has been completed and your invoice is ready. Please review the details below and make your payment using our secure online portal.
+            </p>
+            
+            <div style="background: #f8f9fa; padding: 20px; margin: 20px 0; border-radius: 5px;">
+                <h2 style="color: #333; margin: 0 0 10px 0;">Invoice #{invoice_number}</h2>
+                <p style="margin: 5px 0; color: #666;"><strong>Service:</strong> {doc['title']}</p>
+                <p style="margin: 5px 0; color: #666;"><strong>Due Date:</strong> {due_date.strftime('%B %d, %Y')}</p>
+                {f'<p style="margin: 10px 0; color: #666;"><strong>Description:</strong> {doc["description"]}</p>' if doc.get("description") else ''}
+            </div>
+            
+            {f'''
+            <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                <thead>
+                    <tr style="background: #f1f3f4;">
+                        <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">Description</th>
+                        <th style="padding: 12px; text-align: center; border-bottom: 2px solid #ddd;">Qty</th>
+                        <th style="padding: 12px; text-align: right; border-bottom: 2px solid #ddd;">Unit Price</th>
+                        <th style="padding: 12px; text-align: right; border-bottom: 2px solid #ddd;">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {line_items_html}
+                </tbody>
+            </table>
+            ''' if items else ''}
+            
+            <div style="margin: 30px 0; padding: 20px; background: #f8f9fa; border-radius: 5px;">
+                <div style="text-align: right;">
+                    <p style="margin: 5px 0; color: #666;">Subtotal: <strong>${subtotal:,.2f}</strong></p>
+                    {f'<p style="margin: 5px 0; color: #666;">Discount: <strong>-${discount:,.2f}</strong></p>' if discount > 0 else ''}
+                    {f'<p style="margin: 5px 0; color: #666;">Tax ({tax_rate}%): <strong>${tax_amount:,.2f}</strong></p>' if tax_amount > 0 else ''}
+                    <hr style="margin: 10px 0; border: none; border-top: 1px solid #ddd;">
+                    <p style="margin: 10px 0; color: #333; font-size: 18px;"><strong>Total: ${total_amount:,.2f}</strong></p>
+                </div>
+            </div>
+            
+            <!-- Payment Portal Button -->
+            <div style="text-align: center; margin: 40px 0;">
+                <a href="{payment_url}" 
+                   style="display: inline-block; background: #007bff; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;">
+                    💳 Pay Now - ${total_amount:,.2f}
+                </a>
+                <p style="margin: 10px 0 0 0; color: #666; font-size: 12px;">
+                    Secure payment portal • Credit cards, bank transfers, and more
+                </p>
+            </div>
+            
+            <div style="margin: 30px 0; padding: 20px; background: #e8f5e8; border-radius: 5px;">
+                <h3 style="color: #2d5a2d; margin: 0 0 10px 0;">Easy Online Payment</h3>
+                <p style="color: #2d5a2d; margin: 0; line-height: 1.6;">
+                    Click the "Pay Now" button above to access our secure payment portal. 
+                    You can pay with credit cards, debit cards, or bank transfer. 
+                    Your payment will be processed immediately and you'll receive a confirmation email.
+                </p>
+            </div>
+            
+            {f'<div style="background: #fff3cd; padding: 15px; border-radius: 5px; margin: 20px 0;"><p style="margin: 0; color: #856404;"><strong>Notes:</strong> {doc["notes"]}</p></div>' if doc.get("notes") else ''}
+            
+            <p style="color: #666; line-height: 1.6;">
+                Thank you for choosing Storm AI Services. If you have any questions about this invoice, 
+                please don't hesitate to contact us.
+            </p>
+            
+            <p style="color: #666; line-height: 1.6;">
+                Best regards,<br>
+                <strong>Storm AI Services Team</strong>
+            </p>
+        </div>
+        
+        <div style="background: #f8f9fa; padding: 20px; text-align: center; color: #666; font-size: 12px;">
+            <p style="margin: 0;">Invoice #{invoice_number} • Due: {due_date.strftime('%B %d, %Y')}</p>
+            <p style="margin: 5px 0 0 0;">Storm AI Services • Professional Service Solutions</p>
+        </div>
+    </div>
+    """
+
+    # Send email in background (async)
+    async def send_email_async():
+        try:
+            from app.utils.emailer import send_email
+            send_email(customer["email"], subject, html_content)
+            
+            # Update invoice status to sent after email succeeds
+            await db.invoices.update_one(
+                {"_id": result.inserted_id},
+                {
+                    "$set": {
+                        "status": "sent",
+                        "sent_at": datetime.utcnow(),
+                        "updated_at": datetime.utcnow(),
+                        "payment_url": payment_url
+                    }
+                }
+            )
+            print(f"✅ Invoice {invoice_number} sent successfully to {customer['email']}")
+            
+        except Exception as email_error:
+            # Update invoice status to failed if email fails
+            await db.invoices.update_one(
+                {"_id": result.inserted_id},
+                {
+                    "$set": {
+                        "status": "failed",
+                        "error_message": str(email_error),
+                        "updated_at": datetime.utcnow()
+                    }
+                }
+            )
+            print(f"❌ Email failed for invoice {invoice_number}: {email_error}")
+
+    # Start background email task
+    asyncio.create_task(send_email_async())
+
+    # Return response immediately with pending status
+    response = _serialize_invoice(doc)
+    response["status"] = "pending"  # Will be updated to "sent" or "failed" by background task
+    response["customer_email"] = customer["email"]
+    response["customer_name"] = customer_name
+    response["payment_url"] = payment_url
+    
+    return response

@@ -1,0 +1,10 @@
+{
+    "python-envs.pythonProjects": [
+        {
+            "path": "Backend/app/api/v1/__pycache__",
+            "envManager": "ms-python.python:system",
+            "packageManager": "ms-python.python:pip"
+        }
+    ],
+    "python-envs.defaultEnvManager": "ms-python.python:system"
+}

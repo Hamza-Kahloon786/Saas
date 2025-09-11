@@ -1,4 +1,4 @@
-// frontend/src/components/layout/Header.tsx - FIXED VERSION
+// frontend/src/components/layout/Header.tsx - FINAL VERSION WITH WHITE AVATAR
 
 import { useState, useRef, useEffect } from 'react'
 import { useAuthStore } from '../../store/authStore'
@@ -288,17 +288,20 @@ export default function Header({ onMenuClick }: HeaderProps) {
             )}
           </div>
 
-          {/* User Menu - responsive */}
+          {/* User Menu - UPDATED WITH WHITE BACKGROUND */}
           <div className="relative" ref={userMenuRef}>
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
               className="flex items-center space-x-2 sm:space-x-3 text-sm rounded-lg p-1.5 sm:p-2 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors touch-friendly"
               aria-label="User menu"
             >
-              <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-primary-600 flex items-center justify-center flex-shrink-0">
-                <span className="text-white font-medium text-xs sm:text-sm">
+              {/* WHITE AVATAR WITH BORDER */}
+              <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center flex-shrink-0 shadow-sm relative">
+                <span className="text-gray-700 font-medium text-xs sm:text-sm">
                   {user?.name?.split(' ').map(n => n[0]).join('').toUpperCase()}
                 </span>
+                {/* Green online status dot */}
+                <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 bg-green-400 rounded-full ring-2 ring-white"></div>
               </div>
               <div className="hidden md:block text-left min-w-0">
                 <p className="text-gray-700 font-medium text-sm truncate">{user?.name}</p>
@@ -307,15 +310,25 @@ export default function Header({ onMenuClick }: HeaderProps) {
               <ChevronDownIcon className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 hidden md:block flex-shrink-0" />
             </button>
 
-            {/* User Dropdown - responsive */}
+            {/* User Dropdown */}
             {showUserMenu && (
               <div className="absolute right-0 mt-2 w-52 sm:w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
                 <div className="px-3 sm:px-4 py-3 border-b border-gray-200">
-                  <p className="text-sm font-medium text-gray-900 truncate">{user?.name}</p>
-                  <p className="text-sm text-gray-500 truncate">{user?.email}</p>
-                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary-100 text-primary-800 mt-1 capitalize">
-                    {user?.role}
-                  </span>
+                  <div className="flex items-center space-x-3">
+                    {/* WHITE AVATAR IN DROPDOWN TOO */}
+                    <div className="h-10 w-10 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center shadow-sm">
+                      <span className="text-black font-medium text-base">
+                        {user?.name?.split(' ').map(n => n[0]).join('').toUpperCase()}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate">{user?.name}</p>
+                      <p className="text-sm text-gray-500 truncate">{user?.email}</p>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary-100 text-primary-800 mt-1 capitalize">
+                        {user?.role}
+                      </span>
+                    </div>
+                  </div>
                 </div>
                 
                 <div className="py-1">

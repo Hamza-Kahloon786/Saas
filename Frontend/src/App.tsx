@@ -44,7 +44,7 @@ import InvoiceGenerator from './Pages/estimates/InvoiceGenerator'
 import InvoiceList from './Pages/estimates/InvoiceList'
 
 // ===== AI Automation =====
-import AIFlows from './Pages/ai_automation/AIFlows'
+// import AIFlows from './Pages/ai_automation/AIFlows'
 import SMSCampaigns from './Pages/ai_automation/SMSCampaigns'
 import LeadScoring from './Pages/ai_automation/LeadScoring'
 import AutomationBuilder from './Pages/ai_automation/AutomationBuilder'
@@ -73,7 +73,7 @@ import Users from './Pages/settings/Users'
 import Integrations from './Pages/settings/Integration'
 
 import ServiceManagement from './Pages/admin/ServiceManagement'
-import AIAnalytics from './Pages/admin/AIAnalytics'
+// import AIAnalytics from './Pages/admin/AIAnalytics'
 
 // Create QueryClient for React Query
 const queryClient = new QueryClient({
@@ -167,7 +167,7 @@ function App() {
                   {/* ADD THIS NEW ROUTE */}
                   <Route path="admin/ai-bookings" element={<AIBookings />} />
                   <Route path="/admin/service-management" element={<ServiceManagement />} />
-                  <Route path="/admin/ai-analytics" element={<AIAnalytics />} />
+                  {/* <Route path="/admin/ai-analytics" element={<AIAnalytics />} /> */}
 
                   {/* CRM Routes */}
                   <Route path="crm/contacts" element={<Contacts />} />
@@ -201,11 +201,11 @@ function App() {
                   <Route path="invoices/:id/edit" element={<InvoiceGenerator />} />
 
                   {/* AI Automation Routes */}
-                  <Route path="ai-automation/flows" element={<AIFlows />} />
+                  {/* <Route path="ai-automation/flows" element={<AIFlows />} /> */}
                   <Route path="ai-automation/sms-campaigns" element={<SMSCampaigns />} />
                   <Route path="ai-automation/lead-scoring" element={<LeadScoring />} />
                   <Route path="ai-automation/automation-builder" element={<AutomationBuilder />} />
-                  <Route path="ai-automation" element={<Navigate to="/ai-automation/flows" replace />} />
+                  {/* <Route path="ai-automation" element={<Navigate to="/ai-automation/flows" replace />} /> */}
 
                   {/* Settings Routes */}
                   <Route path="settings/profile" element={<Profile />} />

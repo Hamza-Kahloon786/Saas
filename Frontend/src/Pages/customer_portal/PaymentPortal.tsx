@@ -1,8 +1,8 @@
-// PaymentPortal.tsx
+// PaymentPortal.tsx - FIXED VERSION
 
 import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import {
   CreditCardIcon,
@@ -21,8 +21,10 @@ import { api } from '../../services/api'
 import { loadStripe } from '@stripe/stripe-js'
 
 const stripePromise = loadStripe('pk_test_51RwltjCcX0FmDNEa1g2pTz0rrbaLJsQ0tyoASLKDPQHnxrgwKRtTMEoGNt9Or3Mpn0okPL1wDmAykDFpv3i5XgL300qyqVGrBt')
+
 export default function PaymentPortal({ invoiceId: propInvoiceId, onBack, onSuccess }) {
   const { invoiceId: urlInvoiceId } = useParams()
+  const navigate = useNavigate()
   const finalInvoiceId = propInvoiceId || urlInvoiceId
   const queryClient = useQueryClient()
   
@@ -41,19 +43,17 @@ export default function PaymentPortal({ invoiceId: propInvoiceId, onBack, onSucc
   })
 
   // Get invoice details
- // In your PaymentPortal.tsx, modify the useQuery:
-const { data: invoiceData, isLoading, error } = useQuery({
-  queryKey: ['customer-invoice', finalInvoiceId],
-  queryFn: async () => {
-    if (!finalInvoiceId) {
-      // If no invoice ID, show a message or redirect
-      throw new Error('Invoice ID is required')
-    }
-    const response = await api.get(`/customer-portal/invoices/${finalInvoiceId}`)
-    return response.data
-  },
-  enabled: !!finalInvoiceId, // Only run query if we have an invoice ID
-})
+  const { data: invoiceData, isLoading, error } = useQuery({
+    queryKey: ['customer-invoice', finalInvoiceId],
+    queryFn: async () => {
+      if (!finalInvoiceId) {
+        throw new Error('Invoice ID is required')
+      }
+      const response = await api.get(`/customer-portal/invoices/${finalInvoiceId}`)
+      return response.data
+    },
+    enabled: !!finalInvoiceId,
+  })
 
   // Process payment mutation
   const processPaymentMutation = useMutation({
@@ -83,6 +83,31 @@ const { data: invoiceData, isLoading, error } = useQuery({
       setIsProcessingPayment(false)
     }
   })
+
+  // FIXED: Navigation handlers
+  const handleBackNavigation = () => {
+    if (onBack) {
+      // If onBack callback is provided (modal/component usage)
+      onBack()
+    } else {
+      // If no callback (standalone route usage), navigate programmatically
+      navigate('/customer-portal/service-history')
+    }
+  }
+
+  const handleSuccessNavigation = () => {
+    if (onSuccess) {
+      // If onSuccess callback is provided (modal/component usage)
+      onSuccess()
+    } else {
+      // If no callback (standalone route usage), navigate programmatically
+      navigate('/customer-portal/service-history')
+    }
+  }
+
+  const handleDashboardNavigation = () => {
+    navigate('/customer-portal/dashboard')
+  }
 
   const handleInputChange = (field, value) => {
     let formattedValue = value
@@ -221,7 +246,7 @@ const { data: invoiceData, isLoading, error } = useQuery({
               {!finalInvoiceId ? 'Invoice ID is missing' : 'The invoice could not be loaded. It may have been removed or you may not have access to it.'}
             </p>
             <button 
-              onClick={() => onBack && onBack()}
+              onClick={handleBackNavigation}
               className="text-blue-600 hover:text-blue-800 font-medium"
             >
               Back to Service History
@@ -265,13 +290,13 @@ const { data: invoiceData, isLoading, error } = useQuery({
             
             <div className="space-y-3">
               <button
-                onClick={() => onSuccess && onSuccess()}
+                onClick={handleSuccessNavigation}
                 className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 font-medium"
               >
                 View Service History
               </button>
               <button
-                onClick={() => onBack && onBack()}
+                onClick={handleDashboardNavigation}
                 className="w-full bg-gray-100 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-200 font-medium"
               >
                 Back to Dashboard
@@ -290,20 +315,22 @@ const { data: invoiceData, isLoading, error } = useQuery({
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Close button for modal */}
-        <div className="flex justify-end mb-4">
-          <button
-            onClick={() => onBack && onBack()}
-            className="p-2 text-gray-400 hover:text-gray-600"
-          >
-            <XMarkIcon className="h-6 w-6" />
-          </button>
-        </div>
+        {onBack && (
+          <div className="flex justify-end mb-4">
+            <button
+              onClick={handleBackNavigation}
+              className="p-2 text-gray-400 hover:text-gray-600"
+            >
+              <XMarkIcon className="h-6 w-6" />
+            </button>
+          </div>
+        )}
 
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center mb-4">
             <button
-              onClick={() => onBack && onBack()}
+              onClick={handleBackNavigation}
               className="flex items-center text-gray-600 hover:text-gray-900"
             >
               <ArrowLeftIcon className="h-5 w-5 mr-2" />

@@ -1,4 +1,5 @@
-// frontend/src/components/chatbot/ChatbotWidget.tsx - COMPLETE FIXED VERSION
+
+// frontend/src/components/chatbot/ChatbotWidget.tsx - RESPONSIVE VERSION
 import React, { useState, useEffect, useRef } from 'react'
 import { 
   ChatBubbleLeftRightIcon, 
@@ -6,9 +7,12 @@ import {
   PaperAirplaneIcon,
   CalendarIcon,
   PhoneIcon,
-  UserIcon
+  UserIcon,
+  ChevronDownIcon,
+  MinusIcon
 } from '@heroicons/react/24/outline'
 import { useAuthStore } from '../../store/authStore'
+
 interface Message {
   id: string
   type: 'user' | 'bot'
@@ -43,6 +47,7 @@ export const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({
 }) => {
   const actualCompanyId = companyId === 'your-company-id' ? '68af46dab1355f0072ad6fa1' : companyId
   const [isWidgetOpen, setIsWidgetOpen] = useState(isOpen)
+  const [isMinimized, setIsMinimized] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [inputMessage, setInputMessage] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -62,6 +67,15 @@ export const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({
   const inputRef = useRef<HTMLInputElement>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout>()
 
+  // Detect if we're on mobile
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
   // WebSocket connection with multiple endpoint testing
   const connectWebSocket = () => {
     try {
@@ -73,10 +87,10 @@ export const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({
       
       // TEST MULTIPLE ENDPOINTS - Try them in order
       const testEndpoints = [
-    `${wsUrl}/test-chatbot/${actualCompanyId}`,              
-    `${wsUrl}/test-ws`,                                
-    `${wsUrl}/api/v1/ws/chatbot/${actualCompanyId}`,        
-  ]
+        `${wsUrl}/test-chatbot/${actualCompanyId}`,              
+        `${wsUrl}/test-ws`,                                
+        `${wsUrl}/api/v1/ws/chatbot/${actualCompanyId}`,        
+      ]
       
       let currentEndpointIndex = 0
       
@@ -180,7 +194,7 @@ export const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({
     if (isWidgetOpen && messages.length === 0 && connectionStatus === 'connected') {
       setTimeout(() => {
         addBotMessage(
-          "👋 Hi! I'm your AI assistant. I can help you with service requests, scheduling appointments, and answering questions. How can I help you today?"
+          "Hi! I'm your AI assistant. I can help you with service requests, scheduling appointments, and answering questions. How can I help you today?"
         )
       }, 500)
     }
@@ -251,7 +265,7 @@ export const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({
     setIsWidgetOpen(newState)
     onToggle?.()
     
-    if (newState && inputRef.current) {
+    if (newState && inputRef.current && !isMobile) {
       setTimeout(() => inputRef.current?.focus(), 100)
     }
     
@@ -260,6 +274,10 @@ export const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({
       setWs(null)
       setConnectionStatus('disconnected')
     }
+  }
+
+  const toggleMinimize = () => {
+    setIsMinimized(!isMinimized)
   }
 
   const addBotMessage = (content: string) => {
@@ -390,8 +408,8 @@ export const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({
   }, [ws])
 
   const positionClasses = {
-    'bottom-right': 'bottom-4 right-4',
-    'bottom-left': 'bottom-4 left-4'
+    'bottom-right': 'bottom-2 sm:bottom-4 right-2 sm:right-4',
+    'bottom-left': 'bottom-2 sm:bottom-4 left-2 sm:left-4'
   }
 
   const themeClasses = {
@@ -411,182 +429,205 @@ export const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({
     }
   }
 
+  // Responsive sizing
+  const getWidgetSize = () => {
+    if (isMobile) {
+      return 'w-[calc(100vw-1rem)] h-[calc(100vh-5rem)] max-w-sm'
+    }
+    return 'w-80 sm:w-96 h-[400px] sm:h-[500px]'
+  }
+
   return (
     <div className={`fixed z-50 ${positionClasses[position]}`}>
       {/* Chat Widget */}
       {isWidgetOpen && (
-        <div className={`w-96 h-[500px] rounded-lg shadow-2xl border ${themeClasses[theme].widget} flex flex-col mb-4`}>
+        <div className={`${getWidgetSize()} rounded-lg shadow-2xl border ${themeClasses[theme].widget} flex flex-col mb-2 sm:mb-4 ${isMinimized ? 'h-auto' : ''}`}>
           {/* Header */}
-          <div className={`${themeClasses[theme].header} px-4 py-3 rounded-t-lg flex items-center justify-between`}>
-            <div className="flex items-center space-x-2">
-              <ChatBubbleLeftRightIcon className="w-5 h-5" />
-              <span className="font-semibold">AI Assistant</span>
+          <div className={`${themeClasses[theme].header} px-3 sm:px-4 py-2 sm:py-3 rounded-t-lg flex items-center justify-between flex-shrink-0`}>
+            <div className="flex items-center space-x-2 min-w-0">
+              <ChatBubbleLeftRightIcon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+              <span className="font-semibold text-sm sm:text-base truncate">AI Assistant</span>
               {/* Connection Status Indicator */}
-              <div className={`w-2 h-2 rounded-full ${
+              <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
                 connectionStatus === 'connected' ? 'bg-green-400' : 
                 connectionStatus === 'connecting' ? 'bg-yellow-400' : 
                 'bg-red-400'
               }`} title={`Connection: ${connectionStatus}`} />
             </div>
-            <button
-              onClick={toggleWidget}
-              className="text-white hover:text-gray-200 transition-colors"
-            >
-              <XMarkIcon className="w-5 h-5" />
-            </button>
+            <div className="flex items-center space-x-1 sm:space-x-2">
+              {/* Minimize button (desktop only) */}
+              {!isMobile && (
+                <button
+                  onClick={toggleMinimize}
+                  className="text-white hover:text-gray-200 transition-colors p-1"
+                >
+                  <MinusIcon className="w-4 h-4" />
+                </button>
+              )}
+              <button
+                onClick={toggleWidget}
+                className="text-white hover:text-gray-200 transition-colors p-1"
+              >
+                <XMarkIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+              </button>
+            </div>
           </div>
 
           {/* Connection Status Message */}
-          {connectionStatus === 'connecting' && (
-            <div className="px-4 py-2 bg-yellow-50 border-b text-yellow-800 text-xs">
-              Connecting to AI assistant...
-            </div>
-          )}
-          
-          {connectionStatus === 'disconnected' && messages.length > 0 && (
-            <div className="px-4 py-2 bg-red-50 border-b text-red-800 text-xs">
-              Connection lost. Messages will use backup system.
-            </div>
-          )}
-
-          {/* Messages */}
-          <div className="flex-1 p-4 overflow-y-auto space-y-3">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  className={`max-w-[80%] px-3 py-2 rounded-lg text-sm ${
-                    message.type === 'user'
-                      ? themeClasses[theme].userMessage
-                      : themeClasses[theme].botMessage
-                  }`}
-                >
-                  {message.content}
-                  <div className="text-xs opacity-75 mt-1">
-                    {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </div>
+          {!isMinimized && (
+            <>
+              {connectionStatus === 'connecting' && (
+                <div className="px-3 sm:px-4 py-2 bg-yellow-50 border-b text-yellow-800 text-xs flex-shrink-0">
+                  Connecting to AI assistant...
                 </div>
-              </div>
-            ))}
-            
-            {isLoading && (
-              <div className="flex justify-start">
-                <div className={`${themeClasses[theme].botMessage} px-3 py-2 rounded-lg text-sm`}>
-                  <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-current rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                    <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                  </div>
+              )}
+              
+              {connectionStatus === 'disconnected' && messages.length > 0 && (
+                <div className="px-3 sm:px-4 py-2 bg-red-50 border-b text-red-800 text-xs flex-shrink-0">
+                  Connection lost. Messages will use backup system.
                 </div>
-              </div>
-            )}
-            
-            <div ref={messagesEndRef} />
-          </div>
+              )}
 
-          {/* Available Slots */}
-          {showScheduling && availableSlots.length > 0 && (
-            <div className="border-t p-4 max-h-32 overflow-y-auto">
-              <div className="text-sm font-medium mb-2">Available Times:</div>
-              <div className="space-y-1">
-                {availableSlots.slice(0, 3).map((slot, index) => (
-                  <button
-                    key={index}
-                    onClick={() => scheduleAppointment(slot)}
-                    className="w-full text-left text-xs px-2 py-1 bg-blue-50 hover:bg-blue-100 rounded border text-blue-700 flex items-center space-x-1"
+              {/* Messages */}
+              <div className="flex-1 p-3 sm:p-4 overflow-y-auto space-y-2 sm:space-y-3 min-h-0">
+                {messages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
-                    <CalendarIcon className="w-3 h-3" />
-                    <span>{slot.display}</span>
-                  </button>
+                    <div
+                      className={`max-w-[85%] sm:max-w-[80%] px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm break-words ${
+                        message.type === 'user'
+                          ? themeClasses[theme].userMessage
+                          : themeClasses[theme].botMessage
+                      }`}
+                    >
+                      <div className="whitespace-pre-wrap">{message.content}</div>
+                      <div className="text-xs opacity-75 mt-1">
+                        {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </div>
+                    </div>
+                  </div>
                 ))}
+                
+                {isLoading && (
+                  <div className="flex justify-start">
+                    <div className={`${themeClasses[theme].botMessage} px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm`}>
+                      <div className="flex space-x-1">
+                        <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-current rounded-full animate-bounce"></div>
+                        <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                        <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                <div ref={messagesEndRef} />
               </div>
-            </div>
-          )}
 
-          {/* Customer Info Form */}
-          {showCustomerForm && (
-            <div className="border-t p-4">
-              <div className="text-sm font-medium mb-2">Contact Information:</div>
-              <div className="space-y-2">
-                <input
-                  type="text"
-                  placeholder="Your Name *"
-                  value={customerInfo.name}
-                  onChange={(e) => setCustomerInfo(prev => ({ ...prev, name: e.target.value }))}
-                  className={`w-full px-2 py-1 text-xs rounded border ${themeClasses[theme].input}`}
-                />
-                <input
-                  type="tel"
-                  placeholder="Phone Number *"
-                  value={customerInfo.phone}
-                  onChange={(e) => setCustomerInfo(prev => ({ ...prev, phone: e.target.value }))}
-                  className={`w-full px-2 py-1 text-xs rounded border ${themeClasses[theme].input}`}
-                />
-                <input
-                  type="email"
-                  placeholder="Email (optional)"
-                  value={customerInfo.email}
-                  onChange={(e) => setCustomerInfo(prev => ({ ...prev, email: e.target.value }))}
-                  className={`w-full px-2 py-1 text-xs rounded border ${themeClasses[theme].input}`}
-                />
-                <button
-                  onClick={submitCustomerInfo}
-                  disabled={!customerInfo.name || !customerInfo.phone}
-                  className="w-full px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-                >
-                  Continue
-                </button>
+              {/* Available Slots */}
+              {showScheduling && availableSlots.length > 0 && (
+                <div className="border-t p-3 sm:p-4 max-h-24 sm:max-h-32 overflow-y-auto flex-shrink-0">
+                  <div className="text-xs sm:text-sm font-medium mb-2">Available Times:</div>
+                  <div className="space-y-1">
+                    {availableSlots.slice(0, 3).map((slot, index) => (
+                      <button
+                        key={index}
+                        onClick={() => scheduleAppointment(slot)}
+                        className="w-full text-left text-xs px-2 py-1 bg-blue-50 hover:bg-blue-100 rounded border text-blue-700 flex items-center space-x-1"
+                      >
+                        <CalendarIcon className="w-3 h-3 flex-shrink-0" />
+                        <span className="truncate">{slot.display}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Customer Info Form */}
+              {showCustomerForm && (
+                <div className="border-t p-3 sm:p-4 flex-shrink-0">
+                  <div className="text-xs sm:text-sm font-medium mb-2">Contact Information:</div>
+                  <div className="space-y-2">
+                    <input
+                      type="text"
+                      placeholder="Your Name *"
+                      value={customerInfo.name}
+                      onChange={(e) => setCustomerInfo(prev => ({ ...prev, name: e.target.value }))}
+                      className={`w-full px-2 py-1.5 text-xs rounded border ${themeClasses[theme].input}`}
+                    />
+                    <input
+                      type="tel"
+                      placeholder="Phone Number *"
+                      value={customerInfo.phone}
+                      onChange={(e) => setCustomerInfo(prev => ({ ...prev, phone: e.target.value }))}
+                      className={`w-full px-2 py-1.5 text-xs rounded border ${themeClasses[theme].input}`}
+                    />
+                    <input
+                      type="email"
+                      placeholder="Email (optional)"
+                      value={customerInfo.email}
+                      onChange={(e) => setCustomerInfo(prev => ({ ...prev, email: e.target.value }))}
+                      className={`w-full px-2 py-1.5 text-xs rounded border ${themeClasses[theme].input}`}
+                    />
+                    <button
+                      onClick={submitCustomerInfo}
+                      disabled={!customerInfo.name || !customerInfo.phone}
+                      className="w-full px-2 py-1.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Continue
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Input */}
+              <div className="border-t p-3 sm:p-4 flex-shrink-0">
+                <div className="flex space-x-2">
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={inputMessage}
+                    onChange={(e) => setInputMessage(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="Type your message..."
+                    className={`flex-1 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg border ${themeClasses[theme].input} min-w-0`}
+                    disabled={isLoading}
+                  />
+                  <button
+                    onClick={sendMessage}
+                    disabled={!inputMessage.trim() || isLoading}
+                    className="px-2 sm:px-3 py-1.5 sm:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
+                  >
+                    <PaperAirplaneIcon className="w-3 h-3 sm:w-4 sm:h-4" />
+                  </button>
+                </div>
+                
+                {/* Connection status info */}
+                <div className="text-xs text-gray-500 mt-1">
+                  {connectionStatus === 'connected' ? '🟢 Real-time chat active' : 
+                   connectionStatus === 'connecting' ? '🟡 Connecting...' : 
+                   '🔴 Using backup connection'}
+                </div>
               </div>
-            </div>
+            </>
           )}
-
-          {/* Input */}
-          <div className="border-t p-4">
-            <div className="flex space-x-2">
-              <input
-                ref={inputRef}
-                type="text"
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Type your message..."
-                className={`flex-1 px-3 py-2 text-sm rounded-lg border ${themeClasses[theme].input}`}
-                disabled={isLoading}
-              />
-              <button
-                onClick={sendMessage}
-                disabled={!inputMessage.trim() || isLoading}
-                className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                <PaperAirplaneIcon className="w-4 h-4" />
-              </button>
-            </div>
-            
-            {/* Connection status info */}
-            <div className="text-xs text-gray-500 mt-1">
-              {connectionStatus === 'connected' ? '🟢 Real-time chat active' : 
-               connectionStatus === 'connecting' ? '🟡 Connecting...' : 
-               '🔴 Using backup connection'}
-            </div>
-          </div>
         </div>
       )}
 
       {/* Toggle Button */}
       <button
         onClick={toggleWidget}
-        className="w-12 h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-200 hover:scale-110"
+        className={`${isMobile ? 'w-12 h-12' : 'w-12 h-12 sm:w-14 sm:h-14'} bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95`}
       >
         {isWidgetOpen ? (
-          <XMarkIcon className="w-6 h-6" />
+          <XMarkIcon className={`${isMobile ? 'w-5 h-5' : 'w-5 h-5 sm:w-6 sm:h-6'}`} />
         ) : (
           <>
-            <ChatBubbleLeftRightIcon className="w-6 h-6" />
+            <ChatBubbleLeftRightIcon className={`${isMobile ? 'w-5 h-5' : 'w-5 h-5 sm:w-6 sm:h-6'}`} />
             {/* Notification dot when disconnected */}
             {connectionStatus !== 'connected' && (
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></div>
+              <div className="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-red-500 rounded-full border-2 border-white"></div>
             )}
           </>
         )}
@@ -596,3 +637,7 @@ export const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({
 }
 
 export default ChatbotWidget
+
+
+
+

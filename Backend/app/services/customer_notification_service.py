@@ -1,4 +1,4 @@
-# backend/app/services/customer_notification_service.py - FIX DATABASE CHECK
+# backend/app/services/customer_notification_service.py - FIXED TO READ FROM .ENV
 
 import smtplib
 from email.mime.text import MIMEText
@@ -17,38 +17,31 @@ logger = logging.getLogger(__name__)
 class CustomerNotificationService:
     def __init__(self, db: Optional[AsyncIOMotorDatabase] = None):
         self.db = db
-        self.smtp_server = (
-            os.getenv("EMAIL_HOST") or 
-            os.getenv("SMTP_HOST") or 
-            "smtp.gmail.com"
-        )
-        self.smtp_port = int(
-            os.getenv("EMAIL_PORT") or 
-            os.getenv("SMTP_PORT") or 
-            "587"
-        )
-        self.email_user = (
-            os.getenv("EMAIL_USER") or 
-            os.getenv("SMTP_USER") or
-            "hpraza8@gmail.com"
-        )
-        self.email_password = (
-            os.getenv("EMAIL_PASSWORD") or 
-            os.getenv("SMTP_PASSWORD") or
-            "vtvfxcgknmrmqncu"
-        )
+        
+        # FIXED: Get email configuration from .env
+        self.smtp_server = os.getenv("EMAIL_HOST", "smtp.office365.com")
+        self.smtp_port = int(os.getenv("EMAIL_PORT", "587"))
+        
+        # FIXED: Use the exact variable names from your .env
+        self.email_user = os.getenv("EMAILS_FROM_EMAIL")  # info@stormai.net
+        self.email_password = os.getenv("EMAIL_PASSWORD")  # rwwctgxbyfvyhqxz
+        
+        # Debug logging
+        logger.info(f"Email Host: {self.smtp_server}")
+        logger.info(f"Email Port: {self.smtp_port}")
+        logger.info(f"Email User: {self.email_user}")
+        logger.info(f"Password configured: {'Yes' if self.email_password else 'No'}")
         
         # Base URL for unsubscribe links
         self.base_url = os.getenv("BASE_URL", "http://localhost:8000")
         
         if not self.email_user or not self.email_password:
-            logger.warning("⚠️ Email credentials not configured - email features disabled")
+            logger.error(f"❌ Email credentials missing - User: {self.email_user}, Password: {'***' if self.email_password else 'None'}")
         else:
-            logger.info("✅ Email credentials configured successfully")
+            logger.info(f"✅ Email service configured - From: {self.email_user}")
     
     async def is_email_unsubscribed(self, email: str, email_type: str = "booking") -> bool:
         """Check if email is unsubscribed from specific email type"""
-        # ✅ FIX: Compare with None instead of using bool()
         if self.db is None:
             return False
             
@@ -89,17 +82,17 @@ class CustomerNotificationService:
                 logger.error("❌ Email credentials not configured")
                 return False
             
-            # ✅ FIX: Check if user has unsubscribed (only if database is available)
+            # Check if user has unsubscribed (only if database is available)
             if self.db is not None:
                 is_unsubscribed = await self.is_email_unsubscribed(customer_email, "booking")
                 if is_unsubscribed:
                     logger.info(f"📧 Email {customer_email} is unsubscribed from booking emails - skipping")
-                    return True  # Return True since it's not an error, just a preference
+                    return True
             
             # Create unsubscribe URL
             unsubscribe_url = self._create_unsubscribe_url(customer_email, booking_id, "booking")
             
-            # Create email content with unsubscribe button
+            # Create email content
             subject = f"🎉 Booking Confirmed - {booking_data.get('service_type', 'Service')}"
             
             html_content = self._create_confirmation_email_html(booking_data, unsubscribe_url)
@@ -114,9 +107,9 @@ class CustomerNotificationService:
             )
             
             if success:
-                logger.info(f"✅ Booking confirmation sent to {customer_email}")
+                logger.info(f"✅ Booking confirmation sent successfully from {self.email_user} to {customer_email}")
                 
-                # ✅ FIX: Log email sent (only if database is available)
+                # Log email sent (only if database is available)
                 if self.db is not None:
                     try:
                         await self.db.email_logs.insert_one({
@@ -125,7 +118,8 @@ class CustomerNotificationService:
                             "booking_id": booking_id,
                             "subject": subject,
                             "sent_at": datetime.utcnow(),
-                            "status": "sent"
+                            "status": "sent",
+                            "from_email": self.email_user
                         })
                     except Exception as log_error:
                         logger.warning(f"⚠️ Could not log email: {log_error}")
@@ -136,10 +130,12 @@ class CustomerNotificationService:
             
         except Exception as e:
             logger.error(f"❌ Error sending booking confirmation: {e}")
+            import traceback
+            logger.error(f"Full traceback: {traceback.format_exc()}")
             return False
     
     def _create_confirmation_email_html(self, booking_data: Dict[str, Any], unsubscribe_url: str) -> str:
-        """Create HTML email content with unsubscribe button"""
+        """Create HTML email content"""
         return f"""
         <!DOCTYPE html>
         <html>
@@ -157,19 +153,6 @@ class CustomerNotificationService:
                 .detail-value {{ color: #333; }}
                 .highlight-box {{ background: #e3f2fd; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2196f3; }}
                 .footer {{ background: #333; padding: 20px; text-align: center; color: white; font-size: 12px; }}
-                .unsubscribe-section {{ background: #f5f5f5; padding: 20px; text-align: center; border-top: 1px solid #ddd; }}
-                .unsubscribe-btn {{ 
-                    display: inline-block; 
-                    padding: 10px 20px; 
-                    background: #dc3545; 
-                    color: white; 
-                    text-decoration: none; 
-                    border-radius: 5px; 
-                    font-size: 12px;
-                    margin: 10px 0;
-                }}
-                .unsubscribe-btn:hover {{ background: #c82333; }}
-                .unsubscribe-text {{ font-size: 11px; color: #666; margin-top: 10px; }}
             </style>
         </head>
         <body>
@@ -181,7 +164,7 @@ class CustomerNotificationService:
             <div class="content">
                 <h2>Hi {booking_data.get('customer_name', 'Customer')},</h2>
                 
-                <p>Great news! Your booking has been <strong>confirmed</strong> by our team. We're all set to provide you with excellent service.</p>
+                <p>Great news! Your booking has been <strong>confirmed</strong> by our team.</p>
                 
                 <div class="booking-card">
                     <h3>📋 Your Booking Details</h3>
@@ -192,14 +175,6 @@ class CustomerNotificationService:
                     <div class="detail-row">
                         <span class="detail-label">Location:</span>
                         <span class="detail-value">{booking_data.get('location', 'N/A')}</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">Scheduled Time:</span>
-                        <span class="detail-value">{booking_data.get('scheduled_time', 'N/A')}</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">Frequency:</span>
-                        <span class="detail-value">{booking_data.get('frequency', 'one-time').title()}</span>
                     </div>
                     <div class="detail-row">
                         <span class="detail-label">Estimated Price:</span>
@@ -214,39 +189,16 @@ class CustomerNotificationService:
                 <div class="highlight-box">
                     <h4>📱 What Happens Next?</h4>
                     <ul>
-                        <li><strong>Our team will arrive</strong> at the scheduled time</li>
-                        <li><strong>We'll call you</strong> 30 minutes before arrival</li>
-                        <li><strong>All equipment included</strong> - no extra charges</li>
+                        <li><strong>Our team will contact you</strong> to schedule the exact time</li>
                         <li><strong>Quality guaranteed</strong> - 100% satisfaction promise</li>
+                        <li><strong>Professional service</strong> with experienced technicians</li>
                     </ul>
                 </div>
                 
-                <div class="highlight-box" style="border-left-color: #ff9800; background: #fff3e0;">
-                    <h4>⚠️ Need to Make Changes?</h4>
-                    <p>If you need to reschedule or cancel, please contact us at least 2 hours in advance:</p>
-                    <p><strong>📞 Phone:</strong> +92 300 123 4567<br>
-                    <strong>📧 Email:</strong> support@stormai.com</p>
-                </div>
-                
-                <p>Thank you for choosing our services! We look forward to serving you.</p>
+                <p>Thank you for choosing Storm AI Services!</p>
                 
                 <div style="text-align: center; margin: 30px 0;">
-                    <p><strong>Best regards,</strong><br>Your Storm AI Service Team</p>
-                </div>
-            </div>
-            
-            <!-- Unsubscribe Section -->
-            <div class="unsubscribe-section">
-                <h4>📧 Email Preferences</h4>
-                <p style="font-size: 12px; color: #666; margin: 10px 0;">
-                    Don't want to receive booking confirmations and updates?
-                </p>
-                <a href="{unsubscribe_url}" class="unsubscribe-btn">
-                    🚫 Unsubscribe from Email Notifications
-                </a>
-                <div class="unsubscribe-text">
-                    Note: You'll still receive important service-related communications.<br>
-                    You can manage your preferences or resubscribe anytime.
+                    <p><strong>Best regards,</strong><br>Storm AI Service Team</p>
                 </div>
             </div>
             
@@ -255,7 +207,7 @@ class CustomerNotificationService:
                 <p>Powered by Storm AI - Your AI-Enhanced Service Platform</p>
                 <p style="font-size: 10px; margin-top: 10px;">
                     Storm AI Services | Lahore, Pakistan<br>
-                    <a href="mailto:support@stormai.com" style="color: #ccc;">support@stormai.com</a>
+                    <a href="mailto:info@stormai.net" style="color: #ccc;">info@stormai.net</a>
                 </p>
             </div>
         </body>
@@ -263,7 +215,7 @@ class CustomerNotificationService:
         """
     
     def _create_confirmation_email_text(self, booking_data: Dict[str, Any], unsubscribe_url: str) -> str:
-        """Create plain text email content with unsubscribe link"""
+        """Create plain text email content"""
         return f"""
         🎉 BOOKING CONFIRMED!
         
@@ -275,52 +227,36 @@ class CustomerNotificationService:
         ----------------------------------------
         Service: {booking_data.get('service_type', 'N/A')}
         Location: {booking_data.get('location', 'N/A')}
-        Scheduled Time: {booking_data.get('scheduled_time', 'N/A')}
-        Frequency: {booking_data.get('frequency', 'one-time').title()}
         Estimated Price: PKR {booking_data.get('estimated_price', 0):,}
         Booking ID: {booking_data.get('booking_id', 'N/A')}
         
         📱 WHAT HAPPENS NEXT?
         ----------------------------------------
-        - Our team will arrive at the scheduled time
-        - We'll call you 30 minutes before arrival
-        - All equipment included - no extra charges
+        - Our team will contact you to schedule the exact time
         - Quality guaranteed - 100% satisfaction promise
+        - Professional service with experienced technicians
         
-        ⚠️ NEED TO MAKE CHANGES?
-        ----------------------------------------
-        Phone: +92 300 123 4567
-        Email: support@stormai.com
-        
-        Thank you for choosing our services!
+        Thank you for choosing Storm AI Services!
         
         Best regards,
-        Your Storm AI Service Team
+        Storm AI Service Team
         
         ----------------------------------------
-        📧 EMAIL PREFERENCES:
-        Don't want to receive these emails? Unsubscribe here:
-        {unsubscribe_url}
-        
-        Note: You'll still receive important service-related communications.
-        ----------------------------------------
-        
         Powered by Storm AI - Your AI-Enhanced Service Platform
+        Storm AI Services | Lahore, Pakistan
+        info@stormai.net
         """
     
     async def _send_email(self, to_email: str, subject: str, html_content: str, text_content: str) -> bool:
         """Send email using SMTP with proper async handling"""
         try:
+            logger.info(f"Attempting to send email from {self.email_user} to {to_email}")
+            
             # Create message
             msg = MIMEMultipart('alternative')
             msg['From'] = self.email_user
             msg['To'] = to_email
             msg['Subject'] = subject
-            
-            # Add unsubscribe headers (RFC compliance)
-            unsubscribe_url = self._create_unsubscribe_url(to_email, None, "booking")
-            msg['List-Unsubscribe'] = f"<{unsubscribe_url}>"
-            msg['List-Unsubscribe-Post'] = "List-Unsubscribe=One-Click"
             
             # Create text and HTML parts
             text_part = MIMEText(text_content, 'plain', 'utf-8')
@@ -332,10 +268,14 @@ class CustomerNotificationService:
             # Send email in thread pool to avoid blocking
             def send_sync():
                 try:
+                    logger.info(f"Connecting to SMTP server: {self.smtp_server}:{self.smtp_port}")
                     with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
                         server.starttls()
+                        logger.info(f"Logging in with user: {self.email_user}")
                         server.login(self.email_user, self.email_password)
+                        logger.info("Login successful, sending message...")
                         server.send_message(msg)
+                        logger.info("Message sent successfully!")
                     return True
                 except Exception as e:
                     logger.error(f"❌ SMTP Error: {e}")
@@ -349,8 +289,6 @@ class CustomerNotificationService:
         except Exception as e:
             logger.error(f"❌ Email sending failed: {e}")
             return False
-
-
 
 
 

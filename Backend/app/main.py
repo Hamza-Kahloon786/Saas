@@ -1,8 +1,12 @@
-
-
 """
 AI-Enhanced SaaS CRM - Main Application Entry Point
 """
+from dotenv import load_dotenv
+import os
+
+# Load environment variables FIRST
+load_dotenv()
+
 from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -21,18 +25,18 @@ from starlette.middleware.base import BaseHTTPMiddleware
 import time
 import logging
 from typing import Optional, List, Dict, Any
+from datetime import datetime, timezone
 from app.core.database import connect_to_mongo, close_mongo_connection 
 from fastapi.responses import JSONResponse
 from app.core.utils import custom_jsonable_encoder
 from bson import ObjectId
-import datetime
+
 # Import core components
 from app.core import (
     settings,
     initialize_core,
     connect_to_mongo,
     close_mongo_connection,
-    health_check,
     shutdown_core,
     get_logger,
 )
@@ -49,6 +53,22 @@ from app.dependencies.auth import get_current_user
 
 # Import schemas for error responses
 from app.schemas import ErrorResponse, MessageResponse
+
+# ✅ PROPER DATETIME HANDLING - No monkey patching needed!
+# Instead of monkey-patching (which causes immutable type errors),
+# we'll create a utility function and import it where needed
+
+def utc_now() -> datetime:
+    """
+    Returns current UTC datetime with timezone info.
+    Use this instead of datetime.utcnow() throughout the application.
+    
+    This replaces the deprecated datetime.utcnow() method.
+    """
+    return datetime.now(timezone.utc)
+
+# Make it available as a module-level function for easy importing
+__all__ = ['app', 'utc_now']
 
 # Get logger
 logger = get_logger(__name__)
@@ -101,22 +121,18 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.error(f"❌ Error during shutdown: {e}")
 
-
-
 def serialize_object_id(obj: Any) -> Any:
     """
     Recursively serialize MongoDB ObjectId to string in a nested structure.
     Works with dictionaries, lists, and individual ObjectId values.
     """
-    if isinstance(obj, dict):
+    if isinstance(obj, ObjectId):
+        return str(obj)
+    elif isinstance(obj, dict):
         return {k: serialize_object_id(v) for k, v in obj.items()}
     elif isinstance(obj, list):
         return [serialize_object_id(item) for item in obj]
-    elif isinstance(obj, ObjectId):
-        return str(obj)
-    elif isinstance(obj, datetime.datetime):
-        return obj.isoformat()
-    elif isinstance(obj, datetime.date):
+    elif isinstance(obj, datetime):
         return obj.isoformat()
     else:
         return obj
@@ -189,6 +205,7 @@ async def startup():
 @app.on_event("shutdown")
 async def shutdown():
     await close_mongo_connection()
+
 # ✅ EXCEPTION HANDLERS
 @app.exception_handler(ValueError)
 async def value_error_handler(request: Request, exc: ValueError):
@@ -220,23 +237,44 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     ).model_dump()
     return JSONResponse(status_code=422, content=jsonable_encoder(content))
 
+# Add after your imports
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import JSONResponse
+from bson import ObjectId
+
+def custom_jsonable_encoder(obj):
+    """Custom encoder that handles ObjectId serialization"""
+    if isinstance(obj, ObjectId):
+        return str(obj)
+    elif isinstance(obj, dict):
+        return {key: custom_jsonable_encoder(value) for key, value in obj.items()}
+    elif isinstance(obj, list):
+        return [custom_jsonable_encoder(item) for item in obj]
+    else:
+        return jsonable_encoder(obj)
+
+# ✅ UPDATE YOUR MAIN.PY EXCEPTION HANDLER
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc: Exception):
+    # Check for ObjectId serialization errors
+    if "ObjectId" in str(exc) or "bson.objectid.ObjectId" in str(exc):
+        logger.error(f"ObjectId serialization error on {request.method} {request.url.path}: {exc}")
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "Data serialization error - ObjectId not converted to string"}
+        )
+    
     logger.exception(
         f"Unhandled exception on {request.method} {request.url.path}: {str(exc)}",
         extra={"path": request.url.path, "method": request.method, "exception_type": type(exc).__name__}
     )
+    
     error_message = str(exc) if settings.DEBUG else "Internal server error"
-    content = ErrorResponse(
-        error="internal_error",
-        message=error_message,
-        details={"path": str(request.url.path), "method": request.method} if settings.DEBUG else None
-    ).model_dump()
-    return JSONResponse(status_code=500, content=jsonable_encoder(content))
+    return JSONResponse(status_code=500, content={"detail": error_message})
 
 # ✅ INCLUDE API ROUTER
 app.include_router(api_router, prefix=settings.API_V1_STR)
-app.include_router(api_router, prefix="/api/v1")
+
 # ✅ ESSENTIAL ENDPOINTS
 @app.get("/", response_model=MessageResponse, tags=["Root"])
 async def root():
@@ -257,47 +295,90 @@ async def root():
         },
     )
 
-
-# In backend/app/main.py, add this function
-
-@app.exception_handler(Exception)
-async def general_exception_handler(request: Request, exc: Exception):
-    logger.exception(
-        f"Unhandled exception on {request.method} {request.url.path}: {str(exc)}",
-        extra={"path": request.url.path, "method": request.method, "exception_type": type(exc).__name__}
-    )
-    error_message = str(exc) if settings.DEBUG else "Internal server error"
-    content = ErrorResponse(
-        error="internal_error",
-        message=error_message,
-        details={"path": str(request.url.path), "method": request.method} if settings.DEBUG else None
-    ).model_dump()
-    return JSONResponse(status_code=500, content=custom_jsonable_encoder(content))
-
+# ✅ HEALTH CHECK FUNCTIONS
+async def health_check():
+    """Perform health check"""
+    try:
+        from app.core.database import ping_database
+        
+        # Check database connection
+        db_healthy = await ping_database()
+        
+        health_status = {
+            "status": "healthy" if db_healthy else "unhealthy",
+            "timestamp": utc_now().isoformat(),  # Use our utility function
+            "version": settings.VERSION,
+            "environment": settings.ENVIRONMENT,
+            "database": "connected" if db_healthy else "disconnected",
+            "uptime": time.time()
+        }
+        
+        return health_status
+    except Exception as e:
+        logger.error(f"Health check failed: {e}")
+        return {
+            "status": "unhealthy",
+            "timestamp": utc_now().isoformat(),  # Use our utility function
+            "error": str(e)
+        }
 
 @app.get("/health", tags=["Health"])
 async def health_check_endpoint():
-    health_status = await health_check()
-    status_code = 200 if health_status.get("status") == "healthy" else 503
-    return ORJSONResponse(status_code=status_code, content=jsonable_encoder(health_status))
+    """Health check endpoint"""
+    try:
+        health_status = await health_check()
+        status_code = 200 if health_status.get("status") == "healthy" else 503
+        return ORJSONResponse(status_code=status_code, content=health_status)
+    except Exception as e:
+        logger.error(f"Health check endpoint error: {e}")
+        return ORJSONResponse(
+            status_code=503, 
+            content={
+                "status": "unhealthy",
+                "timestamp": utc_now().isoformat(),  # Use our utility function
+                "error": str(e)
+            }
+        )
 
 @app.get("/health/liveness", tags=["Health"])
 async def liveness_check():
-    return {"status": "alive", "timestamp": time.time()}
+    """Liveness check"""
+    return {
+        "status": "alive", 
+        "timestamp": utc_now().isoformat()  # Use our utility function
+    }
 
 @app.get("/health/readiness", tags=["Health"])
 async def readiness_check():
+    """Readiness check"""
     try:
         from app.core.database import ping_database
         db_healthy = await ping_database()
         if db_healthy:
-            return {"status": "ready", "timestamp": time.time()}
+            return {
+                "status": "ready", 
+                "timestamp": utc_now().isoformat()  # Use our utility function
+            }
         else:
-            return ORJSONResponse(status_code=503, content=jsonable_encoder({"status": "not_ready", "reason": "database_unavailable"}))
+            return ORJSONResponse(
+                status_code=503, 
+                content={
+                    "status": "not_ready", 
+                    "reason": "database_unavailable",
+                    "timestamp": utc_now().isoformat()  # Use our utility function
+                }
+            )
     except Exception as e:
-        return ORJSONResponse(status_code=503, content=jsonable_encoder({"status": "not_ready", "reason": str(e)}))
+        return ORJSONResponse(
+            status_code=503, 
+            content={
+                "status": "not_ready", 
+                "reason": str(e),
+                "timestamp": utc_now().isoformat()  # Use our utility function
+            }
+        )
 
-# ✅ DEBUG ENDPOINT (SINGLE VERSION)
+# ✅ DEBUG ENDPOINT
 @app.get("/debug/routes", tags=["Debug"])
 async def debug_routes():
     """Debug endpoint to see all routes"""
@@ -319,23 +400,14 @@ async def debug_routes():
         "contacts_routes": [r for r in routes_info if 'contacts' in r['path']]
     }
 
-# backend/app/main.py - ADD THIS SIMPLE TEST ENDPOINT
-# Add this to your main.py file temporarily for testing
-
-from fastapi import WebSocket, WebSocketDisconnect
-
-
-
-# Also add this regular endpoint to test if API is working
+# Test endpoint
 @app.get("/test-api")
 async def test_api():
     """Test if API is working"""
-    return {"message": "API is working!", "timestamp": "2025-01-01"}
-
-@app.get("/health")
-async def health_check():
-    return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
-
+    return {
+        "message": "API is working!", 
+        "timestamp": utc_now().isoformat()  # Use our utility function
+    }
 
 if __name__ == "__main__":
     uvicorn.run(
@@ -348,4 +420,3 @@ if __name__ == "__main__":
         workers=1 if settings.DEBUG else 4,
         loop="uvloop" if not settings.DEBUG else "asyncio",
     )
-

@@ -8,7 +8,9 @@ import {
   UsersIcon,
   PhoneIcon,
   EnvelopeIcon,
-  CalendarIcon
+  CalendarIcon,
+  ExclamationTriangleIcon,
+  ArrowPathIcon
 } from '@heroicons/react/24/outline'
 import toast from 'react-hot-toast'
 
@@ -36,6 +38,16 @@ interface Lead {
   priority: number
 }
 
+interface PipelineData {
+  stages: PipelineStage[]
+  summary: {
+    total_value: number
+    total_leads: number
+    average_deal_size: number
+    period: string
+  }
+}
+
 const defaultStages = [
   { id: 'new', name: 'New Leads', color: 'bg-blue-500' },
   { id: 'contacted', name: 'Contacted', color: 'bg-yellow-500' },
@@ -45,17 +57,83 @@ const defaultStages = [
   { id: 'lost', name: 'Lost', color: 'bg-red-500' }
 ]
 
+const getEmptyPipelineData = (period: string): PipelineData => ({
+  stages: defaultStages.map(stage => ({
+    ...stage,
+    leads: [],
+    total_value: 0,
+    count: 0
+  })),
+  summary: {
+    total_value: 0,
+    total_leads: 0,
+    average_deal_size: 0,
+    period
+  }
+})
+
 export default function Pipeline() {
   const [selectedPeriod, setSelectedPeriod] = useState('this_month')
   
   const queryClient = useQueryClient()
 
-  const { data: pipelineData, isLoading } = useQuery({
+  const { data: pipelineData, isLoading, error, isError, refetch } = useQuery({
     queryKey: ['pipeline', selectedPeriod],
-    queryFn: async () => {
-      const response = await api.get(`/leads/pipeline?period=${selectedPeriod}`)
-      return response.data
+    queryFn: async (): Promise<PipelineData> => {
+      try {
+        console.log(`Fetching pipeline data for period: ${selectedPeriod}`)
+        const response = await api.get(`/pipeline?period=${selectedPeriod}`)
+        console.log('Pipeline API response:', response.data)
+        return response.data
+      } catch (error: any) {
+        console.error('Pipeline API Error:', error)
+        
+        // Handle different error types
+        if (error.response?.status === 400) {
+          console.warn('Got 400 error, returning empty pipeline structure')
+          toast.error('Unable to load pipeline data. Showing empty view.')
+          return getEmptyPipelineData(selectedPeriod)
+        }
+        
+        if (error.response?.status === 401) {
+          console.warn('Authentication error')
+          toast.error('Authentication failed. Please log in again.')
+          // Could redirect to login here
+        }
+        
+        if (error.response?.status === 403) {
+          console.warn('Permission denied')
+          toast.error('You do not have permission to view pipeline data.')
+          return getEmptyPipelineData(selectedPeriod)
+        }
+        
+        if (error.response?.status >= 500) {
+          console.warn('Server error')
+          toast.error('Server error. Please try again later.')
+        }
+        
+        // For network errors or other issues, still return empty data
+        if (!error.response) {
+          console.warn('Network error or no response')
+          toast.error('Network error. Please check your connection.')
+          return getEmptyPipelineData(selectedPeriod)
+        }
+        
+        // Re-throw for other errors to trigger React Query error handling
+        throw error
+      }
     },
+    retry: (failureCount, error: any) => {
+      // Don't retry on client errors (400-499)
+      if (error?.response?.status >= 400 && error?.response?.status < 500) {
+        return false
+      }
+      // Retry on server errors and network issues
+      return failureCount < 2
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    staleTime: 30000, // Consider data stale after 30 seconds
+    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
   })
 
   const updateLeadStatusMutation = useMutation({
@@ -68,6 +146,7 @@ export default function Pipeline() {
       toast.success('Lead moved successfully!')
     },
     onError: (error: any) => {
+      console.error('Error updating lead status:', error)
       toast.error(error.response?.data?.detail || 'Failed to update lead')
     },
   })
@@ -78,10 +157,14 @@ export default function Pipeline() {
     const { draggableId, destination } = result
     const newStatus = destination.droppableId
 
-    updateLeadStatusMutation.mutate({
-      leadId: draggableId,
-      status: newStatus
-    })
+    // Optimistic update
+    const sourceStage = result.source.droppableId
+    if (sourceStage !== newStatus) {
+      updateLeadStatusMutation.mutate({
+        leadId: draggableId,
+        status: newStatus
+      })
+    }
   }
 
   const formatCurrency = (amount: number) => {
@@ -100,6 +183,10 @@ export default function Pipeline() {
     return 'text-red-600'
   }
 
+  const handleRetry = () => {
+    refetch()
+  }
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -115,8 +202,10 @@ export default function Pipeline() {
     )
   }
 
-  const totalValue = pipelineData?.stages?.reduce((sum: number, stage: PipelineStage) => sum + stage.total_value, 0) || 0
-  const totalLeads = pipelineData?.stages?.reduce((sum: number, stage: PipelineStage) => sum + stage.count, 0) || 0
+  // Use fallback data if we have an error but no data
+  const displayData = pipelineData || getEmptyPipelineData(selectedPeriod)
+  const totalValue = displayData.summary?.total_value || 0
+  const totalLeads = displayData.summary?.total_leads || 0
 
   return (
     <div className="space-y-6">
@@ -129,17 +218,57 @@ export default function Pipeline() {
           </p>
         </div>
         
-        <select
-          value={selectedPeriod}
-          onChange={(e) => setSelectedPeriod(e.target.value)}
-          className="block w-40 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
-        >
-          <option value="this_week">This Week</option>
-          <option value="this_month">This Month</option>
-          <option value="this_quarter">This Quarter</option>
-          <option value="this_year">This Year</option>
-        </select>
+        <div className="flex items-center space-x-4">
+          <select
+            value={selectedPeriod}
+            onChange={(e) => setSelectedPeriod(e.target.value)}
+            className="block w-40 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
+          >
+            <option value="this_week">This Week</option>
+            <option value="this_month">This Month</option>
+            <option value="this_quarter">This Quarter</option>
+            <option value="this_year">This Year</option>
+          </select>
+          
+          {isError && (
+            <button
+              onClick={handleRetry}
+              className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+            >
+              <ArrowPathIcon className="h-4 w-4 mr-1" />
+              Retry
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* Error Banner */}
+      {isError && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <ExclamationTriangleIcon className="h-5 w-5 text-yellow-400" />
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-yellow-800">
+                Pipeline Data Issue
+              </h3>
+              <div className="mt-2 text-sm text-yellow-700">
+                <p>
+                  Unable to load current pipeline data. Showing empty pipeline. 
+                  This might be due to authentication issues or server problems.
+                </p>
+                <button 
+                  onClick={handleRetry}
+                  className="mt-2 text-yellow-800 underline hover:text-yellow-900"
+                >
+                  Try again
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Pipeline Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -203,7 +332,10 @@ export default function Pipeline() {
         <div className="overflow-x-auto">
           <div className="flex space-x-6 min-w-max">
             {defaultStages.map((stage) => {
-              const stageData = pipelineData?.stages?.find((s: PipelineStage) => s.id === stage.id) || {
+              const stageData = displayData.stages?.find((s: PipelineStage) => s.id === stage.id) || {
+                id: stage.id,
+                name: stage.name,
+                color: stage.color,
                 leads: [],
                 total_value: 0,
                 count: 0
@@ -294,9 +426,9 @@ export default function Pipeline() {
                           ))}
                           {provided.placeholder}
                           
-                          {stageData.leads?.length === 0 && (
+                          {(!stageData.leads || stageData.leads.length === 0) && (
                             <div className="text-center py-8 text-gray-400 text-sm">
-                              No leads in this stage
+                              {isError ? 'No data available' : 'No leads in this stage'}
                             </div>
                           )}
                         </div>

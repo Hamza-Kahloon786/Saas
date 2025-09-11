@@ -26,13 +26,13 @@ export default function AuthLayout() {
       </main>
 
       {/* Optional: Add a simple footer */}
-      <footer className="absolute bottom-0 left-0 right-0 py-4">
+      {/* <footer className="absolute bottom-0 left-0 right-0 py-4">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center text-sm text-gray-500">
             © 2024 STORM AI. All rights reserved.
           </div>
         </div>
-      </footer>
+      </footer> */}
     </div>
   )
 }

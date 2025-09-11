@@ -26,7 +26,7 @@ interface Estimate {
   customer_name: string
   customer_email: string
   customer_phone: string
-  contact_id: string
+  customer_id: string
   service_type: string
   description: string
   status: 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired'
@@ -77,32 +77,30 @@ export default function EstimateList() {
 
   const queryClient = useQueryClient()
 
- const { data: estimatesResponse, isLoading } = useQuery({
-  queryKey: ['estimates', searchTerm, statusFilter, dateFilter],
-  queryFn: async () => {
-    const params = new URLSearchParams()
-    if (searchTerm) params.append('search', searchTerm)
-    if (statusFilter !== 'all') params.append('status', statusFilter)
-    if (dateFilter !== 'all') params.append('date_filter', dateFilter)
-    
-    const response = await api.get(`/estimates/?${params.toString()}`)
-    return response.data
-  },
-})
-const estimates = estimatesResponse?.estimates || []
+  const { data: estimatesResponse, isLoading } = useQuery({
+    queryKey: ['estimates', searchTerm, statusFilter, dateFilter],
+    queryFn: async () => {
+      const params = new URLSearchParams()
+      if (searchTerm) params.append('search', searchTerm)
+      if (statusFilter !== 'all') params.append('status', statusFilter)
+      if (dateFilter !== 'all') params.append('date_filter', dateFilter)
+      
+      const response = await api.get(`/estimates/?${params.toString()}`)
+      return response.data
+    },
+  })
+  const estimates = estimatesResponse?.estimates || []
 
-
- const sendEstimateMutation = useMutation({
-  mutationFn: async (estimateId: string) => api.post(`/estimates/${estimateId}/send`),
-  onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ['estimates'] })
-    toast.success('Estimate sent successfully!')
-  },
-  onError: (err: any) => {
-    toast.error(err.response?.data?.detail || 'Failed to send estimate')
-  },
-})
-
+  const sendEstimateMutation = useMutation({
+    mutationFn: async (estimateId: string) => api.post(`/estimates/${estimateId}/send`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['estimates'] })
+      toast.success('Estimate sent successfully!')
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.detail || 'Failed to send estimate')
+    },
+  })
 
   const duplicateEstimateMutation = useMutation({
     mutationFn: async (estimateId: string) => {
@@ -165,19 +163,19 @@ const estimates = estimatesResponse?.estimates || []
     })
   }
 
- const getEstimateStats = () => {
-  if (!estimates || !Array.isArray(estimates)) {
-    return { total: 0, draft: 0, sent: 0, accepted: 0, totalValue: 0 }
+  const getEstimateStats = () => {
+    if (!estimates || !Array.isArray(estimates)) {
+      return { total: 0, draft: 0, sent: 0, accepted: 0, totalValue: 0 }
+    }
+    
+    return {
+      total: estimates.length,
+      draft: estimates.filter((est: Estimate) => est.status === 'draft').length,
+      sent: estimates.filter((est: Estimate) => est.status === 'sent').length,
+      accepted: estimates.filter((est: Estimate) => est.status === 'accepted').length,
+      totalValue: estimates.reduce((sum: number, est: Estimate) => sum + est.total_amount, 0)
+    }
   }
-  
-  return {
-    total: estimates.length,
-    draft: estimates.filter((est: Estimate) => est.status === 'draft').length,
-    sent: estimates.filter((est: Estimate) => est.status === 'sent').length,
-    accepted: estimates.filter((est: Estimate) => est.status === 'accepted').length,
-    totalValue: estimates.reduce((sum: number, est: Estimate) => sum + est.total_amount, 0)
-  }
-}
 
   const stats = getEstimateStats()
 
@@ -188,12 +186,12 @@ const estimates = estimatesResponse?.estimates || []
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Estimates</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Create, manage, and track your service estimates and proposals
+            Create, manage, and track your service estimates that are automatically sent to customers
           </p>
         </div>
         <Link
           to="/estimates/new"
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-black bg-primary-600 hover:bg-primary-700"
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
         >
           <PlusIcon className="h-4 w-4 mr-2" />
           Create Estimate
@@ -267,6 +265,21 @@ const estimates = estimatesResponse?.estimates || []
         </div>
       </div>
 
+      {/* Auto-send notification */}
+      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+        <div className="flex">
+          <div className="flex-shrink-0">
+            <CheckCircleIcon className="h-5 w-5 text-green-400" />
+          </div>
+          <div className="ml-3">
+            <p className="text-sm text-green-800">
+              <strong>Automatic Email Delivery:</strong> All estimates are automatically sent to customers when created. 
+              Status shows 'sent' when successfully delivered.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Filters */}
       <div className="bg-white shadow rounded-lg p-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -279,14 +292,14 @@ const estimates = estimatesResponse?.estimates || []
               placeholder="Search estimates..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
+              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
 
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+            className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
           >
             <option value="all">All Statuses</option>
             <option value="draft">Draft</option>
@@ -300,7 +313,7 @@ const estimates = estimatesResponse?.estimates || []
           <select
             value={dateFilter}
             onChange={(e) => setDateFilter(e.target.value)}
-            className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+            className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
           >
             <option value="all">All Dates</option>
             <option value="today">Today</option>
@@ -376,7 +389,7 @@ const estimates = estimatesResponse?.estimates || []
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">{estimate.customer_name}</div>
                       <div className="text-sm text-gray-500">{estimate.customer_email}</div>
-                  </td>
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{estimate.service_type}</div>
                       <div className="text-sm text-gray-500 truncate max-w-xs">{estimate.description}</div>
@@ -401,7 +414,7 @@ const estimates = estimatesResponse?.estimates || []
                       <div className="flex items-center space-x-2">
                         <button
                           onClick={() => setSelectedEstimate(estimate)}
-                          className="text-primary-600 hover:text-primary-900"
+                          className="text-blue-600 hover:text-blue-900"
                           title="View Details"
                         >
                           <EyeIcon className="h-4 w-4" />
@@ -418,7 +431,7 @@ const estimates = estimatesResponse?.estimates || []
                         {estimate.status === 'draft' && (
                           <button
                             onClick={() => handleSendEstimate(estimate.id)}
-                            className="text-black hover:text-blue-900"
+                            className="text-blue-600 hover:text-blue-900"
                             title="Send Estimate"
                           >
                             <EnvelopeIcon className="h-4 w-4" />
@@ -571,7 +584,7 @@ const estimates = estimatesResponse?.estimates || []
               <button
                 onClick={() => handleSendEstimate(selectedEstimate.id)}
                 disabled={selectedEstimate.status !== 'draft'}
-                className="inline-flex bg-black justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-50"
+                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
               >
                 Send Estimate
               </button>

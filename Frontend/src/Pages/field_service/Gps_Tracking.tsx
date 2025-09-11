@@ -1,5 +1,5 @@
-// frontend/src/pages/field-service/GPS-Tracking.tsx
-import { useState, useEffect } from 'react'
+// frontend/src/pages/field-service/GPS-Tracking.tsx - WITH OPENSTREETMAP
+import { useState, useEffect, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   MapPinIcon,
@@ -17,6 +17,13 @@ import {
 } from '@heroicons/react/24/outline'
 
 import { api } from '../../services/api'
+
+// Leaflet types
+declare global {
+  interface Window {
+    L: any
+  }
+}
 
 interface TechnicianLocation {
   id: string
@@ -71,11 +78,300 @@ interface TechnicianLocation {
     license_plate: string
     fuel_level?: number
   }
-  emergency_contact?: {
-    name: string
-    phone: string
-    relationship: string
+}
+
+// OpenStreetMap Component using Leaflet
+const OpenStreetMap = ({ technicians, selectedTechnician, onTechnicianClick }: {
+  technicians: TechnicianLocation[]
+  selectedTechnician: string | null
+  onTechnicianClick: (id: string) => void
+}) => {
+  const mapRef = useRef<HTMLDivElement>(null)
+  const mapInstanceRef = useRef<any>(null)
+  const markersRef = useRef<Map<string, any>>(new Map())
+
+  const statusColors = {
+    online: '#10B981',    // green
+    offline: '#EF4444',   // red
+    idle: '#F59E0B',      // yellow
+    driving: '#3B82F6',   // blue
+    on_job: '#8B5CF6'     // purple
   }
+
+  useEffect(() => {
+    // Add a flag to prevent double initialization in React strict mode
+    let isInitialized = false
+    
+    // Load Leaflet CSS and JS
+    const loadLeaflet = () => {
+      if (isInitialized) {
+        console.log('Leaflet loading already in progress, skipping...')
+        return
+      }
+      
+      isInitialized = true
+      
+      if (window.L) {
+        initializeMap()
+        return
+      }
+
+      // Check if Leaflet CSS is already loaded
+      if (!document.querySelector('link[href*="leaflet.css"]')) {
+        const cssLink = document.createElement('link')
+        cssLink.rel = 'stylesheet'
+        cssLink.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
+        document.head.appendChild(cssLink)
+      }
+
+      // Check if Leaflet JS is already loaded
+      if (!document.querySelector('script[src*="leaflet.js"]')) {
+        const script = document.createElement('script')
+        script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+        script.onload = initializeMap
+        document.head.appendChild(script)
+      } else {
+        initializeMap()
+      }
+    }
+
+    const initializeMap = () => {
+      if (!mapRef.current || !window.L) return
+
+      // Initialize map centered on Lahore, Pakistan
+      const map = window.L.map(mapRef.current).setView([31.5497, 74.3436], 12)
+
+      // Add OpenStreetMap tiles
+      window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19
+      }).addTo(map)
+
+      mapInstanceRef.current = map
+      updateMarkers()
+    }
+
+    loadLeaflet()
+  }, [])
+
+  useEffect(() => {
+    if (mapInstanceRef.current && technicians.length > 0) {
+      updateMarkers()
+      fitMapToMarkers()
+    }
+  }, [technicians, selectedTechnician])
+
+  const updateMarkers = () => {
+    if (!mapInstanceRef.current || !window.L) return
+
+    try {
+      // Clear existing markers
+      markersRef.current.forEach(marker => {
+        try {
+          if (marker && mapInstanceRef.current) {
+            mapInstanceRef.current.removeLayer(marker)
+          }
+        } catch (error) {
+          console.warn('Error removing marker:', error)
+        }
+      })
+      markersRef.current.clear()
+
+      technicians.forEach(technician => {
+        if (!technician.current_location || 
+            !technician.current_location.lat || 
+            !technician.current_location.lng) return
+
+        try {
+          const position = [technician.current_location.lat, technician.current_location.lng]
+          const isSelected = selectedTechnician === technician.id
+
+          // Create custom icon
+          const iconHtml = `
+            <div style="
+              width: ${isSelected ? '24px' : '16px'};
+              height: ${isSelected ? '24px' : '16px'};
+              background-color: ${statusColors[technician.status]};
+              border: ${isSelected ? '3px' : '2px'} solid ${isSelected ? '#1F2937' : '#FFFFFF'};
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+              ${isSelected ? 'animation: pulse 2s infinite;' : ''}
+            ">
+              <div style="
+                width: 8px;
+                height: 8px;
+                background-color: white;
+                border-radius: 50%;
+              "></div>
+            </div>
+          `
+
+          const customIcon = window.L.divIcon({
+            html: iconHtml,
+            className: 'custom-marker',
+            iconSize: [isSelected ? 24 : 16, isSelected ? 24 : 16],
+            iconAnchor: [isSelected ? 12 : 8, isSelected ? 12 : 8]
+          })
+
+          // Create marker
+          const marker = window.L.marker(position, { icon: customIcon }).addTo(mapInstanceRef.current)
+
+          // Create popup content
+          const popupContent = createPopupContent(technician)
+          marker.bindPopup(popupContent, {
+            maxWidth: 300,
+            className: 'technician-popup'
+          })
+
+          // Add click listener
+          marker.on('click', () => {
+            onTechnicianClick(technician.id)
+            marker.openPopup()
+          })
+
+          markersRef.current.set(technician.id, marker)
+
+          // Auto-open popup for selected technician
+          if (isSelected) {
+            marker.openPopup()
+          }
+        } catch (error) {
+          console.warn('Error creating marker for technician:', technician.name, error)
+        }
+      })
+    } catch (error) {
+      console.error('Error updating markers:', error)
+    }
+  }
+
+  const createPopupContent = (technician: TechnicianLocation) => {
+    const lastUpdate = new Date(technician.current_location.last_updated).toLocaleTimeString()
+    
+    return `
+      <div style="font-family: system-ui, -apple-system, sans-serif;">
+        <div style="display: flex; align-items: center; margin-bottom: 8px;">
+          <div style="
+            width: 12px; 
+            height: 12px; 
+            background-color: ${statusColors[technician.status]}; 
+            border-radius: 50%; 
+            margin-right: 8px;
+          "></div>
+          <strong style="font-size: 16px; color: #1F2937;">${technician.name}</strong>
+        </div>
+        
+        <div style="font-size: 12px; color: #6B7280; margin-bottom: 4px;">
+          <strong>ID:</strong> ${technician.employee_id} | 
+          <strong>Status:</strong> ${technician.status.replace('_', ' ')}
+        </div>
+        
+        <div style="font-size: 12px; color: #6B7280; margin-bottom: 4px;">
+          <strong>📍 Location:</strong> ${technician.current_location.address}
+        </div>
+        
+        <div style="font-size: 12px; color: #6B7280; margin-bottom: 4px;">
+          <strong>🚗 Speed:</strong> ${technician.current_location.speed} mph |
+          <strong>📞 Phone:</strong> ${technician.phone || 'N/A'}
+        </div>
+        
+        <div style="font-size: 12px; color: #6B7280; margin-bottom: 8px;">
+          <strong>⏰ Updated:</strong> ${lastUpdate}
+        </div>
+        
+        ${technician.current_job ? `
+          <div style="
+            background: #EBF8FF; 
+            padding: 8px; 
+            border-radius: 4px; 
+            font-size: 12px;
+            margin-bottom: 8px;
+          ">
+            <strong style="color: #1E40AF;">Current Job:</strong><br>
+            <span style="color: #1E40AF;">${technician.current_job.customer_name}</span><br>
+            <span style="color: #3B82F6;">${technician.current_job.service_type}</span>
+          </div>
+        ` : ''}
+        
+        <div style="
+          margin-top: 8px; 
+          font-size: 11px; 
+          color: #9CA3AF;
+          display: flex;
+          justify-content: space-between;
+        ">
+          <span><strong>Jobs:</strong> ${technician.performance?.jobs_completed || 0}</span>
+          <span><strong>Miles:</strong> ${(technician.performance?.miles_driven || 0).toFixed(1)}</span>
+          <span><strong>On-time:</strong> ${technician.performance?.on_time_percentage || 0}%</span>
+        </div>
+      </div>
+    `
+  }
+
+  const fitMapToMarkers = () => {
+    if (!mapInstanceRef.current || !window.L || technicians.length === 0) return
+
+    const group = new window.L.featureGroup(Array.from(markersRef.current.values()))
+    mapInstanceRef.current.fitBounds(group.getBounds().pad(0.1))
+  }
+
+  const centerOnTechnician = (technicianId: string) => {
+    const technician = technicians.find(t => t.id === technicianId)
+    if (technician && technician.current_location && mapInstanceRef.current) {
+      mapInstanceRef.current.setView(
+        [technician.current_location.lat, technician.current_location.lng], 
+        16
+      )
+    }
+  }
+
+  useEffect(() => {
+    if (selectedTechnician) {
+      centerOnTechnician(selectedTechnician)
+    }
+  }, [selectedTechnician])
+
+  return (
+    <>
+      <style>
+        {`
+          .custom-marker {
+            background: transparent !important;
+            border: none !important;
+          }
+          .technician-popup .leaflet-popup-content {
+            margin: 8px 12px;
+            line-height: 1.4;
+          }
+          .technician-popup .leaflet-popup-tip {
+            background: white;
+          }
+          @keyframes pulse {
+            0% {
+              transform: scale(1);
+            }
+            50% {
+              transform: scale(1.1);
+            }
+            100% {
+              transform: scale(1);
+            }
+          }
+        `}
+      </style>
+      <div 
+        ref={mapRef} 
+        style={{ 
+          width: '100%', 
+          height: '400px', 
+          borderRadius: '8px',
+          border: '1px solid #E5E7EB'
+        }} 
+      />
+    </>
+  )
 }
 
 const statusColors = {
@@ -94,29 +390,24 @@ const statusIcons = {
   on_job: PlayIcon
 }
 
-const priorityColors = {
-  low: 'bg-gray-100 text-gray-800',
-  medium: 'bg-blue-100 text-blue-800',
-  high: 'bg-orange-100 text-orange-800',
-  urgent: 'bg-red-100 text-red-800'
-}
-
 export default function GPSTracking() {
   const [selectedTechnician, setSelectedTechnician] = useState<string | null>(null)
-  const [mapCenter, setMapCenter] = useState({ lat: 40.7128, lng: -74.0060 }) // Default to NYC
   const [autoRefresh, setAutoRefresh] = useState(true)
-  const [refreshInterval, setRefreshInterval] = useState(30) // seconds
-  const [mapZoom, setMapZoom] = useState(10)
+  const [refreshInterval, setRefreshInterval] = useState(30)
   const [showOfflineTechnicians, setShowOfflineTechnicians] = useState(false)
 
-  const { data: technicianLocations, isLoading, refetch, dataUpdatedAt } = useQuery({
+  const { data: technicianLocations, isLoading, refetch, dataUpdatedAt, error } = useQuery({
     queryKey: ['technician-locations'],
     queryFn: async () => {
-      const response = await api.get('/users/locations/')
+      console.log('🔍 Fetching technician locations...')
+      const response = await api.get('/users/locations')
+      console.log('📍 Technician locations response:', response.data)
       return response.data as TechnicianLocation[]
     },
     refetchInterval: autoRefresh ? refreshInterval * 1000 : false,
     refetchIntervalInBackground: true,
+    retry: 3,
+    retryDelay: 1000,
   })
 
   // Auto-refresh countdown
@@ -137,7 +428,6 @@ export default function GPSTracking() {
     return () => clearInterval(timer)
   }, [autoRefresh, refreshInterval])
 
-  // Reset countdown when data updates
   useEffect(() => {
     setCountdown(refreshInterval)
   }, [dataUpdatedAt, refreshInterval])
@@ -165,26 +455,16 @@ export default function GPSTracking() {
     return { text: 'Low', color: 'text-red-600', bg: 'bg-red-100' }
   }
 
-  const calculateETA = (scheduledTime: string, currentTime: string = new Date().toISOString()) => {
-    const scheduled = new Date(scheduledTime)
-    const current = new Date(currentTime)
-    const diffMinutes = Math.floor((scheduled.getTime() - current.getTime()) / (1000 * 60))
-    
-    if (diffMinutes < 0) return { text: 'Overdue', color: 'text-red-600' }
-    if (diffMinutes < 60) return { text: `${diffMinutes}m`, color: 'text-green-600' }
-    const hours = Math.floor(diffMinutes / 60)
-    const minutes = diffMinutes % 60
-    return { text: `${hours}h ${minutes}m`, color: 'text-blue-600' }
-  }
-
   const getOverallStats = () => {
-    if (!technicianLocations) return { 
-      online: 0, 
-      driving: 0, 
-      onJob: 0, 
-      totalMiles: 0, 
-      avgSpeed: 0,
-      completedJobs: 0
+    if (!technicianLocations || technicianLocations.length === 0) {
+      return { 
+        online: 0, 
+        driving: 0, 
+        onJob: 0, 
+        totalMiles: 0, 
+        avgSpeed: 0,
+        completedJobs: 0
+      }
     }
     
     const onlineTechnicians = technicianLocations.filter(tech => tech.status !== 'offline')
@@ -193,23 +473,40 @@ export default function GPSTracking() {
       online: onlineTechnicians.length,
       driving: technicianLocations.filter(tech => tech.status === 'driving').length,
       onJob: technicianLocations.filter(tech => tech.status === 'on_job').length,
-      totalMiles: technicianLocations.reduce((sum, tech) => sum + tech.performance.miles_driven, 0),
+      totalMiles: technicianLocations.reduce((sum, tech) => sum + (tech.performance?.miles_driven || 0), 0),
       avgSpeed: onlineTechnicians.length > 0 
-        ? onlineTechnicians.reduce((sum, tech) => sum + tech.performance.avg_speed, 0) / onlineTechnicians.length
+        ? onlineTechnicians.reduce((sum, tech) => sum + (tech.performance?.avg_speed || 0), 0) / onlineTechnicians.length
         : 0,
-      completedJobs: technicianLocations.reduce((sum, tech) => sum + tech.performance.jobs_completed, 0)
+      completedJobs: technicianLocations.reduce((sum, tech) => sum + (tech.performance?.jobs_completed || 0), 0)
     }
   }
 
   const stats = getOverallStats()
-
   const filteredTechnicians = technicianLocations?.filter(tech => 
     showOfflineTechnicians || tech.status !== 'offline'
   ) || []
 
-  const selectedTechnicianData = selectedTechnician 
-    ? technicianLocations?.find(tech => tech.id === selectedTechnician)
-    : null
+  if (isLoading && !technicianLocations) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">GPS Tracking</h1>
+            <p className="mt-1 text-sm text-gray-500">Loading technician locations...</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="bg-white overflow-hidden shadow rounded-lg animate-pulse">
+              <div className="p-5">
+                <div className="h-16 bg-gray-200 rounded"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -218,7 +515,7 @@ export default function GPSTracking() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">GPS Tracking</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Real-time location tracking and route monitoring for field technicians
+            Real-time location tracking for {technicianLocations?.length || 0} field technicians
           </p>
         </div>
         
@@ -366,7 +663,9 @@ export default function GPSTracking() {
           <div className="bg-white shadow rounded-lg">
             <div className="px-4 py-5 sm:p-6">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium text-gray-900">Technicians</h3>
+                <h3 className="text-lg font-medium text-gray-900">
+                  Technicians ({filteredTechnicians.length})
+                </h3>
                 <div className="flex items-center">
                   <input
                     type="checkbox"
@@ -383,14 +682,24 @@ export default function GPSTracking() {
               
               {isLoading ? (
                 <div className="animate-pulse space-y-4">
-                  {[...Array(5)].map((_, i) => (
+                  {[...Array(3)].map((_, i) => (
                     <div key={i} className="h-20 bg-gray-200 rounded"></div>
                   ))}
+                </div>
+              ) : filteredTechnicians.length === 0 ? (
+                <div className="text-center py-8">
+                  <UserIcon className="h-12 w-12 text-gray-400 mx-auto mb-2" />
+                  <p className="text-sm text-gray-500">
+                    {technicianLocations?.length === 0 
+                      ? 'No technicians found' 
+                      : 'No technicians match current filters'
+                    }
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-3 max-h-96 overflow-y-auto">
                   {filteredTechnicians.map((technician) => {
-                    const accuracy = getLocationAccuracy(technician.current_location.accuracy)
+                    const accuracy = getLocationAccuracy(technician.current_location?.accuracy || 100)
                     
                     return (
                       <div
@@ -412,7 +721,9 @@ export default function GPSTracking() {
                               {getStatusIcon(technician.status)}
                             </div>
                             <div className="ml-3">
-                              <p className="text-sm font-medium text-gray-900">{technician.name}</p>
+                              <p className="text-sm font-medium text-gray-900">
+                                {technician.name || 'Unknown Technician'}
+                              </p>
                               <p className="text-xs text-gray-500">ID: {technician.employee_id}</p>
                             </div>
                           </div>
@@ -422,7 +733,7 @@ export default function GPSTracking() {
                             }`}>
                               {technician.status.replace('_', ' ')}
                             </span>
-                            {technician.status !== 'offline' && (
+                            {technician.status !== 'offline' && technician.current_location && (
                               <div className={`text-xs mt-1 px-1 py-0.5 rounded ${accuracy.bg} ${accuracy.color}`}>
                                 {accuracy.text}
                               </div>
@@ -433,62 +744,49 @@ export default function GPSTracking() {
                         <div className="mt-2 text-xs text-gray-500">
                           <div className="flex items-center">
                             <MapPinIcon className="h-3 w-3 mr-1" />
-                            <span className="truncate">{technician.current_location.address}</span>
+                            <span className="truncate">
+                              {technician.current_location?.address || 'Location unavailable'}
+                            </span>
                           </div>
                           <div className="flex items-center justify-between mt-1">
                             <div className="flex items-center">
                               <ClockIcon className="h-3 w-3 mr-1" />
-                              <span>Updated {formatLastUpdate(technician.current_location.last_updated)}</span>
+                              <span>
+                                Updated {technician.current_location?.last_updated 
+                                  ? formatLastUpdate(technician.current_location.last_updated)
+                                  : 'Never'
+                                }
+                              </span>
                             </div>
-                            {technician.current_location.speed > 0 && (
+                            {technician.current_location && technician.current_location.speed > 0 && (
                               <span className="text-blue-600">{technician.current_location.speed} mph</span>
                             )}
                           </div>
                         </div>
 
-                        {technician.current_job && (
-                          <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs">
-                            <div className="flex items-center justify-between">
-                              <div className="font-medium text-blue-900">Current Job</div>
-                              <span className={`px-1 py-0.5 rounded text-xs ${
-                                priorityColors[technician.current_job.priority]
-                              }`}>
-                                {technician.current_job.priority}
-                              </span>
+                        {/* Performance Summary */}
+                        {technician.performance && (
+                          <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
+                            <div className="text-center">
+                              <div className="font-medium text-gray-900">
+                                {technician.performance.jobs_completed || 0}
+                              </div>
+                              <div className="text-gray-500">Jobs</div>
                             </div>
-                            <div className="text-blue-700">{technician.current_job.customer_name}</div>
-                            <div className="text-blue-600">
-                              {technician.current_job.service_type}
+                            <div className="text-center">
+                              <div className="font-medium text-gray-900">
+                                {(technician.performance.miles_driven || 0).toFixed(1)}
+                              </div>
+                              <div className="text-gray-500">Miles</div>
                             </div>
-                            <div className="flex items-center justify-between mt-1">
-                              <span className="text-blue-600">
-                                ETA: {calculateETA(technician.current_job.estimated_arrival).text}
-                              </span>
-                              <span className="text-blue-500">
-                                {new Date(technician.current_job.scheduled_start).toLocaleTimeString([], { 
-                                  hour: '2-digit', 
-                                  minute: '2-digit' 
-                                })}
-                              </span>
+                            <div className="text-center">
+                              <div className="font-medium text-gray-900">
+                                {technician.performance.on_time_percentage || 0}%
+                              </div>
+                              <div className="text-gray-500">On-time</div>
                             </div>
                           </div>
                         )}
-
-                        {/* Performance Summary */}
-                        <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
-                          <div className="text-center">
-                            <div className="font-medium text-gray-900">{technician.performance.jobs_completed}</div>
-                            <div className="text-gray-500">Jobs</div>
-                          </div>
-                          <div className="text-center">
-                            <div className="font-medium text-gray-900">{technician.performance.miles_driven.toFixed(1)}</div>
-                            <div className="text-gray-500">Miles</div>
-                          </div>
-                          <div className="text-center">
-                            <div className="font-medium text-gray-900">{technician.performance.on_time_percentage}%</div>
-                            <div className="text-gray-500">On-time</div>
-                          </div>
-                        </div>
                       </div>
                     )
                   })}
@@ -498,52 +796,42 @@ export default function GPSTracking() {
           </div>
         </div>
 
-        {/* Map and Details */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Interactive Map Placeholder */}
+        {/* OpenStreetMap */}
+        <div className="lg:col-span-2">
           <div className="bg-white shadow rounded-lg">
             <div className="px-4 py-5 sm:p-6">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-medium text-gray-900">Live Map</h3>
                 <div className="flex items-center space-x-2">
-                  <select
-                    value={mapZoom}
-                    onChange={(e) => setMapZoom(Number(e.target.value))}
-                    className="text-sm border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
-                  >
-                    <option value={8}>City View</option>
-                    <option value={10}>Area View</option>
-                    <option value={12}>Neighborhood</option>
-                    <option value={15}>Street Level</option>
-                  </select>
                   <button
                     onClick={() => {
-                      // Center map on all technicians
-                      console.log('Center map on all technicians')
+                      // Trigger map to fit all markers
+                      setSelectedTechnician(null)
                     }}
-                    className="text-sm text-primary-600 hover:text-primary-800"
+                    className="text-sm text-primary-600 hover:text-primary-800 px-3 py-1 border border-primary-300 rounded"
                   >
                     Fit All
                   </button>
                 </div>
               </div>
               
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-lg h-80 flex items-center justify-center border-2 border-dashed border-gray-300">
-                <div className="text-center">
-                  <MapPinIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600 font-medium mb-2">Interactive Map Integration</p>
-                  <p className="text-sm text-gray-500 mb-4">
-                    Real-time technician locations with route visualization
-                  </p>
-                  <div className="space-y-2 text-xs text-gray-500">
-                    <p>• Google Maps / Mapbox integration</p>
-                    <p>• Real-time marker updates</p>
-                    <p>• Route optimization display</p>
-                    <p>• Geofencing alerts</p>
-                    <p>• Traffic condition overlay</p>
+              {technicianLocations && technicianLocations.length > 0 ? (
+                <OpenStreetMap
+                  technicians={technicianLocations}
+                  selectedTechnician={selectedTechnician}
+                  onTechnicianClick={setSelectedTechnician}
+                />
+              ) : (
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-lg h-96 flex items-center justify-center border-2 border-dashed border-gray-300">
+                  <div className="text-center">
+                    <MapPinIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600 font-medium mb-2">Loading Technician Locations...</p>
+                    <p className="text-sm text-gray-500 mb-4">
+                      Waiting for GPS data from field technicians
+                    </p>
                   </div>
                 </div>
-              </div>
+              )}
 
               {/* Map Legend */}
               <div className="mt-4 flex flex-wrap gap-4 text-xs">
@@ -571,264 +859,14 @@ export default function GPSTracking() {
             </div>
           </div>
 
-          {/* Selected Technician Details */}
-          {selectedTechnicianData && (
-            <div className="bg-white shadow rounded-lg">
-              <div className="px-4 py-5 sm:p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-medium text-gray-900">
-                    {selectedTechnicianData.name} - Details
-                  </h3>
-                  <div className="flex items-center space-x-2">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      statusColors[selectedTechnicianData.status]
-                    }`}>
-                      {selectedTechnicianData.status.replace('_', ' ')}
-                    </span>
-                    {selectedTechnicianData.vehicle_info && (
-                      <span className="text-xs text-gray-500">
-                        {selectedTechnicianData.vehicle_info.make} {selectedTechnicianData.vehicle_info.model}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-900 mb-3">Current Location</h4>
-                    <div className="space-y-2 text-sm">
-                      <div>
-                        <span className="text-gray-500">Address:</span>
-                        <span className="ml-2">{selectedTechnicianData.current_location.address}</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Coordinates:</span>
-                        <span className="ml-2 font-mono text-xs">
-                          {selectedTechnicianData.current_location.lat.toFixed(6)}, {selectedTechnicianData.current_location.lng.toFixed(6)}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Accuracy:</span>
-                        <span className={`ml-2 ${getLocationAccuracy(selectedTechnicianData.current_location.accuracy).color}`}>
-                          {getLocationAccuracy(selectedTechnicianData.current_location.accuracy).text} (±{selectedTechnicianData.current_location.accuracy}m)
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Speed:</span>
-                        <span className="ml-2">{selectedTechnicianData.current_location.speed} mph</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Heading:</span>
-                        <span className="ml-2">{selectedTechnicianData.current_location.heading}°</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Last Updated:</span>
-                        <span className="ml-2">{formatLastUpdate(selectedTechnicianData.current_location.last_updated)}</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-900 mb-3">Today's Performance</h4>
-                    <div className="space-y-2 text-sm">
-                      <div>
-                        <span className="text-gray-500">Jobs Completed:</span>
-                        <span className="ml-2">{selectedTechnicianData.performance.jobs_completed}</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Miles Driven:</span>
-                        <span className="ml-2">{selectedTechnicianData.performance.miles_driven.toFixed(1)} mi</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Hours Worked:</span>
-                        <span className="ml-2">{selectedTechnicianData.performance.hours_worked.toFixed(1)} hrs</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">On-Time Rate:</span>
-                        <span className="ml-2">{selectedTechnicianData.performance.on_time_percentage}%</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Average Speed:</span>
-                        <span className="ml-2">{selectedTechnicianData.performance.avg_speed.toFixed(1)} mph</span>
-                      </div>
-                      {selectedTechnicianData.performance.fuel_efficiency && (
-                        <div>
-                          <span className="text-gray-500">Fuel Efficiency:</span>
-                          <span className="ml-2">{selectedTechnicianData.performance.fuel_efficiency.toFixed(1)} mpg</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Contact Information */}
-                <div className="mt-6 pt-6 border-t border-gray-200">
-                  <h4 className="text-sm font-medium text-gray-900 mb-3">Contact Information</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="flex items-center text-sm">
-                      <PhoneIcon className="h-4 w-4 text-gray-400 mr-2" />
-                      <a href={`tel:${selectedTechnicianData.phone}`} className="text-primary-600 hover:text-primary-800">
-                        {selectedTechnicianData.phone}
-                      </a>
-                    </div>
-                    {selectedTechnicianData.emergency_contact && (
-                      <div className="text-sm">
-                        <span className="text-gray-500">Emergency Contact:</span>
-                        <div className="ml-2">
-                          <div>{selectedTechnicianData.emergency_contact.name} ({selectedTechnicianData.emergency_contact.relationship})</div>
-                          <a href={`tel:${selectedTechnicianData.emergency_contact.phone}`} className="text-primary-600 hover:text-primary-800">
-                            {selectedTechnicianData.emergency_contact.phone}
-                          </a>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Vehicle Information */}
-                {selectedTechnicianData.vehicle_info && (
-                  <div className="mt-6 pt-6 border-t border-gray-200">
-                    <h4 className="text-sm font-medium text-gray-900 mb-3">Vehicle Information</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                      <div>
-                        <span className="text-gray-500">Vehicle:</span>
-                        <div className="font-medium">
-                          {selectedTechnicianData.vehicle_info.year} {selectedTechnicianData.vehicle_info.make} {selectedTechnicianData.vehicle_info.model}
-                        </div>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">License Plate:</span>
-                        <div className="font-medium">{selectedTechnicianData.vehicle_info.license_plate}</div>
-                      </div>
-                      {selectedTechnicianData.vehicle_info.fuel_level && (
-                        <div>
-                          <span className="text-gray-500">Fuel Level:</span>
-                          <div className="flex items-center">
-                            <div className="w-16 bg-gray-200 rounded-full h-2 mr-2">
-                              <div
-                                className={`h-2 rounded-full ${
-                                  selectedTechnicianData.vehicle_info.fuel_level > 25 ? 'bg-green-500' :
-                                  selectedTechnicianData.vehicle_info.fuel_level > 10 ? 'bg-yellow-500' : 'bg-red-500'
-                                }`}
-                                style={{ width: `${selectedTechnicianData.vehicle_info.fuel_level}%` }}
-                              ></div>
-                            </div>
-                            <span className="text-sm">{selectedTechnicianData.vehicle_info.fuel_level}%</span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Today's Route */}
-                {selectedTechnicianData.todays_route.length > 0 && (
-                  <div className="mt-6 pt-6 border-t border-gray-200">
-                    <h4 className="text-sm font-medium text-gray-900 mb-3">Today's Route</h4>
-                    <div className="space-y-3 max-h-64 overflow-y-auto">
-                      {selectedTechnicianData.todays_route.map((stop, index) => {
-                        const eta = calculateETA(stop.scheduled_time)
-                        
-                        return (
-                          <div key={stop.id} className="flex items-start p-3 bg-gray-50 rounded-lg">
-                            <div className="flex-shrink-0 mr-3">
-                              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                                stop.status === 'completed' 
-                                  ? 'bg-green-500 text-white'
-                                  : stop.status === 'arrived'
-                                  ? 'bg-blue-500 text-white'
-                                  : stop.status === 'en_route'
-                                  ? 'bg-yellow-500 text-white'
-                                  : 'bg-gray-300 text-gray-700'
-                              }`}>
-                                {stop.status === 'completed' ? '✓' : index + 1}
-                              </div>
-                            </div>
-                            
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between">
-                                <div>
-                                  <p className="text-sm font-medium text-gray-900">{stop.customer_name}</p>
-                                  <p className="text-sm text-gray-500">{stop.address}</p>
-                                  <p className="text-xs text-gray-400">{stop.service_type}</p>
-                                </div>
-                                <div className="text-right text-xs">
-                                  <div className="font-medium">
-                                    {new Date(stop.scheduled_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                  </div>
-                                  <div className="text-gray-500">
-                                    {stop.estimated_duration} min
-                                  </div>
-                                  {stop.distance_from_previous && (
-                                    <div className="text-gray-400">
-                                      {stop.distance_from_previous.toFixed(1)} mi
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                              
-                              <div className="mt-2 flex items-center justify-between">
-                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                  stop.status === 'completed' 
-                                    ? 'bg-green-100 text-green-800'
-                                    : stop.status === 'arrived'
-                                    ? 'bg-blue-100 text-blue-800'
-                                    : stop.status === 'en_route'
-                                    ? 'bg-yellow-100 text-yellow-800'
-                                    : 'bg-gray-100 text-gray-800'
-                                }`}>
-                                  {stop.status.replace('_', ' ')}
-                                </span>
-                                
-                                {stop.status === 'pending' && (
-                                  <span className={`text-xs font-medium ${eta.color}`}>
-                                    ETA: {eta.text}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-
-                    {/* Route Summary */}
-                    <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                      <div className="grid grid-cols-3 gap-4 text-center text-sm">
-                        <div>
-                          <div className="font-medium text-blue-900">
-                            {selectedTechnicianData.todays_route.filter(stop => stop.status === 'completed').length}
-                          </div>
-                          <div className="text-blue-700">Completed</div>
-                        </div>
-                        <div>
-                          <div className="font-medium text-blue-900">
-                            {selectedTechnicianData.todays_route.filter(stop => stop.status === 'pending').length}
-                          </div>
-                          <div className="text-blue-700">Remaining</div>
-                        </div>
-                        <div>
-                          <div className="font-medium text-blue-900">
-                            {selectedTechnicianData.todays_route.reduce((sum, stop) => sum + (stop.distance_from_previous || 0), 0).toFixed(1)} mi
-                          </div>
-                          <div className="text-blue-700">Total Distance</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Alerts and Notifications */}
-          <div className="bg-white shadow rounded-lg">
+          {/* Real-time Alerts */}
+          <div className="bg-white shadow rounded-lg mt-6">
             <div className="px-4 py-5 sm:p-6">
               <h3 className="text-lg font-medium text-gray-900 mb-4">Real-time Alerts</h3>
               
               <div className="space-y-3">
                 {/* Speed Alerts */}
-                {technicianLocations?.filter(tech => tech.current_location.speed > 75).map(tech => (
+                {technicianLocations?.filter(tech => tech.current_location && tech.current_location.speed > 75).map(tech => (
                   <div key={`speed-${tech.id}`} className="flex items-center p-3 bg-red-50 border border-red-200 rounded-md">
                     <ExclamationTriangleIcon className="h-5 w-5 text-red-600 mr-3" />
                     <div className="flex-1">
@@ -838,13 +876,13 @@ export default function GPSTracking() {
                       </p>
                     </div>
                     <div className="text-xs text-red-600">
-                      {formatLastUpdate(tech.current_location.last_updated)}
+                      {tech.current_location.last_updated ? formatLastUpdate(tech.current_location.last_updated) : 'Now'}
                     </div>
                   </div>
                 ))}
 
                 {/* Low Accuracy Alerts */}
-                {technicianLocations?.filter(tech => tech.current_location.accuracy > 100 && tech.status !== 'offline').map(tech => (
+                {technicianLocations?.filter(tech => tech.current_location && tech.current_location.accuracy > 100 && tech.status !== 'offline').map(tech => (
                   <div key={`accuracy-${tech.id}`} className="flex items-center p-3 bg-yellow-50 border border-yellow-200 rounded-md">
                     <SignalIcon className="h-5 w-5 text-yellow-600 mr-3" />
                     <div className="flex-1">
@@ -856,27 +894,12 @@ export default function GPSTracking() {
                   </div>
                 ))}
 
-                {/* Overdue Jobs */}
-                {technicianLocations?.filter(tech => 
-                  tech.current_job && new Date(tech.current_job.estimated_arrival) < new Date()
-                ).map(tech => (
-                  <div key={`overdue-${tech.id}`} className="flex items-center p-3 bg-orange-50 border border-orange-200 rounded-md">
-                    <ClockIcon className="h-5 w-5 text-orange-600 mr-3" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-orange-800">Job Overdue</p>
-                      <p className="text-sm text-orange-700">
-                        {tech.name} is late for {tech.current_job?.customer_name}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-
                 {/* No Alerts */}
-                {(!technicianLocations?.some(tech => 
-                  tech.current_location.speed > 75 || 
-                  (tech.current_location.accuracy > 100 && tech.status !== 'offline') ||
-                  (tech.current_job && new Date(tech.current_job.estimated_arrival) < new Date())
-                )) && (
+                {(!technicianLocations || technicianLocations.length === 0 || 
+                  !technicianLocations.some(tech => 
+                    (tech.current_location && tech.current_location.speed > 75) || 
+                    (tech.current_location && tech.current_location.accuracy > 100 && tech.status !== 'offline')
+                  )) && (
                   <div className="text-center py-8">
                     <CheckCircleIcon className="h-12 w-12 text-green-500 mx-auto mb-2" />
                     <p className="text-sm text-gray-500">No active alerts</p>

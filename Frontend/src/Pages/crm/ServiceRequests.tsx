@@ -1,4 +1,4 @@
-// frontend/src/Pages/crm/ServiceRequests.tsx - UPDATED WITH USER ASSIGNMENT
+// frontend/src/Pages/crm/ServiceRequests.tsx - RESPONSIVE VERSION
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { 
@@ -10,7 +10,10 @@ import {
   PencilIcon,
   UserPlusIcon,
   ArrowPathIcon,
-  ExclamationTriangleIcon
+  ExclamationTriangleIcon,
+  ChevronDownIcon,
+  Bars3Icon,
+  XMarkIcon
 } from '@heroicons/react/24/outline'
 import { toast } from 'react-hot-toast'
 import { serviceRequestsService, ServiceRequest, UpdateServiceRequestData } from '../../services/serviceRequests.service'
@@ -110,36 +113,40 @@ function ServiceRequestModal({
   if (!isOpen || !request) return null
 
   return (
-    <div className="fixed inset-0 bg-gray-400 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
-        <div className="flex items-center justify-between p-6 border-b">
-          <div>
-            <h2 className="text-xl font-semibold">Service Request #{request.request_number}</h2>
-            <p className="text-sm text-gray-600">Created {format(new Date(request.created_at), 'MMM dd, yyyy at h:mm a')}</p>
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[95vh] overflow-hidden">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 sm:p-6 border-b space-y-3 sm:space-y-0">
+          <div className="min-w-0 flex-1">
+            <h2 className="text-lg sm:text-xl font-semibold truncate">Service Request #{request.request_number}</h2>
+            <p className="text-xs sm:text-sm text-gray-600">Created {format(new Date(request.created_at), 'MMM dd, yyyy at h:mm a')}</p>
           </div>
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
             <button
               onClick={() => setEditMode(!editMode)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center space-x-2"
+              className="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center space-x-2 text-sm"
             >
               <PencilIcon className="w-4 h-4" />
-              <span>{editMode ? 'Cancel Edit' : 'Edit'}</span>
+              <span className="hidden sm:inline">{editMode ? 'Cancel Edit' : 'Edit'}</span>
+              <span className="sm:hidden">{editMode ? 'Cancel' : 'Edit'}</span>
             </button>
             <button
               onClick={onClose}
-              className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
+              className="px-3 sm:px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 text-sm"
             >
-              Close
+              <XMarkIcon className="w-4 h-4 sm:hidden" />
+              <span className="hidden sm:inline">Close</span>
             </button>
           </div>
         </div>
 
-        <div className="flex border-b">
+        {/* Tabs */}
+        <div className="flex border-b overflow-x-auto">
           {['details', 'customer', 'actions'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-6 py-3 text-sm font-medium capitalize ${
+              className={`px-4 sm:px-6 py-3 text-sm font-medium capitalize whitespace-nowrap ${
                 activeTab === tab
                   ? 'border-b-2 border-blue-500 text-blue-600'
                   : 'text-gray-500 hover:text-gray-700'
@@ -150,17 +157,18 @@ function ServiceRequestModal({
           ))}
         </div>
 
-        <div className="p-6 max-h-[60vh] overflow-y-auto">
+        {/* Content */}
+        <div className="p-4 sm:p-6 max-h-[60vh] overflow-y-auto">
           {activeTab === 'details' && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-4 sm:space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
                   {editMode ? (
                     <select
                       value={formData.status}
                       onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
                     >
                       <option value="pending">Pending</option>
                       <option value="assigned">Assigned</option>
@@ -181,7 +189,7 @@ function ServiceRequestModal({
                     <select
                       value={formData.priority}
                       onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
                     >
                       <option value="low">Low</option>
                       <option value="medium">Medium</option>
@@ -198,29 +206,29 @@ function ServiceRequestModal({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Service Type</label>
-                <p className="text-gray-900">{request.service_type}</p>
+                <p className="text-gray-900 text-sm">{request.service_type}</p>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">{request.description}</p>
+                <p className="text-gray-900 bg-gray-50 p-3 rounded-lg text-sm break-words">{request.description}</p>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
-                  <p className="text-gray-900">{request.location}</p>
+                  <p className="text-gray-900 text-sm break-words">{request.location}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Preferred Date/Time</label>
-                  <p className="text-gray-900">
+                  <p className="text-gray-900 text-sm">
                     {request.preferred_date && format(new Date(request.preferred_date), 'MMM dd, yyyy')}
                     {request.preferred_time && ` at ${request.preferred_time}`}
                   </p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Estimated Cost ($)</label>
                   {editMode ? (
@@ -228,10 +236,10 @@ function ServiceRequestModal({
                       type="number"
                       value={formData.estimated_cost}
                       onChange={(e) => setFormData({ ...formData, estimated_cost: parseFloat(e.target.value) })}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
                     />
                   ) : (
-                    <p className="text-gray-900">${request.estimated_cost || 0}</p>
+                    <p className="text-gray-900 text-sm">${request.estimated_cost || 0}</p>
                   )}
                 </div>
                 <div>
@@ -241,10 +249,10 @@ function ServiceRequestModal({
                       type="number"
                       value={formData.estimated_duration}
                       onChange={(e) => setFormData({ ...formData, estimated_duration: parseInt(e.target.value) })}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
                     />
                   ) : (
-                    <p className="text-gray-900">{(request.estimated_duration || 0) / 60} hours</p>
+                    <p className="text-gray-900 text-sm">{(request.estimated_duration || 0) / 60} hours</p>
                   )}
                 </div>
               </div>
@@ -256,27 +264,27 @@ function ServiceRequestModal({
                     value={formData.admin_notes}
                     onChange={(e) => setFormData({ ...formData, admin_notes: e.target.value })}
                     rows={4}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
                     placeholder="Add internal notes..."
                   />
                 ) : (
-                  <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">
+                  <p className="text-gray-900 bg-gray-50 p-3 rounded-lg text-sm break-words">
                     {request.admin_notes || 'No admin notes'}
                   </p>
                 )}
               </div>
 
               {editMode && (
-                <div className="flex justify-end space-x-3">
+                <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3">
                   <button
                     onClick={() => setEditMode(false)}
-                    className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                    className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleSave}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
                   >
                     Save Changes
                   </button>
@@ -291,22 +299,22 @@ function ServiceRequestModal({
                 <>
                   <div>
                     <h3 className="text-lg font-medium text-gray-900 mb-4">Customer Information</h3>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700">Name</label>
-                        <p className="text-gray-900">{request.customer.name}</p>
+                        <p className="text-gray-900 text-sm">{request.customer.name}</p>
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700">Email</label>
-                        <p className="text-gray-900">{request.customer.email}</p>
+                        <p className="text-gray-900 text-sm break-all">{request.customer.email}</p>
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700">Phone</label>
-                        <p className="text-gray-900">{request.customer.phone}</p>
+                        <p className="text-gray-900 text-sm">{request.customer.phone}</p>
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700">Contact Phone (for this request)</label>
-                        <p className="text-gray-900">{request.contact_phone || 'Same as primary'}</p>
+                        <p className="text-gray-900 text-sm">{request.contact_phone || 'Same as primary'}</p>
                       </div>
                     </div>
                   </div>
@@ -314,7 +322,7 @@ function ServiceRequestModal({
                   {request.special_instructions && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Special Instructions</label>
-                      <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">{request.special_instructions}</p>
+                      <p className="text-gray-900 bg-gray-50 p-3 rounded-lg text-sm break-words">{request.special_instructions}</p>
                     </div>
                   )}
                 </>
@@ -323,7 +331,7 @@ function ServiceRequestModal({
           )}
 
           {activeTab === 'actions' && (
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               <h3 className="text-lg font-medium text-gray-900">Available Actions</h3>
               
               {/* Assignment Section */}
@@ -336,7 +344,7 @@ function ServiceRequestModal({
                     <select
                       value={selectedUserId}
                       onChange={(e) => setSelectedUserId(e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
                     >
                       <option value="">Select a team member...</option>
                       {availableUsers?.map((user) => (
@@ -353,7 +361,7 @@ function ServiceRequestModal({
                       value={assignmentNotes}
                       onChange={(e) => setAssignmentNotes(e.target.value)}
                       rows={3}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
                       placeholder="Add any notes about this assignment..."
                     />
                   </div>
@@ -361,9 +369,9 @@ function ServiceRequestModal({
                   <button
                     onClick={handleAssignment}
                     disabled={!selectedUserId}
-                    className="w-full flex items-center justify-center space-x-2 p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full flex items-center justify-center space-x-2 p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                   >
-                    <UserPlusIcon className="w-5 h-5" />
+                    <UserPlusIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                     <span>Assign Request</span>
                   </button>
                 </div>
@@ -377,9 +385,9 @@ function ServiceRequestModal({
                 </p>
                 <button
                   onClick={() => onConvertToLead(request.id)}
-                  className="w-full flex items-center justify-center space-x-2 p-3 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                  className="w-full flex items-center justify-center space-x-2 p-3 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
                 >
-                  <ArrowPathIcon className="w-5 h-5" />
+                  <ArrowPathIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                   <span>Convert to Lead</span>
                 </button>
               </div>
@@ -388,12 +396,12 @@ function ServiceRequestModal({
               {request.assigned_user && (
                 <div className="bg-blue-50 p-4 rounded-lg">
                   <h4 className="font-medium text-gray-900 mb-2">Currently Assigned To</h4>
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
                     <div>
-                      <p className="font-medium">{request.assigned_user.name}</p>
-                      <p className="text-sm text-gray-500">{request.assigned_user.email}</p>
+                      <p className="font-medium text-sm">{request.assigned_user.name}</p>
+                      <p className="text-sm text-gray-500 break-all">{request.assigned_user.email}</p>
                     </div>
-                    <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                    <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full self-start sm:self-center">
                       {request.assigned_user.role || 'Assigned'}
                     </span>
                   </div>
@@ -407,11 +415,11 @@ function ServiceRequestModal({
                   <div className="space-y-2">
                     {request.related_jobs.map((job) => (
                       <div key={job.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div>
-                          <p className="font-medium">{job.job_number}</p>
-                          <p className="text-sm text-gray-500">Status: {job.status}</p>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-sm truncate">{job.job_number}</p>
+                          <p className="text-xs text-gray-500">Status: {job.status}</p>
                         </div>
-                        <button className="text-blue-600 hover:text-blue-700">
+                        <button className="text-blue-600 hover:text-blue-700 flex-shrink-0 ml-2">
                           <EyeIcon className="w-4 h-4" />
                         </button>
                       </div>
@@ -427,11 +435,11 @@ function ServiceRequestModal({
                   <div className="space-y-2">
                     {request.related_estimates.map((estimate) => (
                       <div key={estimate.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div>
-                          <p className="font-medium">{estimate.estimate_number}</p>
-                          <p className="text-sm text-gray-500">${estimate.total_amount} - {estimate.status}</p>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-sm truncate">{estimate.estimate_number}</p>
+                          <p className="text-xs text-gray-500">${estimate.total_amount} - {estimate.status}</p>
                         </div>
-                        <button className="text-blue-600 hover:text-blue-700">
+                        <button className="text-blue-600 hover:text-blue-700 flex-shrink-0 ml-2">
                           <EyeIcon className="w-4 h-4" />
                         </button>
                       </div>
@@ -455,7 +463,9 @@ export default function ServiceRequests() {
     priority: '',
     search: '',
   })
+  const [showFilters, setShowFilters] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
+  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table')
   const pageSize = 20
 
   const queryClient = useQueryClient()
@@ -544,7 +554,7 @@ export default function ServiceRequests() {
 
   if (isLoading) {
     return (
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <div className="animate-pulse space-y-4">
           <div className="h-8 bg-gray-200 rounded w-1/4"></div>
           <div className="h-64 bg-gray-200 rounded"></div>
@@ -555,11 +565,11 @@ export default function ServiceRequests() {
 
   if (error) {
     return (
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <div className="flex items-center">
-            <ExclamationTriangleIcon className="w-5 h-5 text-red-500 mr-2" />
-            <span className="text-red-700">Failed to load service requests</span>
+            <ExclamationTriangleIcon className="w-5 h-5 text-red-500 mr-2 flex-shrink-0" />
+            <span className="text-red-700 text-sm">Failed to load service requests</span>
           </div>
         </div>
       </div>
@@ -570,81 +580,93 @@ export default function ServiceRequests() {
   const totalRequests = data?.total || 0
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Service Requests</h1>
-          <p className="text-gray-600">Manage incoming customer service requests</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Service Requests</h1>
+          <p className="text-gray-600 text-sm sm:text-base">Manage incoming customer service requests</p>
         </div>
       </div>
 
       {/* Stats Cards */}
       {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-          <div className="bg-white p-4 rounded-lg shadow border">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+          <div className="bg-white p-3 sm:p-4 rounded-lg shadow border">
             <div className="flex items-center">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <ClipboardDocumentListIcon className="w-5 h-5 text-blue-600" />
+              <div className="p-1.5 sm:p-2 bg-blue-100 rounded-lg">
+                <ClipboardDocumentListIcon className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
               </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium text-gray-600">Total Requests</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.total_requests}</p>
+              <div className="ml-2 sm:ml-3">
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Total Requests</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.total_requests}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white p-4 rounded-lg shadow border">
+          <div className="bg-white p-3 sm:p-4 rounded-lg shadow border">
             <div className="flex items-center">
-              <div className="p-2 bg-yellow-100 rounded-lg">
-                <ExclamationTriangleIcon className="w-5 h-5 text-yellow-600" />
+              <div className="p-1.5 sm:p-2 bg-yellow-100 rounded-lg">
+                <ExclamationTriangleIcon className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-600" />
               </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium text-gray-600">Pending</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.pending_requests}</p>
+              <div className="ml-2 sm:ml-3">
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Pending</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.pending_requests}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white p-4 rounded-lg shadow border">
+          <div className="bg-white p-3 sm:p-4 rounded-lg shadow border">
             <div className="flex items-center">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <UserPlusIcon className="w-5 h-5 text-green-600" />
+              <div className="p-1.5 sm:p-2 bg-green-100 rounded-lg">
+                <UserPlusIcon className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
               </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium text-gray-600">Completed</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.completed_requests}</p>
+              <div className="ml-2 sm:ml-3">
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Completed</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.completed_requests}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white p-4 rounded-lg shadow border">
+          <div className="bg-white p-3 sm:p-4 rounded-lg shadow border">
             <div className="flex items-center">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <ArrowPathIcon className="w-5 h-5 text-purple-600" />
+              <div className="p-1.5 sm:p-2 bg-purple-100 rounded-lg">
+                <ArrowPathIcon className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
               </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium text-gray-600">Completion Rate</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.completion_rate}%</p>
+              <div className="ml-2 sm:ml-3">
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Completion Rate</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.completion_rate}%</p>
               </div>
             </div>
           </div>
         </div>
       )}
 
+      {/* Mobile Filter Toggle */}
+      <div className="lg:hidden">
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          className="flex items-center w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
+        >
+          <FunnelIcon className="h-4 w-4 mr-2" />
+          Filters & Search
+          <ChevronDownIcon className={`h-4 w-4 ml-auto transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+        </button>
+      </div>
+
       {/* Filters */}
-      <div className="bg-white p-4 rounded-lg shadow border mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className={`bg-white p-4 sm:p-4 rounded-lg shadow border ${!showFilters ? 'hidden lg:block' : ''}`}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
             <div className="relative">
-              <MagnifyingGlassIcon className="w-5 h-5 absolute left-3 top-3 text-gray-400" />
+              <MagnifyingGlassIcon className="w-4 h-4 sm:w-5 sm:h-5 absolute left-3 top-2.5 sm:top-3 text-gray-400" />
               <input
                 type="text"
                 value={filters.search}
                 onChange={(e) => setFilters({ ...filters, search: e.target.value })}
                 placeholder="Search requests..."
-                className="pl-10 w-full border border-gray-300 rounded-lg px-3 py-2"
+                className="pl-9 sm:pl-10 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
               />
             </div>
           </div>
@@ -654,7 +676,7 @@ export default function ServiceRequests() {
             <select
               value={filters.status}
               onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
             >
               <option value="">All Statuses</option>
               <option value="pending">Pending</option>
@@ -670,7 +692,7 @@ export default function ServiceRequests() {
             <select
               value={filters.priority}
               onChange={(e) => setFilters({ ...filters, priority: e.target.value })}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
             >
               <option value="">All Priorities</option>
               <option value="low">Low</option>
@@ -680,93 +702,167 @@ export default function ServiceRequests() {
             </select>
           </div>
 
-          <div className="flex items-end">
+          <div className="flex flex-col sm:flex-row items-end space-y-2 sm:space-y-0 sm:space-x-2">
             <button
               onClick={() => setFilters({ status: '', priority: '', search: '' })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="w-full sm:flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm"
             >
               Clear Filters
             </button>
+            
+            {/* View Mode Toggle (Desktop) */}
+            <div className="hidden sm:flex rounded-md shadow-sm">
+              <button
+                onClick={() => setViewMode('table')}
+                className={`px-3 py-2 text-sm font-medium rounded-l-md border ${
+                  viewMode === 'table'
+                    ? 'bg-blue-600 text-white border-blue-600'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                <Bars3Icon className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => setViewMode('cards')}
+                className={`px-3 py-2 text-sm font-medium rounded-r-md border-t border-r border-b ${
+                  viewMode === 'cards'
+                    ? 'bg-blue-600 text-white border-blue-600'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                <ClipboardDocumentListIcon className="h-4 w-4" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Service Requests Table */}
+      {/* Service Requests Display */}
       <div className="bg-white shadow border rounded-lg overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Request
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Customer
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Service Type
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Priority
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Created
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {serviceRequests.map((request) => (
-                <tr key={request.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">#{request.request_number}</p>
-                      <p className="text-sm text-gray-500">{request.description.slice(0, 50)}...</p>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">{request.customer_name}</p>
-                      <p className="text-sm text-gray-500">{request.customer_email}</p>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {request.service_type}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+        {viewMode === 'table' ? (
+          // Table View
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Request
+                  </th>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+                    Customer
+                  </th>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
+                    Service Type
+                  </th>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Priority
+                  </th>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
+                    Created
+                  </th>
+                  <th className="px-4 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {serviceRequests.map((request) => (
+                  <tr key={request.id} className="hover:bg-gray-50">
+                    <td className="px-4 sm:px-6 py-4">
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">#{request.request_number}</p>
+                        <p className="text-xs sm:text-sm text-gray-500 truncate max-w-xs">{request.description.slice(0, 50)}...</p>
+                        {/* Mobile: Show customer info here */}
+                        <div className="sm:hidden mt-1">
+                          <p className="text-xs text-gray-500">{request.customer_name}</p>
+                          <p className="text-xs text-gray-400">{request.customer_email}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 sm:px-6 py-4 hidden sm:table-cell">
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{request.customer_name}</p>
+                        <p className="text-sm text-gray-500 truncate max-w-xs">{request.customer_email}</p>
+                      </div>
+                    </td>
+                    <td className="px-4 sm:px-6 py-4 text-sm text-gray-900 hidden md:table-cell">
+                      {request.service_type}
+                    </td>
+                    <td className="px-4 sm:px-6 py-4">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${PRIORITY_COLORS[request.priority as keyof typeof PRIORITY_COLORS]}`}>
+                        {request.priority}
+                      </span>
+                    </td>
+                    <td className="px-4 sm:px-6 py-4">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${STATUS_COLORS[request.status as keyof typeof STATUS_COLORS]}`}>
+                        {request.status.replace('_', ' ')}
+                      </span>
+                    </td>
+                    <td className="px-4 sm:px-6 py-4 text-sm text-gray-500 hidden lg:table-cell">
+                      {format(new Date(request.created_at), 'MMM dd, yyyy')}
+                    </td>
+                    <td className="px-4 sm:px-6 py-4 text-right text-sm font-medium">
+                      <button
+                        onClick={() => handleViewRequest(request)}
+                        className="text-blue-600 hover:text-blue-900"
+                      >
+                        <EyeIcon className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          // Cards View
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4 sm:p-6">
+            {serviceRequests.map((request) => (
+              <div key={request.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-900">#{request.request_number}</h3>
+                    <p className="text-xs text-gray-500">{format(new Date(request.created_at), 'MMM dd, yyyy')}</p>
+                  </div>
+                  <div className="flex space-x-1">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${PRIORITY_COLORS[request.priority as keyof typeof PRIORITY_COLORS]}`}>
                       {request.priority}
                     </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${STATUS_COLORS[request.status as keyof typeof STATUS_COLORS]}`}>
                       {request.status.replace('_', ' ')}
                     </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {format(new Date(request.created_at), 'MMM dd, yyyy')}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button
-                      onClick={() => handleViewRequest(request)}
-                      className="text-blue-600 hover:text-blue-900"
-                    >
-                      <EyeIcon className="w-4 h-4" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  </div>
+                </div>
+                
+                <div className="mb-3">
+                  <p className="text-sm font-medium text-gray-900">{request.customer_name}</p>
+                  <p className="text-xs text-gray-500 truncate">{request.customer_email}</p>
+                </div>
+                
+                <div className="mb-3">
+                  <p className="text-xs text-gray-600 font-medium">{request.service_type}</p>
+                  <p className="text-xs text-gray-500 line-clamp-2">{request.description}</p>
+                </div>
+                
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => handleViewRequest(request)}
+                    className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                  >
+                    <EyeIcon className="w-3 h-3 mr-1" />
+                    View
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {serviceRequests.length === 0 && (
-          <div className="text-center py-12">
+          <div className="text-center py-8 sm:py-12">
             <ClipboardDocumentListIcon className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">No service requests</h3>
             <p className="mt-1 text-sm text-gray-500">

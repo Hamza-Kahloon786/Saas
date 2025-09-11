@@ -1,234 +1,47 @@
-# backend/app/api/v1/endpoints/jobs.pyion
-import logging
-
-# backend/app/api/v1/endpoints/jobs.py - COMPLETE FIXED VERSION
 from typing import Any, List, Optional, Dict
-from fastapi import APIRouter, Depends, HTTPException, Query, Body
+from fastapi import APIRouter, Depends, HTTPException, Query,Body
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from bson import ObjectId
 from datetime import datetime, timedelta
+import logging
 
 from app.core.database import get_database
 from app.dependencies.auth import get_current_user
+
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-
-# MAIN GET ROUTE - This handles the Jobs.tsx request
-@router.get("/", response_model=Dict[str, Any])
+@router.get("/")
 async def get_jobs(
     db: AsyncIOMotorDatabase = Depends(get_database),
     current_user: dict = Depends(get_current_user),
-    date: Optional[str] = Query(None, description="Date filter: today, tomorrow, this_week, etc."),
-    status: Optional[str] = Query(None, description="Status filter"),
-    technician_id: Optional[str] = Query(None, description="Technician filter"),
-    search: Optional[str] = Query(None, description="Search term"),
-    skip: int = Query(default=0, description="Skip records"),
-    limit: int = Query(default=100, description="Limit records")
-) -> Any:
-    """Get jobs with filtering - Main endpoint for Jobs.tsx"""
+    skip: int = Query(default=0),
+    limit: int = Query(default=100)
+):
     try:
-        from app.core.logger import get_logger
-        logger = get_logger("endpoints.jobs.get")
-        
-        logger.info(f"Jobs request - Date: {date}, Status: {status}, Technician: {technician_id}")
-        
-        # Build query
         query = {"company_id": ObjectId(current_user["company_id"])}
+        jobs = await db.jobs.find(query).skip(skip).limit(limit).to_list(length=limit)
+        total = await db.jobs.count_documents(query)
         
-        # Handle date filtering - FIXED to work with your database structure
-        if date and date != "all":
-            today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-            
-            if date == "today":
-                tomorrow = today + timedelta(days=1)
-                query["$or"] = [
-                    {"time_tracking.scheduled_start": {"$gte": today, "$lt": tomorrow}},
-                    {"created_at": {"$gte": today, "$lt": tomorrow}}
-                ]
-            elif date == "tomorrow":
-                tomorrow = today + timedelta(days=1)
-                day_after = today + timedelta(days=2)
-                query["$or"] = [
-                    {"time_tracking.scheduled_start": {"$gte": tomorrow, "$lt": day_after}},
-                    {"created_at": {"$gte": tomorrow, "$lt": day_after}}
-                ]
-            elif date == "this_week":
-                days_since_monday = today.weekday()
-                start_of_week = today - timedelta(days=days_since_monday)
-                end_of_week = start_of_week + timedelta(days=7)
-                query["$or"] = [
-                    {"time_tracking.scheduled_start": {"$gte": start_of_week, "$lt": end_of_week}},
-                    {"created_at": {"$gte": start_of_week, "$lt": end_of_week}}
-                ]
-            elif date == "next_week":
-                days_since_monday = today.weekday()
-                start_of_next_week = today - timedelta(days=days_since_monday) + timedelta(days=7)
-                end_of_next_week = start_of_next_week + timedelta(days=7)
-                query["$or"] = [
-                    {"time_tracking.scheduled_start": {"$gte": start_of_next_week, "$lt": end_of_next_week}},
-                    {"created_at": {"$gte": start_of_next_week, "$lt": end_of_next_week}}
-                ]
-            elif len(date) == 10 and date.count('-') == 2:
-                try:
-                    filter_date = datetime.strptime(date, "%Y-%m-%d")
-                    next_day = filter_date + timedelta(days=1)
-                    query["$or"] = [
-                        {"time_tracking.scheduled_start": {"$gte": filter_date, "$lt": next_day}},
-                        {"created_at": {"$gte": filter_date, "$lt": next_day}}
-                    ]
-                except ValueError:
-                    logger.warning(f"Invalid date format: {date}")
-        
-        # Status filter
-        if status and status != "all":
-            query["status"] = status
-            
-        # Technician filter
-        if technician_id and technician_id != "all" and ObjectId.is_valid(technician_id):
-            query["technician_id"] = ObjectId(technician_id)
-        
-        # Search filter
-        if search:
-            query["$or"] = [
-                {"title": {"$regex": search, "$options": "i"}},
-                {"description": {"$regex": search, "$options": "i"}},
-                {"service_type": {"$regex": search, "$options": "i"}},
-                {"job_number": {"$regex": search, "$options": "i"}}
-            ]
-        
-        logger.info(f"Query: {query}")
-        
-        # Get jobs from database - FIXED sorting to handle missing fields
-        try:
-            cursor = db.jobs.find(query).sort([
-                ("time_tracking.scheduled_start", 1),
-                ("created_at", 1)
-            ]).skip(skip).limit(limit)
-        except:
-            # Fallback if time_tracking.scheduled_start doesn't exist
-            cursor = db.jobs.find(query).sort("created_at", 1).skip(skip).limit(limit)
-        
-        jobs = await cursor.to_list(length=limit)
-        
-        # Get total count for pagination
-        total_count = await db.jobs.count_documents(query)
-        
-        logger.info(f"Found {len(jobs)} jobs (total: {total_count})")
-        
-        # Format jobs for frontend
         formatted_jobs = []
         for job in jobs:
-            try:
-                # Get customer info
-                customer_name = "Unknown Customer"
-                customer_phone = None
-                customer_email = None
-                
-                if job.get("customer_id"):
-                    customer = await db.contacts.find_one({"_id": job["customer_id"]})
-                    if customer:
-                        customer_name = f"{customer.get('first_name', '')} {customer.get('last_name', '')}".strip() or customer.get('name', 'Unknown')
-                        customer_phone = customer.get("phone")
-                        customer_email = customer.get("email")
-                
-                # Get technician info - FIXED TYPO
-                technician_name = None
-                technician_phone = None
-                if job.get("technician_id"):
-                    technician = await db.users.find_one({"_id": job["technician_id"]})
-                    if technician:
-                        technician_name = f"{technician.get('first_name', '')} {technician.get('last_name', '')}".strip()
-                        technician_phone = technician.get("phone")
-                
-                # Format time tracking
-                time_tracking = job.get("time_tracking", {})
-                scheduled_start = time_tracking.get("scheduled_start")
-                scheduled_end = time_tracking.get("scheduled_end")
-                
-                # Use created_at as fallback if no scheduled_start
-                if not scheduled_start:
-                    scheduled_start = job.get("created_at", datetime.now())
-                if not scheduled_end and scheduled_start:
-                    scheduled_end = scheduled_start + timedelta(hours=1)
-                
-                # Format address
-                address = job.get("address", {})
-                if isinstance(address, str):
-                    full_address = address
-                    city = ""
-                    state = ""
-                    zip_code = ""
-                elif isinstance(address, dict):
-                    street = address.get("street", "")
-                    city = address.get("city", "")
-                    state = address.get("state", "")
-                    zip_code = address.get("postal_code", "") or address.get("zip_code", "")
-                    full_address = f"{street}, {city}, {state} {zip_code}".strip(", ")
-                else:
-                    full_address = city = state = zip_code = ""
-                
-                # Create job object in the format Jobs.tsx expects
-                formatted_job = {
-                    "id": str(job["_id"]),
-                    "job_number": job.get("job_number", f"JOB-{str(job['_id'])[-6:]}"),
-                    "customer_name": customer_name,
-                    "customer_phone": customer_phone,
-                    "customer_email": customer_email,
-                    "service_type": job.get("service_type", "Service Call"),
-                    "description": job.get("description", ""),
-                    "address": full_address,
-                    "city": city,
-                    "state": state,
-                    "zip_code": zip_code,
-                    
-                    # Date and time formatting
-                    "scheduled_date": scheduled_start.strftime("%Y-%m-%d") if scheduled_start else datetime.now().strftime("%Y-%m-%d"),
-                    "start_time": scheduled_start.strftime("%H:%M:%S") if scheduled_start else "09:00:00",
-                    "end_time": scheduled_end.strftime("%H:%M:%S") if scheduled_end else "10:00:00",
-                    
-                    "estimated_duration": job.get("estimated_duration", 60),
-                    "actual_duration": job.get("actual_duration"),
-                    
-                    "status": job.get("status", "scheduled"),
-                    "priority": job.get("priority", "medium"),
-                    
-                    "technician_id": str(job["technician_id"]) if job.get("technician_id") else None,
-                    "technician_name": technician_name,
-                    "technician_phone": technician_phone,
-                    
-                    "notes": job.get("notes", ""),
-                    "special_instructions": job.get("special_instructions", ""),
-                    "equipment_needed": job.get("equipment_needed", []),
-                    "photos": job.get("photos", []),
-                    "customer_signature": job.get("customer_signature"),
-                    "completion_notes": job.get("completion_notes", ""),
-                    
-                    "created_at": job.get("created_at").isoformat() if job.get("created_at") else None,
-                    "updated_at": job.get("updated_at").isoformat() if job.get("updated_at") else None
-                }
-                
-                formatted_jobs.append(formatted_job)
-                
-            except Exception as job_error:
-                logger.error(f"Error processing job {job.get('_id')}: {job_error}")
-                continue
-        
-        logger.info(f"Successfully formatted {len(formatted_jobs)} jobs")
+            formatted_jobs.append({
+                "id": str(job["_id"]),
+                "job_number": job.get("job_number", ""),
+                "customer_name": "Customer",
+                "status": job.get("status", "scheduled"),
+                "service_type": job.get("service_type", "Service"),
+                "created_at": job.get("created_at").isoformat() if job.get("created_at") else None
+            })
         
         return {
             "jobs": formatted_jobs,
-            "total": total_count,
+            "total": total,
             "page": skip // limit,
-            "limit": limit,
-            "has_more": total_count > skip + limit
+            "limit": limit
         }
-        
     except Exception as e:
-        logger.error(f"Error fetching jobs: {e}")
-        import traceback
-        logger.error(f"Traceback: {traceback.format_exc()}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch jobs: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 # TEST ENDPOINT
 @router.get("/test")
@@ -242,6 +55,7 @@ async def test_jobs_endpoint(
         "company_id": str(current_user["company_id"]),
         "timestamp": datetime.utcnow().isoformat()
     }
+
 
 # CALENDAR ENDPOINT - For Calendar.tsx
 @router.get("/calendar", response_model=Dict[str, Any])
@@ -701,7 +515,7 @@ async def get_ai_bookings(
         # Query for jobs created by AI chatbot
         query = {
             "company_id": ObjectId(current_user["company_id"]),
-            "source": "ai_chatbot"  # Filter for AI-generated bookings
+            "source": "canvas_ai_chatbot"  # To this # Filter for AI-generated bookings
         }
         
         logger.info(f"🔍 Searching for AI bookings with query: {query}")
@@ -760,7 +574,7 @@ async def confirm_ai_booking(
         booking = await db.jobs.find_one({
             "_id": ObjectId(booking_id),
             "company_id": ObjectId(current_user["company_id"]),
-            "source": "ai_chatbot"
+            "source": "canvas_ai_chatbot"
         })
         
         if not booking:
@@ -952,3 +766,4 @@ async def get_notifications(
     except Exception as e:
         logger.error(f"Error getting notifications: {e}")
         return {"notifications": [], "unread_count": 0}
+    

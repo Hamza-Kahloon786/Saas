@@ -136,28 +136,27 @@ export default function EstimateForm({ onSubmit, onCancel, isLoading, initialDat
 
   // Fetch customers
 // Fetch customers (no ?type filter; normalize to array)
+// Fetch customers from users collection with role=customer
 const { data: customers = [] } = useQuery({
   queryKey: ['customers'],
   queryFn: async () => {
-    const res = await api.get('/contacts/')
-    const d = res?.data
-    // handle either [ ... ] or { contacts: [ ... ] }
-    return Array.isArray(d) ? d : (d?.contacts ?? [])
+    const res = await api.get('/users/?role=customer')
+    return res?.data || []
   },
   staleTime: 300_000,
 })
 
 
   // Fetch customer details when customer is selected
-  const { data: customerDetails } = useQuery({
-    queryKey: ['customer-details', watchedCustomerId],
-    queryFn: async () => {
-      const response = await api.get(`/contacts/${watchedCustomerId}`)
-      return response.data
-    },
-    enabled: !!watchedCustomerId,
-  })
-
+ // Fetch customer details when customer is selected
+const { data: customerDetails } = useQuery({
+  queryKey: ['customer-details', watchedCustomerId],
+  queryFn: async () => {
+    const response = await api.get(`/users/${watchedCustomerId}`)
+    return response.data
+  },
+  enabled: !!watchedCustomerId,
+})
   // Auto-fill address when customer is selected
   useEffect(() => {
     if (customerDetails && mode === 'create') {
@@ -227,10 +226,10 @@ const { data: customers = [] } = useQuery({
             >
               <option value="">Select customer...</option>
               {customers?.map((customer: any) => (
-                <option key={customer.id} value={customer.id}>
-    {`${customer.first_name ?? ''} ${customer.last_name ?? ''}`.trim() || customer.email || customer.id}
+  <option key={customer.id} value={customer.id}>
+    {customer.name || `${customer.first_name ?? ''} ${customer.last_name ?? ''}`.trim() || customer.email || customer.id}
   </option>
-              ))}
+))}
             </select>
             {errors.customer_id && (
               <p className="mt-1 text-sm text-red-600">{errors.customer_id.message}</p>
@@ -612,7 +611,7 @@ const { data: customers = [] } = useQuery({
         <button
           type="button"
           onClick={onCancel}
-          className="bg-black  py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+          className="text-black  py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
         >
           Cancel
         </button>

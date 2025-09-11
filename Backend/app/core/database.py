@@ -322,7 +322,76 @@ class DatabaseManager:
             raise RuntimeError("Database not connected")
         return self.database[name]
 
+# backend/app/core/database.py - Add integration collections setup
 
+# Add these collection creation methods to your existing database.py file
+
+async def create_integration_collections(db):
+    """Create integration-related collections with proper indexes"""
+    
+    # Integrations collection
+    if "integrations" not in await db.list_collection_names():
+        await db.create_collection("integrations")
+        
+        # Create indexes for integrations
+        await db.integrations.create_index([("company_id", 1)])
+        await db.integrations.create_index([("provider_id", 1)])
+        await db.integrations.create_index([("company_id", 1), ("provider_id", 1)], unique=True)
+        await db.integrations.create_index([("status", 1)])
+        await db.integrations.create_index([("created_at", -1)])
+    
+    # Webhooks collection
+    if "webhooks" not in await db.list_collection_names():
+        await db.create_collection("webhooks")
+        
+        # Create indexes for webhooks
+        await db.webhooks.create_index([("company_id", 1)])
+        await db.webhooks.create_index([("integration_id", 1)])
+        await db.webhooks.create_index([("is_active", 1)])
+        await db.webhooks.create_index([("events", 1)])
+        await db.webhooks.create_index([("created_at", -1)])
+    
+    # Integration logs collection
+    if "integration_logs" not in await db.list_collection_names():
+        await db.create_collection("integration_logs")
+        
+        # Create indexes for logs
+        await db.integration_logs.create_index([("integration_id", 1)])
+        await db.integration_logs.create_index([("company_id", 1)])
+        await db.integration_logs.create_index([("created_at", -1)])
+        await db.integration_logs.create_index([("status", 1)])
+        await db.integration_logs.create_index([("action", 1)])
+        
+        # TTL index to automatically delete old logs (30 days)
+        await db.integration_logs.create_index(
+            [("created_at", 1)], 
+            expireAfterSeconds=30 * 24 * 60 * 60  # 30 days
+        )
+    
+    # API keys collection
+    if "api_keys" not in await db.list_collection_names():
+        await db.create_collection("api_keys")
+        
+        # Create indexes for API keys
+        await db.api_keys.create_index([("company_id", 1)])
+        await db.api_keys.create_index([("key_hash", 1)], unique=True)
+        await db.api_keys.create_index([("is_active", 1)])
+        await db.api_keys.create_index([("expires_at", 1)])
+        await db.api_keys.create_index([("created_at", -1)])
+        
+        # TTL index for expired keys
+        await db.api_keys.create_index([("expires_at", 1)], expireAfterSeconds=0)
+
+# Add this to your existing database initialization
+async def initialize_integration_database():
+    """Initialize integration-specific database setup"""
+    try:
+        database = await get_database()
+        await create_integration_collections(database)
+        logger.info("✅ Integration database collections initialized")
+    except Exception as e:
+        logger.error(f"❌ Failed to initialize integration database: {e}")
+        raise
 
 async def get_database():
     """Get database instance"""
