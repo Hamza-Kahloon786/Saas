@@ -7,7 +7,7 @@ import { z } from 'zod'
 import { useMutation } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { authService } from '../../services/auth.service'
-import { RocketLaunchIcon, ArrowLeftIcon } from '@heroicons/react/24/outline'
+import { ArrowLeftIcon } from '@heroicons/react/24/outline'
 
 const forgotPasswordSchema = z.object({
   email: z.string().email('Please enter a valid email'),
@@ -46,21 +46,31 @@ export default function ForgotPassword() {
     return (
       <div className="min-h-screen flex bg-gray-50">
         {/* Left Side - Success Message */}
-        <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-20 xl:px-24">
-          <div className="mx-auto w-full max-w-sm lg:w-96">
-            
+        <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:px-20 xl:px-24">
+          {/* Logo Section - Top Left */}
+          <div className="absolute top-8 left-8 flex items-center">
+            <img 
+              src="/rlogo.png" 
+              alt="STORM AI Logo" 
+              className="h-6 w-6 object-contain mr-2"
+            />
+            <span className="text-base font-bold text-gray-900">STORM AI</span>
+          </div>
+          
+          {/* Form Container */}
+          <div className="mx-auto w-full max-w-sm mt-16">
             {/* Check your email */}
-            <div className="mb-8">
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
                 Check your email
               </h2>
-              <p className="text-gray-600">
+              <p className="text-sm text-gray-600">
                 We've sent a password reset link to{' '}
                 <span className="font-medium text-gray-900">{getValues('email')}</span>
               </p>
             </div>
 
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
               <div className="flex">
                 <div className="flex-shrink-0">
                   <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
@@ -80,8 +90,8 @@ export default function ForgotPassword() {
               </div>
             </div>
 
-            <div className="space-y-4">
-              <p className="text-center text-sm text-gray-600">
+            <div className="space-y-3">
+              <p className="text-center text-xs text-gray-600">
                 Didn't receive the email? Check your spam folder or{' '}
                 <button
                   onClick={() => setEmailSent(false)}
@@ -94,7 +104,7 @@ export default function ForgotPassword() {
               <div className="text-center">
                 <Link
                   to="/login"
-                  className="inline-flex items-center text-sm font-medium text-primary-600 hover:text-primary-500"
+                  className="inline-flex items-center text-xs font-medium text-primary-600 hover:text-primary-500"
                 >
                   <ArrowLeftIcon className="h-4 w-4 mr-1" />
                   Back to sign in
@@ -145,41 +155,51 @@ export default function ForgotPassword() {
   return (
     <div className="min-h-screen flex bg-gray-50">
       {/* Left Side - Forgot Password Form */}
-      <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-20 xl:px-24">
-        <div className="mx-auto w-full max-w-sm lg:w-96">
-          
+      <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:px-20 xl:px-24">
+        {/* Logo Section - Top Left */}
+        <div className="absolute top-8 left-8 flex items-center">
+          <img 
+            src="/rlogo.png" 
+            alt="STORM AI Logo" 
+            className="h-6 w-6 object-contain mr-2"
+          />
+          <span className="text-xl font-bold text-gray-900">STORM AI</span>
+        </div>
+        
+        {/* Form Container */}
+        <div className="mx-auto w-full max-w-sm mt-16">
           {/* Forgot Password */}
-          <div className="mb-8">
+          <div className="mb-6">
             <h2 className="text-3xl font-bold text-gray-900 mb-2">
               Forgot your password?
             </h2>
-            <p className="text-gray-600">
+            <p className="text-sm text-gray-600">
               Enter your email address and we'll send you a link to reset your password.
             </p>
           </div>
 
           {/* Reset Form */}
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                 Email Address
               </label>
               <input
                 {...register('email')}
                 type="email"
                 autoComplete="email"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 bg-white"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 bg-white text-sm"
                 placeholder="Enter your email address"
               />
               {errors.email && (
-                <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
+                <p className="mt-1 text-xs text-red-600">{errors.email.message}</p>
               )}
             </div>
 
             <button
               type="submit"
               disabled={forgotPasswordMutation.isPending}
-              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+              className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
             >
               {forgotPasswordMutation.isPending ? (
                 <div className="flex items-center">
@@ -192,18 +212,18 @@ export default function ForgotPassword() {
             </button>
           </form>
 
-          <div className="mt-6 text-center">
+          <div className="mt-4 text-center">
             <Link
               to="/login"
-              className="inline-flex items-center text-sm font-medium text-primary-600 hover:text-primary-500"
+              className="inline-flex items-center text-xs font-medium text-primary-600 hover:text-primary-500"
             >
               <ArrowLeftIcon className="h-4 w-4 mr-1" />
               Back to sign in
             </Link>
           </div>
 
-          <div className="mt-6 border-t border-gray-200 pt-6">
-            <p className="text-center text-sm text-gray-500">
+          <div className="mt-4 border-t border-gray-200 pt-4">
+            <p className="text-center text-xs text-gray-500">
               Don't have an account?{' '}
               <Link
                 to="/register"
@@ -239,8 +259,6 @@ export default function ForgotPassword() {
             </div>
           </div>
         </div>
-        
-       
       </div>
     </div>
   )

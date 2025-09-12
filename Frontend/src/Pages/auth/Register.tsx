@@ -8,7 +8,6 @@ import toast from 'react-hot-toast'
 import { authService } from '../../services/auth.service'
 import { useAuthStore } from '../../store/authStore'
 import { 
-  RocketLaunchIcon, 
   EyeIcon, 
   EyeSlashIcon,
   UserIcon
@@ -97,82 +96,86 @@ export default function Register() {
   return (
     <div className="min-h-screen flex bg-gray-50">
       {/* Left Side - Registration Form */}
-      <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-20 xl:px-24">
-        <div className="mx-auto w-full max-w-sm lg:w-96">
-          
-          {/* Create Account */}
-          <div className="mb-8">
+      <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:px-20 xl:px-24">
+        {/* Logo Section - Top Left */}
+        <div className="absolute top-4 left-8 flex items-center">
+          <img 
+            src="/rlogo.png" 
+            alt="STORM AI Logo" 
+            className="h-6 w-6 object-contain mr-2"
+          />
+          <span className="text-lg font-bold text-gray-900">STORM AI</span>
+        </div>
+        
+        {/* Form Container */}
+        <div className="mx-auto w-full max-w-sm mt-16">
+          {/* Create your STORM AI account */}
+          <div className="mb-6">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
               Create your STORM AI account
             </h2>
-            <p className="text-gray-600">
+            <p className="text-sm text-gray-600 mb-4">
               Join our platform to book services and manage your appointments
             </p>
-            {/* <div className="mt-4 flex justify-start">
-              {/* <div className="flex items-center px-3 py-2 bg-blue-50 rounded-full">
-                <UserIcon className="h-5 w-5 text-blue-600 mr-2" />
-                <span className="text-sm font-medium text-blue-900">Customer Registration</span>
-              </div> 
-            </div> */}
           </div>
 
           {/* Registration Form */}
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             {/* Name Fields */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label htmlFor="first_name" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="first_name" className="block text-sm font-medium text-gray-700 mb-1">
                   First Name
                 </label>
                 <input
                   {...register('first_name')}
                   type="text"
                   autoComplete="given-name"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 bg-white"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 bg-white text-sm"
                   placeholder="First name"
                 />
                 {errors.first_name && (
-                  <p className="mt-1 text-sm text-red-600">{errors.first_name.message}</p>
+                  <p className="mt-1 text-xs text-red-600">{errors.first_name.message}</p>
                 )}
               </div>
 
               <div>
-                <label htmlFor="last_name" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="last_name" className="block text-sm font-medium text-gray-700 mb-1">
                   Last Name
                 </label>
                 <input
                   {...register('last_name')}
                   type="text"
                   autoComplete="family-name"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 bg-white"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 bg-white text-sm"
                   placeholder="Last name"
                 />
                 {errors.last_name && (
-                  <p className="mt-1 text-sm text-red-600">{errors.last_name.message}</p>
+                  <p className="mt-1 text-xs text-red-600">{errors.last_name.message}</p>
                 )}
               </div>
             </div>
 
             {/* Email */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                 Email Address
               </label>
               <input
                 {...register('email')}
                 type="email"
                 autoComplete="email"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 bg-white"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 bg-white text-sm"
                 placeholder="Email address"
               />
               {errors.email && (
-                <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
+                <p className="mt-1 text-xs text-red-600">{errors.email.message}</p>
               )}
             </div>
 
             {/* Password Fields */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                 Password
               </label>
               <div className="relative">
@@ -180,28 +183,28 @@ export default function Register() {
                   {...register('password')}
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="new-password"
-                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 bg-white"
+                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 bg-white text-sm"
                   placeholder="Password"
                 />
                 <button
                   type="button"
-                  className="absolute inset-y-0 right-0 pr-4 flex items-center"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
-                    <EyeSlashIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                    <EyeSlashIcon className="h-4 w-4 text-gray-400 hover:text-gray-600" />
                   ) : (
-                    <EyeIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                    <EyeIcon className="h-4 w-4 text-gray-400 hover:text-gray-600" />
                   )}
                 </button>
               </div>
               {errors.password && (
-                <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
+                <p className="mt-1 text-xs text-red-600">{errors.password.message}</p>
               )}
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
                 Confirm Password
               </label>
               <div className="relative">
@@ -209,36 +212,36 @@ export default function Register() {
                   {...register('confirmPassword')}
                   type={showConfirmPassword ? 'text' : 'password'}
                   autoComplete="new-password"
-                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 bg-white"
+                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 bg-white text-sm"
                   placeholder="Confirm password"
                 />
                 <button
                   type="button"
-                  className="absolute inset-y-0 right-0 pr-4 flex items-center"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 >
                   {showConfirmPassword ? (
-                    <EyeSlashIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                    <EyeSlashIcon className="h-4 w-4 text-gray-400 hover:text-gray-600" />
                   ) : (
-                    <EyeIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                    <EyeIcon className="h-4 w-4 text-gray-400 hover:text-gray-600" />
                   )}
                 </button>
               </div>
               {errors.confirmPassword && (
-                <p className="mt-1 text-sm text-red-600">{errors.confirmPassword.message}</p>
+                <p className="mt-1 text-xs text-red-600">{errors.confirmPassword.message}</p>
               )}
             </div>
 
             {/* Terms and Conditions */}
-            <div className="flex items-center">
+            <div className="flex items-start">
               <input
                 {...register('terms')}
                 id="terms"
                 name="terms"
                 type="checkbox"
-                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded mt-0.5"
               />
-              <label htmlFor="terms" className="ml-2 block text-sm text-gray-900">
+              <label htmlFor="terms" className="ml-2 block text-xs text-gray-900">
                 I agree to the{' '}
                 <Link to="/terms" className="text-primary-600 hover:text-primary-500">
                   Terms and Conditions
@@ -250,14 +253,14 @@ export default function Register() {
               </label>
             </div>
             {errors.terms && (
-              <p className="mt-1 text-sm text-red-600">{errors.terms.message}</p>
+              <p className="mt-1 text-xs text-red-600">{errors.terms.message}</p>
             )}
 
             {/* Submit Button */}
             <button
               type="submit"
               disabled={registerMutation.isPending}
-              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+              className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
             >
               {registerMutation.isPending ? (
                 <div className="flex items-center">
@@ -270,23 +273,16 @@ export default function Register() {
             </button>
           </form>
 
-          {/* Additional Info */}
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              Already have an account?{' '}
-              <Link
-                to="/login"
-                className="font-medium text-primary-600 hover:text-primary-500"
-              >
-                Sign in here
-              </Link>
-            </p>
-            {/* <div className="mt-3 p-3 bg-blue-50 rounded-lg">
-              <p className="text-xs text-blue-700">
-                <strong>For Staff/Admin Access:</strong> Please contact your system administrator to get credentials.
-              </p>
-            </div> */}
-          </div>
+          {/* Login Link */}
+          <p className="mt-4 text-center text-xs text-gray-600">
+            Already have an account?{' '}
+            <Link
+              to="/login"
+              className="font-medium text-primary-600 hover:text-primary-500"
+            >
+              Sign in here
+            </Link>
+          </p>
         </div>
       </div>
 
@@ -294,7 +290,7 @@ export default function Register() {
       <div className="hidden lg:block relative w-0 flex-1 bg-gradient-to-br from-primary-600 to-indigo-700 overflow-hidden">
         <div className="absolute inset-0 flex flex-col justify-center items-center px-12 py-16">
           <div className="text-center text-white mb-12 max-w-xl mx-auto">
-            <h2 className="text-2xl font-bold mb-6 leading-tight">
+            <h2 className="text-3xl font-bold mb-6 leading-tight">
               Join thousands of satisfied customers.
             </h2>
             <p className="text-lg opacity-90">
@@ -313,8 +309,6 @@ export default function Register() {
             </div>
           </div>
         </div>
-        
-       
       </div>
     </div>
   )

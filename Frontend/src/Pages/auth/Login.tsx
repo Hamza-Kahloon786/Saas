@@ -83,26 +83,29 @@ export default function Login() {
   return (
     <div className="min-h-screen flex bg-gray-50">
       {/* Left Side - Login Form */}
-      <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-20 xl:px-24">
-        <div className="mx-auto w-full max-w-sm lg:w-96">
-          {/* Logo */}
-          <div className="flex items-center mb-8">
-            {/* <div className="flex items-center">
-              <RocketLaunchIcon className="h-8 w-8 text-primary-600 mr-3" />
-              <span className="text-xl font-bold text-gray-900">STORM AI</span>
-            </div> */}
-          </div>
-
+      <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:px-20 xl:px-24">
+        {/* Logo Section - Top Left */}
+        <div className="absolute top-4 left-8 flex items-center">
+          <img 
+            src="/rlogo.png" 
+            alt="STORM AI Logo" 
+            className="h-6 w-6 object-contain mr-2"
+          />
+          <span className="text-base font-bold text-gray-900">STORM AI</span>
+        </div>
+        
+        {/* Form Container */}
+        <div className="mx-auto text center w-full max-w-sm">
           {/* Sign in to STORM AI */}
           <div className="mb-8">
             <h2 className="text-3xl font-bold text-gray-900 mb-2">
               Sign in to STORM AI
             </h2>
             <p className="text-gray-600">
-              Or{' '}
+        
               <Link
                 to="/register"
-                className="font-medium text-primary-600 hover:text-primary-500"
+                className="font-medium justify center text-center text-primary-600 hover:text-primary-500"
               >
                 start your 14-day free trial
               </Link>
@@ -214,32 +217,28 @@ export default function Login() {
 
       {/* Right Side - CRM Dashboard Preview */}
       <div className="hidden lg:block relative w-0 flex-1 bg-gradient-to-br from-primary-600 to-indigo-700 overflow-hidden">
-        <div className="absolute inset-0 flex flex-col justify-center items-center px-4 py-8">
-          <div className="text-center text-white mb-6 max-w-lg mx-auto">
-            <h2 className="text-2xl lg:text-3xl font-bold mb-4 leading-tight">
+        <div className="absolute inset-0 flex flex-col justify-center items-center px-12 py-16">
+          <div className="text-center text-white mb-12 max-w-xl mx-auto">
+            <h2 className="text-3xl font-bold mb-6 leading-tight">
               Effortlessly manage your team and operations.
             </h2>
-            <p className="text-base lg:text-lg opacity-90">
+            <p className="text-lg opacity-90">
               Log in to access your CRM dashboard and manage your team.
             </p>
           </div>
           
           {/* Dashboard Preview - Using your dashboard image */}
-          <div className="w-full max-w-2xl mx-auto px-8">
-            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 shadow-2xl">
+          <div className="w-full max-w-3xl mx-auto">
+            <div className="bg-white rounded-3xl p-8 shadow-2xl">
               <img 
                 src="/dashboard.png" 
                 alt="STORM AI Dashboard Preview" 
-                className="w-full h-auto rounded-xl shadow-lg transform hover:scale-105 transition-all duration-700 ease-out"
+                className="w-full h-auto rounded-2xl"
               />
             </div>
           </div>
         </div>
-        
-       
       </div>
-
-     
     </div>
   )
 }
