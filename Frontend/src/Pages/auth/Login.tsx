@@ -1,4 +1,4 @@
-// frontend/src/pages/auth/Login.tsx - UPDATED VERSION
+// frontend/src/pages/auth/Login.tsx - STORM AI STYLE UPDATE
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
@@ -8,7 +8,7 @@ import { useMutation } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { authService } from '../../services/auth.service'
 import { useAuthStore } from '../../store/authStore'
-import { RocketLaunchIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
+import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email'),
@@ -28,6 +28,10 @@ export default function Login() {
     formState: { errors },
   } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: 'stormstore@company.com',
+      password: 'Stormstore.'
+    }
   })
 
   const loginMutation = useMutation({
@@ -77,37 +81,46 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <div className="mx-auto h-12 w-12 flex items-center justify-center">
-            <RocketLaunchIcon className="h-12 w-12 text-primary-600" />
+    <div className="min-h-screen flex bg-gray-50">
+      {/* Left Side - Login Form */}
+      <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-20 xl:px-24">
+        <div className="mx-auto w-full max-w-sm lg:w-96">
+          {/* Logo */}
+          <div className="flex items-center mb-8">
+            {/* <div className="flex items-center">
+              <RocketLaunchIcon className="h-8 w-8 text-primary-600 mr-3" />
+              <span className="text-xl font-bold text-gray-900">STORM AI</span>
+            </div> */}
           </div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Sign in to STORM AI
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Or{' '}
-            <Link
-              to="/register"
-              className="font-medium text-primary-600 hover:text-primary-500"
-            >
-              start your 14-day free trial
-            </Link>
-          </p>
-        </div>
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
-          <div className="space-y-4">
+          {/* Sign in to STORM AI */}
+          <div className="mb-8">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">
+              Sign in to STORM AI
+            </h2>
+            <p className="text-gray-600">
+              Or{' '}
+              <Link
+                to="/register"
+                className="font-medium text-primary-600 hover:text-primary-500"
+              >
+                start your 14-day free trial
+              </Link>
+            </p>
+          </div>
+
+          {/* Login Form */}
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {/* Email Field */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                 Email Address
               </label>
               <input
                 {...register('email')}
                 type="email"
                 autoComplete="email"
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 bg-white"
                 placeholder="Enter your email address"
               />
               {errors.email && (
@@ -115,27 +128,28 @@ export default function Login() {
               )}
             </div>
 
+            {/* Password Field */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                 Password
               </label>
-              <div className="mt-1 relative">
+              <div className="relative">
                 <input
                   {...register('password')}
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
-                  className="appearance-none relative block w-full px-3 py-2 pr-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
+                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 bg-white"
                   placeholder="Enter your password"
                 />
                 <button
                   type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
-                    <EyeSlashIcon className="h-4 w-4 text-gray-400" />
+                    <EyeSlashIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
                   ) : (
-                    <EyeIcon className="h-4 w-4 text-gray-400" />
+                    <EyeIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
                   )}
                 </button>
               </div>
@@ -143,49 +157,50 @@ export default function Login() {
                 <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
               )}
             </div>
-          </div>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <input
-                id="remember-me"
-                name="remember-me"
-                type="checkbox"
-                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-              />
-              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-                Remember me
-              </label>
+            {/* Remember Me & Forgot Password */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <input
+                  id="remember-me"
+                  name="remember-me"
+                  type="checkbox"
+                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                />
+                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
+                  Remember me
+                </label>
+              </div>
+
+              <div className="text-sm">
+                <Link
+                  to="/forgot-password"
+                  className="font-medium text-primary-600 hover:text-primary-500"
+                >
+                  Forgot your password?
+                </Link>
+              </div>
             </div>
 
-            <div className="text-sm">
-              <Link
-                to="/forgot-password"
-                className="font-medium text-primary-600 hover:text-primary-500"
-              >
-                Forgot your password?
-              </Link>
-            </div>
-          </div>
-
-          <div>
+            {/* Login Button */}
             <button
               type="submit"
               disabled={loginMutation.isPending}
-              className="group bg-black relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
             >
-              <span className="absolute left-0 inset-y-0 flex items-center pl-3">
-                {loginMutation.isPending && (
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                )}
-              </span>
-              {loginMutation.isPending ? 'Signing in...' : 'Sign in'}
+              {loginMutation.isPending ? (
+                <div className="flex items-center">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Signing in...
+                </div>
+              ) : (
+                'Sign in'
+              )}
             </button>
-          </div>
-        </form>
+          </form>
 
-        <div className="mt-6 border-t border-gray-200 pt-6">
-          <p className="text-center text-sm text-gray-800">
+          {/* Register Link */}
+          <p className="mt-8 text-center text-sm text-gray-600">
             Don't have an account?{' '}
             <Link
               to="/register"
@@ -195,165 +210,36 @@ export default function Login() {
             </Link>
           </p>
         </div>
+      </div>
 
-        {/* Development Helper */}
-        {import.meta.env.DEV && (
-          <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
-            <h3 className="text-sm font-medium text-yellow-800 mb-2">Development Info:</h3>
-            <p className="text-xs text-yellow-700">
-              Role-based redirects: Admin/Manager → Dashboard | Customer → Customer Portal | Technician → Technician Portal
+      {/* Right Side - CRM Dashboard Preview */}
+      <div className="hidden lg:block relative w-0 flex-1 bg-gradient-to-br from-primary-600 to-indigo-700 overflow-hidden">
+        <div className="absolute inset-0 flex flex-col justify-center items-center px-4 py-8">
+          <div className="text-center text-white mb-6 max-w-lg mx-auto">
+            <h2 className="text-2xl lg:text-3xl font-bold mb-4 leading-tight">
+              Effortlessly manage your team and operations.
+            </h2>
+            <p className="text-base lg:text-lg opacity-90">
+              Log in to access your CRM dashboard and manage your team.
             </p>
           </div>
-        )}
+          
+          {/* Dashboard Preview - Using your dashboard image */}
+          <div className="w-full max-w-2xl mx-auto px-8">
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 shadow-2xl">
+              <img 
+                src="/dashboard.png" 
+                alt="STORM AI Dashboard Preview" 
+                className="w-full h-auto rounded-xl shadow-lg transform hover:scale-105 transition-all duration-700 ease-out"
+              />
+            </div>
+          </div>
+        </div>
+        
+       
       </div>
+
+     
     </div>
   )
 }
-
-// // frontend/src/pages/auth/Login.tsx
-// import { useState } from 'react'
-// import { Link, useNavigate } from 'react-router-dom'
-// import { useForm } from 'react-hook-form'
-// import { zodResolver } from '@hookform/resolvers/zod'
-// import { z } from 'zod'
-// import { useMutation } from '@tanstack/react-query'
-// import toast from 'react-hot-toast'
-// import { authService } from '../../services/auth.service'
-// import { useAuthStore } from '../../store/authStore'
-// import { RocketLaunchIcon } from '@heroicons/react/24/outline'
-
-// const loginSchema = z.object({
-//   email: z.string().email('Please enter a valid email'),
-//   password: z.string().min(6, 'Password must be at least 6 characters'),
-// })
-
-// type LoginForm = z.infer<typeof loginSchema>
-
-// export default function Login() {
-//   const navigate = useNavigate()
-//   const { login } = useAuthStore()
-//   const [showPassword, setShowPassword] = useState(false)
-
-//   const {
-//     register,
-//     handleSubmit,
-//     formState: { errors },
-//   } = useForm<LoginForm>({
-//     resolver: zodResolver(loginSchema),
-//   })
-
-//   const loginMutation = useMutation({
-//     mutationFn: authService.login,
-//     // onSuccess:
-// onSuccess: (data) => {
-//   login(data.user, data.access_token)
-//   toast.success('Welcome back!')
-
-//   if (data?.user?.role === 'customer') {
-//     navigate('/customer-portal/dashboard', { replace: true })
-//   } else {
-//     navigate('/dashboard', { replace: true })
-//   }
-// },
-
-//     onError: (error: any) => {
-//       toast.error(error.response?.data?.detail || 'Login failed')
-//     },
-//   })
-
-//   const onSubmit = (data: LoginForm) => {
-//     loginMutation.mutate(data)
-//   }
-
-//   return (
-//     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-//       <div className="max-w-md w-full space-y-8">
-//         <div>
-//           <div className="mx-auto h-12 w-12 flex items-center justify-center">
-//             <RocketLaunchIcon className="h-12 w-12 text-primary-600" />
-//           </div>
-//           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-//             Sign in to STORM AI
-//           </h2>
-//           <p className="mt-2 text-center text-sm text-gray-600">
-//             Or{' '}
-//             <Link
-//               to="/register"
-//               className="font-medium text-primary-600 hover:text-primary-500"
-//             >
-//               start your 14-day free trial
-//             </Link>
-//           </p>
-//         </div>
-
-//         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
-//           <div className="rounded-md shadow-sm -space-y-px">
-//             <div>
-//               <label htmlFor="email" className="sr-only">
-//                 Email address
-//               </label>
-//               <input
-//                 {...register('email')}
-//                 type="email"
-//                 autoComplete="email"
-//                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
-//                 placeholder="Email address"
-//               />
-//               {errors.email && (
-//                 <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
-//               )}
-//             </div>
-//             <div>
-//               <label htmlFor="password" className="sr-only">
-//                 Password
-//               </label>
-//               <input
-//                 {...register('password')}
-//                 type={showPassword ? 'text' : 'password'}
-//                 autoComplete="current-password"
-//                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
-//                 placeholder="Password"
-//               />
-//               {errors.password && (
-//                 <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
-//               )}
-//             </div>
-//           </div>
-
-//           <div className="flex items-center justify-between">
-//             <div className="flex items-center">
-//               <input
-//                 id="remember-me"
-//                 name="remember-me"
-//                 type="checkbox"
-//                 className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-//               />
-//               <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-//                 Remember me
-//               </label>
-//             </div>
-
-//             <div className="text-sm">
-//               <Link
-//                 to="/forgot-password"
-//                 className="font-medium bg-black text-primary-600 hover:text-primary-500"
-//               >
-//                 Forgot your password?
-//               </Link>
-//             </div>
-//           </div>
-
-//           <div>
-//             <button
-//               type="submit"
-//               disabled={loginMutation.isPending}
-//               className="group relative w-full bg-black flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
-//             >
-//               {loginMutation.isPending ? 'Signing in...' : 'Sign in'}
-//             </button>
-//           </div>
-//         </form>
-//       </div>
-//     </div>
-//   )
-// }

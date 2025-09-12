@@ -1,6 +1,5 @@
 // frontend/src/components/layout/AuthLayout.tsx
 import { Outlet } from 'react-router-dom'
-import { RocketLaunchIcon } from '@heroicons/react/24/outline'
 
 export default function AuthLayout() {
   return (
@@ -10,10 +9,14 @@ export default function AuthLayout() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center">
-              <RocketLaunchIcon className="h-8 w-8 text-primary-600" />
+              <img 
+                src="/rlogo.png" 
+                alt="STORM AI Logo" 
+                className="h-8 w-8 object-contain"
+              />
               <span className="ml-2 text-xl font-bold text-gray-900">STORM AI</span>
             </div>
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-black">
               AI-Enhanced Service Management
             </div>
           </div>
@@ -24,15 +27,6 @@ export default function AuthLayout() {
       <main className="pt-20">
         <Outlet />
       </main>
-
-      {/* Optional: Add a simple footer */}
-      {/* <footer className="absolute bottom-0 left-0 right-0 py-4">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center text-sm text-gray-500">
-            © 2024 STORM AI. All rights reserved.
-          </div>
-        </div>
-      </footer> */}
     </div>
   )
 }

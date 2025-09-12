@@ -95,185 +95,183 @@ export default function Register() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <div className="mx-auto h-12 w-12 flex items-center justify-center">
-            <RocketLaunchIcon className="h-12 w-12 text-primary-600" />
+    <div className="min-h-screen flex bg-gray-50">
+      {/* Left Side - Registration Form */}
+      <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-20 xl:px-24">
+        <div className="mx-auto w-full max-w-sm lg:w-96">
+          
+          {/* Create Account */}
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              Create your STORM AI account
+            </h2>
+            <p className="text-gray-600">
+              Join our platform to book services and manage your appointments
+            </p>
+            {/* <div className="mt-4 flex justify-start">
+              {/* <div className="flex items-center px-3 py-2 bg-blue-50 rounded-full">
+                <UserIcon className="h-5 w-5 text-blue-600 mr-2" />
+                <span className="text-sm font-medium text-blue-900">Customer Registration</span>
+              </div> 
+            </div> */}
           </div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Create your customer account
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Join our platform to book services and manage your appointments
-          </p>
-          <div className="mt-4 flex justify-center">
-            <div className="flex items-center px-3 py-2 bg-blue-50 rounded-full">
-              <UserIcon className="h-5 w-5 text-blue-600 mr-2" />
-              <span className="text-sm font-medium text-blue-900">Customer Registration</span>
-            </div>
-          </div>
-        </div>
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
-          {/* Name Fields */}
-          <div className="grid grid-cols-2 gap-4">
+          {/* Registration Form */}
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {/* Name Fields */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="first_name" className="block text-sm font-medium text-gray-700 mb-2">
+                  First Name
+                </label>
+                <input
+                  {...register('first_name')}
+                  type="text"
+                  autoComplete="given-name"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 bg-white"
+                  placeholder="First name"
+                />
+                {errors.first_name && (
+                  <p className="mt-1 text-sm text-red-600">{errors.first_name.message}</p>
+                )}
+              </div>
+
+              <div>
+                <label htmlFor="last_name" className="block text-sm font-medium text-gray-700 mb-2">
+                  Last Name
+                </label>
+                <input
+                  {...register('last_name')}
+                  type="text"
+                  autoComplete="family-name"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 bg-white"
+                  placeholder="Last name"
+                />
+                {errors.last_name && (
+                  <p className="mt-1 text-sm text-red-600">{errors.last_name.message}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Email */}
             <div>
-              <label htmlFor="first_name" className="block text-sm font-medium text-gray-700">
-                First Name
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                Email Address
               </label>
               <input
-                {...register('first_name')}
-                type="text"
-                autoComplete="given-name"
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
-                placeholder="First name"
+                {...register('email')}
+                type="email"
+                autoComplete="email"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 bg-white"
+                placeholder="Email address"
               />
-              {errors.first_name && (
-                <p className="mt-1 text-sm text-red-600">{errors.first_name.message}</p>
+              {errors.email && (
+                <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
+              )}
+            </div>
+
+            {/* Password Fields */}
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                Password
+              </label>
+              <div className="relative">
+                <input
+                  {...register('password')}
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="new-password"
+                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 bg-white"
+                  placeholder="Password"
+                />
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeSlashIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                  ) : (
+                    <EyeIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                  )}
+                </button>
+              </div>
+              {errors.password && (
+                <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
               )}
             </div>
 
             <div>
-              <label htmlFor="last_name" className="block text-sm font-medium text-gray-700">
-                Last Name
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
+                Confirm Password
               </label>
-              <input
-                {...register('last_name')}
-                type="text"
-                autoComplete="family-name"
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
-                placeholder="Last name"
-              />
-              {errors.last_name && (
-                <p className="mt-1 text-sm text-red-600">{errors.last_name.message}</p>
+              <div className="relative">
+                <input
+                  {...register('confirmPassword')}
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  autoComplete="new-password"
+                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 bg-white"
+                  placeholder="Confirm password"
+                />
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? (
+                    <EyeSlashIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                  ) : (
+                    <EyeIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                  )}
+                </button>
+              </div>
+              {errors.confirmPassword && (
+                <p className="mt-1 text-sm text-red-600">{errors.confirmPassword.message}</p>
               )}
             </div>
-          </div>
 
-          {/* Email */}
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              Email Address
-            </label>
-            <input
-              {...register('email')}
-              type="email"
-              autoComplete="email"
-              className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
-              placeholder="Email address"
-            />
-            {errors.email && (
-              <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
-            )}
-          </div>
-
-          {/* Password Fields */}
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-              Password
-            </label>
-            <div className="mt-1 relative">
+            {/* Terms and Conditions */}
+            <div className="flex items-center">
               <input
-                {...register('password')}
-                type={showPassword ? 'text' : 'password'}
-                autoComplete="new-password"
-                className="appearance-none relative block w-full px-3 py-2 pr-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
-                placeholder="Password"
+                {...register('terms')}
+                id="terms"
+                name="terms"
+                type="checkbox"
+                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
               />
-              <button
-                type="button"
-                className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? (
-                  <EyeSlashIcon className="h-5 w-5 text-gray-400" />
-                ) : (
-                  <EyeIcon className="h-5 w-5 text-gray-400" />
-                )}
-              </button>
+              <label htmlFor="terms" className="ml-2 block text-sm text-gray-900">
+                I agree to the{' '}
+                <Link to="/terms" className="text-primary-600 hover:text-primary-500">
+                  Terms and Conditions
+                </Link>
+                {' '}and{' '}
+                <Link to="/privacy" className="text-primary-600 hover:text-primary-500">
+                  Privacy Policy
+                </Link>
+              </label>
             </div>
-            {errors.password && (
-              <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
+            {errors.terms && (
+              <p className="mt-1 text-sm text-red-600">{errors.terms.message}</p>
             )}
-          </div>
 
-          <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-              Confirm Password
-            </label>
-            <div className="mt-1 relative">
-              <input
-                {...register('confirmPassword')}
-                type={showConfirmPassword ? 'text' : 'password'}
-                autoComplete="new-password"
-                className="appearance-none relative block w-full px-3 py-2 pr-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
-                placeholder="Confirm password"
-              />
-              <button
-                type="button"
-                className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              >
-                {showConfirmPassword ? (
-                  <EyeSlashIcon className="h-5 w-5 text-gray-400" />
-                ) : (
-                  <EyeIcon className="h-5 w-5 text-gray-400" />
-                )}
-              </button>
-            </div>
-            {errors.confirmPassword && (
-              <p className="mt-1 text-sm text-red-600">{errors.confirmPassword.message}</p>
-            )}
-          </div>
-
-          {/* Terms and Conditions */}
-          <div className="flex items-center">
-            <input
-              {...register('terms')}
-              id="terms"
-              name="terms"
-              type="checkbox"
-              className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-            />
-            <label htmlFor="terms" className="ml-2 block text-sm text-gray-900">
-              I agree to the{' '}
-              <Link to="/terms" className="text-primary-600 hover:text-primary-500">
-                Terms and Conditions
-              </Link>
-              {' '}and{' '}
-              <Link to="/privacy" className="text-primary-600 hover:text-primary-500">
-                Privacy Policy
-              </Link>
-            </label>
-          </div>
-          {errors.terms && (
-            <p className="mt-1 text-sm text-red-600">{errors.terms.message}</p>
-          )}
-
-          {/* Submit Button */}
-          <div>
+            {/* Submit Button */}
             <button
               type="submit"
               disabled={registerMutation.isPending}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
             >
               {registerMutation.isPending ? (
                 <div className="flex items-center">
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                   Creating account...
                 </div>
               ) : (
                 'Create Customer Account'
               )}
             </button>
-          </div>
+          </form>
 
           {/* Additional Info */}
-          <div className="text-center">
+          <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
               Already have an account?{' '}
               <Link
@@ -283,13 +281,40 @@ export default function Register() {
                 Sign in here
               </Link>
             </p>
-            <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+            {/* <div className="mt-3 p-3 bg-blue-50 rounded-lg">
               <p className="text-xs text-blue-700">
                 <strong>For Staff/Admin Access:</strong> Please contact your system administrator to get credentials.
               </p>
+            </div> */}
+          </div>
+        </div>
+      </div>
+
+      {/* Right Side - CRM Dashboard Preview */}
+      <div className="hidden lg:block relative w-0 flex-1 bg-gradient-to-br from-primary-600 to-indigo-700 overflow-hidden">
+        <div className="absolute inset-0 flex flex-col justify-center items-center px-12 py-16">
+          <div className="text-center text-white mb-12 max-w-xl mx-auto">
+            <h2 className="text-2xl font-bold mb-6 leading-tight">
+              Join thousands of satisfied customers.
+            </h2>
+            <p className="text-lg opacity-90">
+              Get started with your free account and experience our premium service management platform.
+            </p>
+          </div>
+          
+          {/* Dashboard Preview - Using your dashboard image */}
+          <div className="w-full max-w-3xl mx-auto">
+            <div className="bg-white rounded-3xl p-8 shadow-2xl">
+              <img 
+                src="/dashboard.png" 
+                alt="STORM AI Dashboard Preview" 
+                className="w-full h-auto rounded-2xl"
+              />
             </div>
           </div>
-        </form>
+        </div>
+        
+       
       </div>
     </div>
   )
