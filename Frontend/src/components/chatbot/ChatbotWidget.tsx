@@ -82,7 +82,7 @@ export const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({
       setConnectionStatus('connecting')
       
       // Get the API URL and convert to WebSocket URL
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+      const apiUrl = import.meta.env.VITE_API_URL || ''
       const wsUrl = apiUrl.replace('http', 'ws')
       
       // TEST MULTIPLE ENDPOINTS - Try them in order
