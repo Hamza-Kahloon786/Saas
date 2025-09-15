@@ -1,4 +1,4 @@
-// frontend/src/pages/auth/Login.tsx - STORM AI STYLE UPDATE
+// frontend/src/pages/auth/Login.tsx - MOBILE RESPONSIVE FIX
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
@@ -28,10 +28,10 @@ export default function Login() {
     formState: { errors },
   } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: 'stormstore@company.com',
-      password: 'Stormstore.'
-    }
+    // defaultValues: {
+    //   email: 'stormstore@company.com',
+    //   password: 'Stormstore.'
+    // }
   })
 
   const loginMutation = useMutation({
@@ -83,37 +83,41 @@ export default function Login() {
   return (
     <div className="min-h-screen flex bg-gray-50">
       {/* Left Side - Login Form */}
-      <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:px-20 xl:px-24">
-        {/* Logo Section - Top Left */}
-        <div className="absolute top-4 left-8 flex items-center">
-          <img 
-            src="/rlogo.png" 
-            alt="STORM AI Logo" 
-            className="h-6 w-6 object-contain mr-2"
-          />
-          <span className="text-base font-bold text-gray-900">STORM AI</span>
+      <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 md:px-8 lg:px-20 xl:px-24 py-8 sm:py-12 lg:py-16">
+        
+        {/* Logo Section - Top Left (Hidden on small screens to save space) */}
+        <div className="hidden sm:block absolute top-4 sm:top-6 lg:top-8 left-4 sm:left-6 lg:left-8">
+          <div className="flex items-center">
+            <img 
+              src="/rlogo.png" 
+              alt="STORM AI Logo" 
+              className="h-5 w-5 sm:h-6 sm:w-6 object-contain mr-2"
+            />
+            <span className="text-sm sm:text-base font-bold text-gray-900">STORM AI</span>
+          </div>
         </div>
         
         {/* Form Container */}
-        <div className="mx-auto text center w-full max-w-sm">
-          {/* Sign in to STORM AI */}
-          <div className="mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              Sign in to STORM AI
+        <div className="mx-auto w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-sm">
+          
+          {/* Login Header */}
+          <div className="mb-6 sm:mb-8 text-center">
+            <div className="flex justify-center mb-4 sm:mb-6">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-blue-600 rounded-full flex items-center justify-center">
+                <img 
+                  src="/rlogow.png" 
+                  alt="Logo" 
+                  className="h-8 w-8 sm:h-10 sm:w-10 object-contain"
+                />
+              </div>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
+              Login
             </h2>
-            <p className="text-gray-600">
-        
-              <Link
-                to="/register"
-                className="font-medium justify center text-center text-primary-600 hover:text-primary-500"
-              >
-                start your 14-day free trial
-              </Link>
-            </p>
           </div>
 
           {/* Login Form */}
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <div className="space-y-5 sm:space-y-6">
             {/* Email Field */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
@@ -123,11 +127,11 @@ export default function Login() {
                 {...register('email')}
                 type="email"
                 autoComplete="email"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 bg-white"
+                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white text-sm sm:text-base outline-none"
                 placeholder="Enter your email address"
               />
               {errors.email && (
-                <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
+                <p className="mt-1 text-xs sm:text-sm text-red-600">{errors.email.message}</p>
               )}
             </div>
 
@@ -141,44 +145,44 @@ export default function Login() {
                   {...register('password')}
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
-                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 bg-white"
+                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 pr-10 sm:pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white text-sm sm:text-base outline-none"
                   placeholder="Enter your password"
                 />
                 <button
                   type="button"
-                  className="absolute inset-y-0 right-0 pr-4 flex items-center"
+                  className="absolute inset-y-0 right-0 pr-3 sm:pr-4 flex items-center"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
-                    <EyeSlashIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                    <EyeSlashIcon className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 hover:text-gray-600" />
                   ) : (
-                    <EyeIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                    <EyeIcon className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 hover:text-gray-600" />
                   )}
                 </button>
               </div>
               {errors.password && (
-                <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
+                <p className="mt-1 text-xs sm:text-sm text-red-600">{errors.password.message}</p>
               )}
             </div>
 
             {/* Remember Me & Forgot Password */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
               <div className="flex items-center">
                 <input
                   id="remember-me"
                   name="remember-me"
                   type="checkbox"
-                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
+                <label htmlFor="remember-me" className="ml-2 block text-xs sm:text-sm text-gray-700">
                   Remember me
                 </label>
               </div>
 
-              <div className="text-sm">
+              <div className="text-xs sm:text-sm">
                 <Link
                   to="/forgot-password"
-                  className="font-medium text-primary-600 hover:text-primary-500"
+                  className="font-medium text-blue-600 hover:text-blue-500"
                 >
                   Forgot your password?
                 </Link>
@@ -187,27 +191,28 @@ export default function Login() {
 
             {/* Login Button */}
             <button
-              type="submit"
+              type="button"
+              onClick={handleSubmit(onSubmit)}
               disabled={loginMutation.isPending}
-              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+              className="w-full flex justify-center py-2.5 sm:py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
             >
               {loginMutation.isPending ? (
                 <div className="flex items-center">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Signing in...
+                  <span className="text-sm">Signing in...</span>
                 </div>
               ) : (
                 'Sign in'
               )}
             </button>
-          </form>
+          </div>
 
           {/* Register Link */}
-          <p className="mt-8 text-center text-sm text-gray-600">
+          <p className="mt-6 sm:mt-8 text-center text-xs sm:text-sm text-gray-600">
             Don't have an account?{' '}
             <Link
               to="/register"
-              className="font-medium text-primary-600 hover:text-primary-500"
+              className="font-medium text-blue-600 hover:text-blue-500"
             >
               Sign up for free
             </Link>
@@ -215,8 +220,8 @@ export default function Login() {
         </div>
       </div>
 
-      {/* Right Side - CRM Dashboard Preview */}
-      <div className="hidden lg:block relative w-0 flex-1 bg-gradient-to-br from-primary-600 to-indigo-700 overflow-hidden">
+      {/* Right Side - CRM Dashboard Preview (Hidden on mobile and tablet) */}
+      <div className="hidden xl:block relative w-0 flex-1 bg-gradient-to-br from-blue-600 to-indigo-700 overflow-hidden">
         <div className="absolute inset-0 flex flex-col justify-center items-center px-12 py-16">
           <div className="text-center text-white mb-12 max-w-xl mx-auto">
             <h2 className="text-3xl font-bold mb-6 leading-tight">
@@ -227,7 +232,7 @@ export default function Login() {
             </p>
           </div>
           
-          {/* Dashboard Preview - Using your dashboard image */}
+          {/* Dashboard Preview */}
           <div className="w-full max-w-3xl mx-auto">
             <div className="bg-white rounded-3xl p-8 shadow-2xl">
               <img 

@@ -43,6 +43,11 @@ const navigation: NavigationItem[] = [
         href: '/crm/service-requests', 
         icon: ClipboardDocumentListIcon,
       },
+      {
+    name: 'Document Management',
+    href: '/admin/documents',
+    icon: DocumentTextIcon,
+  },
       { name: 'AI Bookings', href: '/admin/ai-bookings', icon: ChatBubbleLeftRightIcon },
       { name: 'Pipeline', href: '/crm/pipeline', icon: ChartBarIcon },
     ]

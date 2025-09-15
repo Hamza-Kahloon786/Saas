@@ -102,10 +102,56 @@ class Settings(PydanticBaseSettings):
     OPENAI_MAX_TOKENS: int = 150
     ANTHROPIC_API_KEY: Optional[str] = None
     
-    # File Storage Settings
+    # File Storage Settings (Enhanced for Document Management)
     UPLOAD_PATH: str = "uploads"
-    MAX_FILE_SIZE: int = 10 * 1024 * 1024  # 10MB
-    ALLOWED_FILE_TYPES: Union[str, List[str]] = "pdf,jpg,jpeg,png,doc,docx,txt"
+    MAX_FILE_SIZE: int = 50 * 1024 * 1024  # 50MB (increased from 10MB for documents)
+    ALLOWED_FILE_TYPES: Union[str, List[str]] = "pdf,jpg,jpeg,png,doc,docx,txt,rtf,bmp,webp,gif,mp4,avi,mov,wmv,flv,zip,rar,7z,xlsx,xls,csv,ppt,pptx"
+    
+    # ✅ NEW - Document Management Settings
+    UPLOAD_DIR: str = "uploads"  # Base upload directory
+    DOCUMENTS_DIR: str = "uploads/documents"  # Document-specific directory
+    TEMP_DIR: str = "uploads/temp"  # Temporary files directory
+    MAX_UPLOAD_SIZE: int = 50 * 1024 * 1024  # 50MB limit for documents
+    DOCUMENT_RETENTION_DAYS: int = 365  # How long to keep documents
+    DOCUMENT_BACKUP_ENABLED: bool = True  # Enable document backups
+    DOCUMENT_ENCRYPTION_ENABLED: bool = False  # Enable file encryption (set to True in production)
+    
+    # Document file type restrictions
+    ALLOWED_DOCUMENT_EXTENSIONS: Union[str, List[str]] = ".pdf,.doc,.docx,.txt,.rtf,.jpg,.jpeg,.png,.gif,.bmp,.webp,.mp4,.avi,.mov,.wmv,.flv,.zip,.rar,.7z,.xlsx,.xls,.csv,.ppt,.pptx"
+    RESTRICTED_FILE_TYPES: Union[str, List[str]] = ".exe,.bat,.cmd,.sh,.scr,.com,.pif,.vbs,.js"  # Blocked for security
+    
+    # Document versioning settings
+    DOCUMENT_VERSIONING_ENABLED: bool = True
+    MAX_DOCUMENT_VERSIONS: int = 10  # Maximum versions to keep per document
+    
+    # Document processing settings
+    DOCUMENT_PREVIEW_ENABLED: bool = True
+    DOCUMENT_THUMBNAIL_SIZE: int = 200  # Thumbnail size in pixels
+    DOCUMENT_OCR_ENABLED: bool = False  # Enable OCR for text extraction (requires additional setup)
+    
+    @field_validator("ALLOWED_DOCUMENT_EXTENSIONS", mode="before")
+    @classmethod
+    def assemble_document_extensions(cls, v: Union[str, List[str]]) -> List[str]:
+        if isinstance(v, str):
+            if not v or not v.strip():
+                return [".pdf", ".doc", ".docx", ".txt", ".jpg", ".jpeg", ".png"]
+            return [ext.strip() for ext in v.split(",") if ext.strip()]
+        elif isinstance(v, list):
+            return v
+        else:
+            return [".pdf", ".doc", ".docx", ".txt", ".jpg", ".jpeg", ".png"]
+    
+    @field_validator("RESTRICTED_FILE_TYPES", mode="before")
+    @classmethod
+    def assemble_restricted_types(cls, v: Union[str, List[str]]) -> List[str]:
+        if isinstance(v, str):
+            if not v or not v.strip():
+                return [".exe", ".bat", ".cmd", ".sh", ".scr"]
+            return [ext.strip() for ext in v.split(",") if ext.strip()]
+        elif isinstance(v, list):
+            return v
+        else:
+            return [".exe", ".bat", ".cmd", ".sh", ".scr"]
     
     @field_validator("ALLOWED_FILE_TYPES", mode="before")
     @classmethod
@@ -198,6 +244,9 @@ class Settings(PydanticBaseSettings):
     ENABLE_INTEGRATIONS: bool = True
     ENABLE_ANALYTICS: bool = True
     ENABLE_FILE_UPLOADS: bool = True
+    ENABLE_DOCUMENT_MANAGEMENT: bool = True  # ✅ NEW - Enable document management features
+    ENABLE_DOCUMENT_SIGNING: bool = True  # ✅ NEW - Enable document signing
+    ENABLE_DOCUMENT_APPROVAL: bool = True  # ✅ NEW - Enable document approval workflow
     
     # Business Settings
     DEFAULT_TIMEZONE: str = "UTC"
@@ -224,6 +273,30 @@ class Settings(PydanticBaseSettings):
         except Exception:
             # If we can't create directory, use a safe default
             v = "uploads"
+            Path(v).mkdir(parents=True, exist_ok=True)
+        return v
+    
+    @field_validator("DOCUMENTS_DIR", mode="before")
+    @classmethod
+    def create_documents_directory(cls, v: str) -> str:
+        """Create documents directory if it doesn't exist"""
+        try:
+            Path(v).mkdir(parents=True, exist_ok=True)
+        except Exception:
+            # If we can't create directory, use a safe default
+            v = "uploads/documents"
+            Path(v).mkdir(parents=True, exist_ok=True)
+        return v
+    
+    @field_validator("TEMP_DIR", mode="before")
+    @classmethod
+    def create_temp_directory(cls, v: str) -> str:
+        """Create temp directory if it doesn't exist"""
+        try:
+            Path(v).mkdir(parents=True, exist_ok=True)
+        except Exception:
+            # If we can't create directory, use a safe default
+            v = "uploads/temp"
             Path(v).mkdir(parents=True, exist_ok=True)
         return v
     
@@ -260,6 +333,35 @@ class Settings(PydanticBaseSettings):
     def get_redis_url(self) -> str:
         """Get formatted Redis URL"""
         return f"{self.REDIS_URL}/{self.REDIS_DB}"
+    
+    # ✅ NEW - Document management helper methods
+    def get_documents_path(self) -> Path:
+        """Get documents directory path"""
+        return Path(self.DOCUMENTS_DIR)
+    
+    def get_temp_path(self) -> Path:
+        """Get temporary directory path"""
+        return Path(self.TEMP_DIR)
+    
+    def is_allowed_file_extension(self, filename: str) -> bool:
+        """Check if file extension is allowed"""
+        file_ext = Path(filename).suffix.lower()
+        return file_ext in self.ALLOWED_DOCUMENT_EXTENSIONS
+    
+    def is_restricted_file_type(self, filename: str) -> bool:
+        """Check if file type is restricted"""
+        file_ext = Path(filename).suffix.lower()
+        return file_ext in self.RESTRICTED_FILE_TYPES
+    
+    def get_max_file_size_mb(self) -> float:
+        """Get maximum file size in MB"""
+        return self.MAX_UPLOAD_SIZE / (1024 * 1024)
+    
+    def get_company_documents_path(self, company_id: str) -> Path:
+        """Get company-specific documents path"""
+        company_path = self.get_documents_path() / company_id
+        company_path.mkdir(parents=True, exist_ok=True)
+        return company_path
     
     class Config:
         env_file = ".env"

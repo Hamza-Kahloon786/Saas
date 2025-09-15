@@ -70,7 +70,7 @@ from app.api.v1.endpoints import (
     auth, users, contacts, leads, jobs,
     scheduling, estimates, invoices,
     ai_automation, analytics, integrations,
-    dashboard, notifications, ws, email, 
+    dashboard, notifications, ws, email, documents , 
     mobile, customer_portal, realtime, technician_portal, service_requests, technicians   
 )
 from app.api.v1.endpoints.ai_chatbot import router as ai_chatbot_router
@@ -101,6 +101,9 @@ api_router.include_router(dashboard.router, tags=["dashboard"])
 # Customer & Technician portals
 api_router.include_router(customer_portal.router, prefix="/customer-portal", tags=["customer-portal"])
 api_router.include_router(technician_portal.router, prefix="/technician-portal", tags=["technician-portal"])
+
+# ✅ NEW - Document management
+api_router.include_router(documents.router, prefix="/documents", tags=["documents"])
 
 # Realtime features
 api_router.include_router(realtime.router)

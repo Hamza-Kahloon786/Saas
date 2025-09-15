@@ -51,7 +51,7 @@ const API_BASE = (() => {
 
 const API_CONFIG = {
   baseURL: API_BASE,
-  timeout: 10000, // Increased timeout to 10 seconds
+  timeout: 30000, // Increased timeout to 10 seconds
   headers: { 'Content-Type': 'application/json' },
 }
 
@@ -61,7 +61,22 @@ export const api: AxiosInstance = axios.create(API_CONFIG)
 const FALLBACK_DATA = {
   // Add this to the FALLBACK_DATA object in your api.ts file
 // Add this to your FALLBACK_DATA object in frontend/src/services/api.ts
+// Add to your existing FALLBACK_DATA:
+'documents': {
+  documents: [],
+  total: 0,
+  page: 1,
+  size: 100,
+  pages: 0,
+  document_types: ['id_card', 'agreement', 'contract'],
+  message: "Admin documents fallback data"
+},
 
+'customers': {
+  customers: [],
+  total: 0,
+  message: "Customers fallback data"
+},
 'service-requests': {
   service_requests: [
     {
@@ -1078,6 +1093,13 @@ api.interceptors.response.use(
         case 404: 
           // Don't show toast for 404s on API endpoints - they might be expected
           console.warn(`404 Error - Endpoint may not exist: ${config?.method?.toUpperCase()} ${config?.url}`)
+          break
+        // In your existing response interceptor error handling, add:
+        case 413: // Payload too large
+          toast.error('File too large. Please upload a file smaller than 50MB.')
+          break
+        case 415: // Unsupported media type  
+          toast.error('File type not supported. Please upload a valid document.')
           break
         case 422:
           const validationMessage = typeof data?.detail === 'string' ? data.detail : 

@@ -55,3 +55,7 @@ redis>=5.0.0
 
 # HTTP client with better async support
 aiohttp>=3.9.0
+
+
+aiofiles==23.2.1  # ✅ NEW - For async file operations
+mimetypes==1.0.0  # ✅ NEW - For MIME type detection (built-in but explicit)

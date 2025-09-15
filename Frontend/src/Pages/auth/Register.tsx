@@ -1,3 +1,4 @@
+// frontend/src/pages/auth/Register.tsx - MOBILE RESPONSIVE FIX
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
@@ -96,33 +97,43 @@ export default function Register() {
   return (
     <div className="min-h-screen flex bg-gray-50">
       {/* Left Side - Registration Form */}
-      <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:px-20 xl:px-24">
-        {/* Logo Section - Top Left */}
-        <div className="absolute top-4 left-8 flex items-center">
-          <img 
-            src="/rlogo.png" 
-            alt="STORM AI Logo" 
-            className="h-6 w-6 object-contain mr-2"
-          />
-          <span className="text-lg font-bold text-gray-900">STORM AI</span>
+      <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 md:px-8 lg:px-20 xl:px-24 py-8 sm:py-12 lg:py-16">
+        
+        {/* Logo Section - Top Left (Hidden on small screens to save space) */}
+        <div className="hidden sm:block absolute top-4 sm:top-6 lg:top-8 left-4 sm:left-6 lg:left-8">
+          <div className="flex items-center">
+            <img 
+              src="/rlogo.png" 
+              alt="STORM AI Logo" 
+              className="h-5 w-5 sm:h-6 sm:w-6 object-contain mr-2"
+            />
+            <span className="text-sm sm:text-base lg:text-lg font-bold text-gray-900">STORM AI</span>
+          </div>
         </div>
         
         {/* Form Container */}
-        <div className="mx-auto w-full max-w-sm mt-16">
-          {/* Create your STORM AI account */}
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Create your STORM AI account
+        <div className="mx-auto w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-sm">
+          
+          {/* Register Header */}
+          <div className="mb-6 sm:mb-8 text-center">
+            <div className="flex justify-center mb-4 sm:mb-6">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-blue-600 rounded-full flex items-center justify-center">
+                <img 
+                  src="/rlogow.png" 
+                  alt="Logo" 
+                  className="h-8 w-8 sm:h-10 sm:w-10 object-contain"
+                />
+              </div>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
+              Register
             </h2>
-            <p className="text-sm text-gray-600 mb-4">
-              Join our platform to book services and manage your appointments
-            </p>
           </div>
 
           {/* Registration Form */}
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div className="space-y-4 sm:space-y-5">
             {/* Name Fields */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2 sm:gap-3">
               <div>
                 <label htmlFor="first_name" className="block text-sm font-medium text-gray-700 mb-1">
                   First Name
@@ -131,7 +142,7 @@ export default function Register() {
                   {...register('first_name')}
                   type="text"
                   autoComplete="given-name"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 bg-white text-sm"
+                  className="w-full px-2.5 sm:px-3 py-2 sm:py-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white text-xs sm:text-sm outline-none"
                   placeholder="First name"
                 />
                 {errors.first_name && (
@@ -147,7 +158,7 @@ export default function Register() {
                   {...register('last_name')}
                   type="text"
                   autoComplete="family-name"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 bg-white text-sm"
+                  className="w-full px-2.5 sm:px-3 py-2 sm:py-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white text-xs sm:text-sm outline-none"
                   placeholder="Last name"
                 />
                 {errors.last_name && (
@@ -165,7 +176,7 @@ export default function Register() {
                 {...register('email')}
                 type="email"
                 autoComplete="email"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 bg-white text-sm"
+                className="w-full px-3 sm:px-4 py-2 sm:py-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white text-sm outline-none"
                 placeholder="Email address"
               />
               {errors.email && (
@@ -183,12 +194,12 @@ export default function Register() {
                   {...register('password')}
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="new-password"
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 bg-white text-sm"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-2.5 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white text-sm outline-none"
                   placeholder="Password"
                 />
                 <button
                   type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  className="absolute inset-y-0 right-0 pr-2.5 sm:pr-3 flex items-center"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
@@ -212,12 +223,12 @@ export default function Register() {
                   {...register('confirmPassword')}
                   type={showConfirmPassword ? 'text' : 'password'}
                   autoComplete="new-password"
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 bg-white text-sm"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-2.5 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white text-sm outline-none"
                   placeholder="Confirm password"
                 />
                 <button
                   type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  className="absolute inset-y-0 right-0 pr-2.5 sm:pr-3 flex items-center"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 >
                   {showConfirmPassword ? (
@@ -233,52 +244,53 @@ export default function Register() {
             </div>
 
             {/* Terms and Conditions */}
-            <div className="flex items-start">
+            <div className="flex items-start space-x-2">
               <input
                 {...register('terms')}
                 id="terms"
                 name="terms"
                 type="checkbox"
-                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded mt-0.5"
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mt-0.5 flex-shrink-0"
               />
-              <label htmlFor="terms" className="ml-2 block text-xs text-gray-900">
+              <label htmlFor="terms" className="block text-xs sm:text-sm text-gray-900 leading-relaxed">
                 I agree to the{' '}
-                <Link to="/terms" className="text-primary-600 hover:text-primary-500">
+                <Link to="/terms" className="text-blue-600 hover:text-blue-500">
                   Terms and Conditions
                 </Link>
                 {' '}and{' '}
-                <Link to="/privacy" className="text-primary-600 hover:text-primary-500">
+                <Link to="/privacy" className="text-blue-600 hover:text-blue-500">
                   Privacy Policy
                 </Link>
               </label>
             </div>
             {errors.terms && (
-              <p className="mt-1 text-xs text-red-600">{errors.terms.message}</p>
+              <p className="text-xs text-red-600">{errors.terms.message}</p>
             )}
 
             {/* Submit Button */}
             <button
-              type="submit"
+              type="button"
+              onClick={handleSubmit(onSubmit)}
               disabled={registerMutation.isPending}
-              className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+              className="w-full flex justify-center py-2.5 sm:py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
             >
               {registerMutation.isPending ? (
                 <div className="flex items-center">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Creating account...
+                  <span className="text-sm">Creating account...</span>
                 </div>
               ) : (
                 'Create Customer Account'
               )}
             </button>
-          </form>
+          </div>
 
           {/* Login Link */}
-          <p className="mt-4 text-center text-xs text-gray-600">
+          <p className="mt-4 sm:mt-6 text-center text-xs sm:text-sm text-gray-600">
             Already have an account?{' '}
             <Link
               to="/login"
-              className="font-medium text-primary-600 hover:text-primary-500"
+              className="font-medium text-blue-600 hover:text-blue-500"
             >
               Sign in here
             </Link>
@@ -286,8 +298,8 @@ export default function Register() {
         </div>
       </div>
 
-      {/* Right Side - CRM Dashboard Preview */}
-      <div className="hidden lg:block relative w-0 flex-1 bg-gradient-to-br from-primary-600 to-indigo-700 overflow-hidden">
+      {/* Right Side - CRM Dashboard Preview (Hidden on mobile and tablet) */}
+      <div className="hidden xl:block relative w-0 flex-1 bg-gradient-to-br from-blue-600 to-indigo-700 overflow-hidden">
         <div className="absolute inset-0 flex flex-col justify-center items-center px-12 py-16">
           <div className="text-center text-white mb-12 max-w-xl mx-auto">
             <h2 className="text-3xl font-bold mb-6 leading-tight">
@@ -298,7 +310,7 @@ export default function Register() {
             </p>
           </div>
           
-          {/* Dashboard Preview - Using your dashboard image */}
+          {/* Dashboard Preview */}
           <div className="w-full max-w-3xl mx-auto">
             <div className="bg-white rounded-3xl p-8 shadow-2xl">
               <img 

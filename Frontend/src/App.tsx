@@ -72,6 +72,7 @@ import Users from './Pages/settings/Users'
 import Integrations from './Pages/settings/Integration'
 
 import ServiceManagement from './Pages/admin/ServiceManagement'
+import AdminDocuments from './Pages/admin/AdminDocuments'
 // import AIAnalytics from './Pages/admin/AIAnalytics'
 
 // Create QueryClient for React Query
@@ -160,6 +161,7 @@ function App() {
                   <Route path="reports" element={<Reports />} />
 
                   {/* ADD THIS NEW ROUTE */}
+                  <Route path="/admin/documents" element={<AdminDocuments />} />
                   <Route path="admin/ai-bookings" element={<AIBookings />} />
                   <Route path="/admin/service-management" element={<ServiceManagement />} />
                   {/* <Route path="/admin/ai-analytics" element={<AIAnalytics />} /> */}

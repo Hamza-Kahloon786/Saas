@@ -89,18 +89,40 @@ class RequestTimingMiddleware(BaseHTTPMiddleware):
             )
         return response
 
+# class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+#     async def dispatch(self, request: Request, call_next):
+#         response = await call_next(request)
+#         if settings.SECURITY_HEADERS_ENABLED:
+#             response.headers["X-Content-Type-Options"] = "nosniff"
+#             response.headers["X-Frame-Options"] = settings.FRAME_OPTIONS
+#             response.headers["X-XSS-Protection"] = "1; mode=block"
+#             response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+#             if request.url.scheme == "https":
+#                 response.headers["Strict-Transport-Security"] = f"max-age={settings.HSTS_MAX_AGE}; includeSubDomains"
+#         return response
+
+# backend/app/main.py - Update SecurityHeadersMiddleware to allow document previews
+
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         response = await call_next(request)
         if settings.SECURITY_HEADERS_ENABLED:
+            # Allow iframe for document previews on same origin
+            if request.url.path.startswith("/api/v1/documents/") and request.url.path.endswith("/file"):
+                response.headers["X-Frame-Options"] = "SAMEORIGIN"  # Allow same origin
+            else:
+                response.headers["X-Frame-Options"] = "DENY"  # Default deny for other routes
+            
             response.headers["X-Content-Type-Options"] = "nosniff"
-            response.headers["X-Frame-Options"] = settings.FRAME_OPTIONS
             response.headers["X-XSS-Protection"] = "1; mode=block"
             response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-            if request.url.scheme == "https":
+            
+            # Only add HSTS in production with HTTPS
+            if settings.is_production():
                 response.headers["Strict-Transport-Security"] = f"max-age={settings.HSTS_MAX_AGE}; includeSubDomains"
+        
         return response
-
+        
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("🚀 Starting AI-Enhanced SaaS CRM...")
