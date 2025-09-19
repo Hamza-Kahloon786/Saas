@@ -14,7 +14,7 @@ export default function Chatbot() {
     setLoading(true)
 
     try {
-      const res = await fetch("http://localhost:8000/api/v1/ai/chat", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/${import.meta.env.VITE_API_PREFIX || 'api/v1'}/ai/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

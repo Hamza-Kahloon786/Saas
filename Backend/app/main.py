@@ -6,7 +6,7 @@ import os
 
 # Load environment variables FIRST
 load_dotenv()
-
+from fastapi.staticfiles import StaticFiles
 from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -295,6 +295,8 @@ async def general_exception_handler(request: Request, exc: Exception):
     return JSONResponse(status_code=500, content={"detail": error_message})
 
 # ✅ INCLUDE API ROUTER
+# Add this line in main.py after creating the FastAPI app
+app.mount("/static/avatars", StaticFiles(directory="uploads/avatars"), name="avatars")
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
 # ✅ ESSENTIAL ENDPOINTS

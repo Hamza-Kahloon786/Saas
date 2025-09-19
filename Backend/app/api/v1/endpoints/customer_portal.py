@@ -1525,3 +1525,104 @@ async def get_customer_invoice(
         "due_date": invoice["due_date"],
         "status": invoice["status"]
     }
+
+
+
+
+
+# ================================
+# CUSTOMER AVATAR ENDPOINTS
+# ================================
+
+# Add these to backend/app/api/v1/endpoints/customer_portal.py
+
+@router.post("/avatar", response_model=dict)
+async def upload_customer_avatar(
+    file: UploadFile = File(...),
+    current_user: dict = Depends(get_current_active_user),
+    db: AsyncIOMotorDatabase = Depends(get_database),
+):
+    """Upload avatar for customer user"""
+    # Ensure user is customer
+    if current_user.get("role") != "customer":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only customer users can use this endpoint"
+        )
+    
+    user_id = str(current_user["_id"])
+    
+    try:
+        # Delete old avatar if exists
+        old_avatar = current_user.get("avatar_url")
+        if old_avatar:
+            await delete_avatar_file(old_avatar)
+        
+        # Process and save new avatar
+        avatar_url = await process_and_save_avatar(file, user_id)
+        
+        # Update user in database
+        await db.users.update_one(
+            {"_id": ObjectId(user_id)},
+            {"$set": {"avatar_url": avatar_url, "updated_at": datetime.utcnow()}}
+        )
+        
+        logger.info(f"Avatar uploaded successfully for customer {user_id}")
+        return {"avatar_url": avatar_url, "message": "Avatar uploaded successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error uploading customer avatar: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to upload avatar"
+        )
+
+@router.delete("/avatar", response_model=dict)
+async def delete_customer_avatar(
+    current_user: dict = Depends(get_current_active_user),
+    db: AsyncIOMotorDatabase = Depends(get_database),
+):
+    """Delete avatar for customer user"""
+    # Ensure user is customer
+    if current_user.get("role") != "customer":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only customer users can use this endpoint"
+        )
+    
+    user_id = str(current_user["_id"])
+    
+    try:
+        # Get current avatar
+        old_avatar = current_user.get("avatar_url")
+        if not old_avatar:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No avatar found to delete"
+            )
+        
+        # Delete file from disk
+        await delete_avatar_file(old_avatar)
+        
+        # Update user in database
+        await db.users.update_one(
+            {"_id": ObjectId(user_id)},
+            {
+                "$unset": {"avatar_url": ""},
+                "$set": {"updated_at": datetime.utcnow()}
+            }
+        )
+        
+        logger.info(f"Avatar deleted successfully for customer {user_id}")
+        return {"message": "Avatar deleted successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting customer avatar: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete avatar"
+        )

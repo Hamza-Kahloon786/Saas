@@ -165,7 +165,7 @@ export default function Login() {
               )}
             </div>
 
-            {/* Remember Me & Forgot Password */}
+            {/* Remember Me & Forgot Password
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
               <div className="flex items-center">
                 <input
@@ -187,7 +187,7 @@ export default function Login() {
                   Forgot your password?
                 </Link>
               </div>
-            </div>
+            </div> */}
 
             {/* Login Button */}
             <button
@@ -217,6 +217,19 @@ export default function Login() {
               Sign up for free
             </Link>
           </p>
+
+ {/* Remember Me & Forgot Password */}
+           <div className="flex flex-col text-center sm:flex-row sm:items-center sm:justify-center space-y-3 sm:space-y-0 mt-4">
+  <div className="text-xs sm:text-sm">
+    <Link
+      to="/forgot-password"
+      className="font-medium text-center text-blue-600 hover:text-blue-500"
+    >
+      Forgot your password?
+    </Link>
+  </div>
+</div>
+
         </div>
       </div>
 

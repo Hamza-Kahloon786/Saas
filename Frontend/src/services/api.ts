@@ -18,6 +18,12 @@ const join = (...parts: (string | undefined)[]) =>
  *  VITE_API_MOCK     = false    (disable mock mode)
  *  VITE_USE_FALLBACK = true     (enable fallback data when backend is down)
  */
+// Add this export near the bottom of your api.ts file
+export const getStaticAssetUrl = (path: string) => {
+  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+  return `${baseUrl}${path}`
+}
+
 export const MOCK = String(import.meta.env.VITE_API_MOCK).toLowerCase() === 'true'
 export const USE_FALLBACK = false
 export const technicianAPI = {

@@ -502,3 +502,117 @@ async def delete_technician(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to delete technician: {str(e)}"
         )
+    
+
+
+# ================================
+# TECHNICIAN AVATAR ENDPOINTS
+# ================================
+
+# Add these to backend/app/api/v1/endpoints/technicians.py (or create if not exists)
+from pathlib import Path
+from typing import Optional
+import uuid
+import aiofiles
+from PIL import Image
+from datetime import datetime
+from fastapi import HTTPException, status, Depends, UploadFile, File
+from motor.motor_asyncio import AsyncIOMotorDatabase
+from bson import ObjectId
+from pydantic import BaseModel, EmailStr
+
+from app.core.database import get_database
+from app.dependencies.auth import get_current_user, get_current_active_user
+from app.core.logger import get_logger
+
+
+@router.post("/me/avatar", response_model=dict)
+async def upload_technician_avatar(
+    file: UploadFile = File(...),
+    current_user: dict = Depends(get_current_active_user),
+    db: AsyncIOMotorDatabase = Depends(get_database),
+):
+    """Upload avatar for technician user"""
+    # Ensure user is technician
+    if current_user.get("role") != "technician":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only technician users can use this endpoint"
+        )
+    
+    user_id = str(current_user["_id"])
+    
+    try:
+        # Delete old avatar if exists
+        old_avatar = current_user.get("avatar_url")
+        if old_avatar:
+            await delete_avatar_file(old_avatar)
+        
+        # Process and save new avatar
+        avatar_url = await process_and_save_avatar(file, user_id)
+        
+        # Update user in database
+        await db.users.update_one(
+            {"_id": ObjectId(user_id)},
+            {"$set": {"avatar_url": avatar_url, "updated_at": datetime.utcnow()}}
+        )
+        
+        logger.info(f"Avatar uploaded successfully for technician {user_id}")
+        return {"avatar_url": avatar_url, "message": "Avatar uploaded successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error uploading technician avatar: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to upload avatar"
+        )
+
+@router.delete("/me/avatar", response_model=dict)
+async def delete_technician_avatar(
+    current_user: dict = Depends(get_current_active_user),
+    db: AsyncIOMotorDatabase = Depends(get_database),
+):
+    """Delete avatar for technician user"""
+    # Ensure user is technician
+    if current_user.get("role") != "technician":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only technician users can use this endpoint"
+        )
+    
+    user_id = str(current_user["_id"])
+    
+    try:
+        # Get current avatar
+        old_avatar = current_user.get("avatar_url")
+        if not old_avatar:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No avatar found to delete"
+            )
+        
+        # Delete file from disk
+        await delete_avatar_file(old_avatar)
+        
+        # Update user in database
+        await db.users.update_one(
+            {"_id": ObjectId(user_id)},
+            {
+                "$unset": {"avatar_url": ""},
+                "$set": {"updated_at": datetime.utcnow()}
+            }
+        )
+        
+        logger.info(f"Avatar deleted successfully for technician {user_id}")
+        return {"message": "Avatar deleted successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting technician avatar: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete avatar"
+        )

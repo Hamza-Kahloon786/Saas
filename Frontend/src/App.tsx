@@ -145,6 +145,9 @@ function App() {
                 <Route path="/customer-portal/dashboard" element={<CustomerDashboard />} />
                 <Route path="/customer-portal/service-history" element={<ServiceHistory />} />
                 <Route path="/customer-portal/payment" element={<PaymentPortal />} />
+{/* // CUSTOMER - Same Profile component, different route   */}
+                <Route path="/customer-portal/profile" element={<Profile />} />
+                <Route path="/customer-portal/settings" element={<Profile />} />
                 <Route path="/customer-portal" element={<Navigate to="/customer-portal/dashboard" replace />} />
 
                 {/* Catch all - redirect to login */}
@@ -221,6 +224,9 @@ function App() {
                       <Route path="customer-portal/job-tracking/:jobId" element={<JobTracking />} />
                       <Route path="customer-portal/payments" element={<PaymentsDashboard />} />
                       <Route path="customer-portal/payments/:invoiceId" element={<PaymentPortal />} />
+                      {/* // CUSTOMER - Same Profile component, different route   */}
+<Route path="/customer-portal/profile" element={<Profile />} />
+<Route path="/customer-portal/settings" element={<Profile />} />
                       <Route path="customer-portal" element={<Navigate to="/customer-portal/dashboard" replace />} />
                     </>
                   )}
@@ -234,7 +240,10 @@ function App() {
                       <Route path="technician-portal/route" element={<TechRouteOptimization />} />
                       <Route path="technician-portal/schedule" element={<TechnicianSchedule />} />
                       <Route path="technician-portal/stats" element={<TechnicianStats />} />
-                      <Route path="technician-portal/settings" element={<TechnicianSettings />} />
+                      {/* <Route path="technician-portal/settings" element={<TechnicianSettings />} /> */}
+                      {/* // TECHNICIAN - Same Profile component, different route */}
+<Route path="/technician-portal/profile" element={<Profile />} />
+<Route path="/technician-portal/settings" element={<Profile />} />
                       <Route path="technician-portal" element={<Navigate to="/technician-portal/dashboard" replace />} />
                     </>
                   )}

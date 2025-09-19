@@ -654,3 +654,203 @@ async def delete_user(
     return {"message": "User deleted successfully"}
 
 
+
+
+
+# backend/app/api/v1/endpoints/users.py - Add these endpoints to existing users.py
+# backend/app/api/v1/endpoints/users.py
+from datetime import datetime
+from typing import Optional
+from pathlib import Path
+import uuid
+import aiofiles
+from PIL import Image
+
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
+from motor.motor_asyncio import AsyncIOMotorDatabase
+from bson import ObjectId
+from pydantic import BaseModel, EmailStr
+from passlib.context import CryptContext
+
+from app.core.database import get_database
+from app.dependencies.auth import get_current_active_user
+from app.core.logger import get_logger
+from app.utils.user_serializer import serialize_user
+
+# Init
+router = APIRouter()
+logger = get_logger(__name__)
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+# Config
+UPLOAD_DIR = Path("uploads/avatars")
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+MAX_FILE_SIZE = 5 * 1024 * 1024
+ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
+AVATAR_SIZE = (400, 400)
+
+# Schemas
+class ProfileUpdateRequest(BaseModel):
+    name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
+    title: Optional[str] = None
+    bio: Optional[str] = None
+    timezone: Optional[str] = None
+    language: Optional[str] = None
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+
+# ================================
+# PROFILE
+# ================================
+@router.patch("/me", response_model=dict)
+async def update_user_profile(
+    profile_data: ProfileUpdateRequest,
+    current_user: dict = Depends(get_current_active_user),
+    db: AsyncIOMotorDatabase = Depends(get_database),
+):
+    user_id = current_user["_id"]
+    update_data = {k: v for k, v in profile_data.dict(exclude_unset=True).items() if v is not None}
+    if not update_data:
+        raise HTTPException(400, "No valid fields provided for update")
+
+    update_data["updated_at"] = datetime.utcnow()
+    result = await db.users.update_one({"_id": user_id}, {"$set": update_data})
+    if result.matched_count == 0:
+        raise HTTPException(404, "User not found")
+
+    updated_user = await db.users.find_one({"_id": user_id})
+    if updated_user:
+        updated_user["_id"] = str(updated_user["_id"])
+        if "company_id" in updated_user and updated_user["company_id"]:
+            updated_user["company_id"] = str(updated_user["company_id"])
+        updated_user.pop("password_hash", None)
+        updated_user.pop("hashed_password", None)
+        for k, v in updated_user.items():
+            if isinstance(v, ObjectId):
+                updated_user[k] = str(v)
+
+    logger.info(f"✅ Profile updated successfully for user {user_id}")
+    return updated_user
+
+
+# ================================
+# PASSWORD
+# ================================
+@router.post("/me/change-password", response_model=dict)
+async def change_password(
+    request: ChangePasswordRequest,
+    current_user: dict = Depends(get_current_active_user),
+    db: AsyncIOMotorDatabase = Depends(get_database),
+):
+    user = await db.users.find_one({"_id": current_user["_id"]})
+    if not user:
+        raise HTTPException(404, "User not found")
+
+    # Handle either field name
+    password_field = "hashed_password" if "hashed_password" in user else "password_hash"
+    if not pwd_context.verify(request.current_password, user[password_field]):
+        raise HTTPException(400, "Incorrect current password")
+
+    new_hash = pwd_context.hash(request.new_password)
+    await db.users.update_one(
+        {"_id": current_user["_id"]},
+        {"$set": {password_field: new_hash, "updated_at": datetime.utcnow()}},
+    )
+    logger.info(f"✅ Password changed successfully for user {current_user['_id']}")
+    return {"message": "Password changed successfully"}
+
+
+# ================================
+# AVATAR HELPERS
+# ================================
+def validate_image_file(file: UploadFile) -> bool:
+    return file.content_type and file.content_type.startswith("image/") \
+        and Path(file.filename).suffix.lower() in ALLOWED_EXTENSIONS
+
+def generate_avatar_filename(user_id: str, original_filename: str) -> str:
+    ext = Path(original_filename).suffix.lower()
+    return f"avatar_{user_id}_{uuid.uuid4().hex[:8]}{ext}"
+
+async def process_and_save_avatar(file: UploadFile, user_id: str) -> str:
+    if not validate_image_file(file):
+        raise HTTPException(400, "Invalid image file")
+
+    file.file.seek(0, 2)
+    size = file.file.tell()
+    file.file.seek(0)
+    if size > MAX_FILE_SIZE:
+        raise HTTPException(400, "File too large (max 5MB)")
+
+    filename = generate_avatar_filename(user_id, file.filename)
+    path = UPLOAD_DIR / filename
+    temp = path.with_suffix(".temp")
+
+    async with aiofiles.open(temp, "wb") as f:
+        await f.write(await file.read())
+
+    with Image.open(temp) as img:
+        if img.mode in ("RGBA", "LA", "P"):
+            img = img.convert("RGB")
+        img.thumbnail(AVATAR_SIZE, Image.Resampling.LANCZOS)
+        canvas = Image.new("RGB", AVATAR_SIZE, (255, 255, 255))
+        canvas.paste(img, ((AVATAR_SIZE[0]-img.width)//2, (AVATAR_SIZE[1]-img.height)//2))
+        canvas.save(path, "JPEG", quality=85, optimize=True)
+
+    temp.unlink(missing_ok=True)
+    return f"/static/avatars/{filename}"
+
+async def delete_avatar_file(avatar_url: str):
+    if not avatar_url or not avatar_url.startswith("/static/avatars/"):
+        return False
+    path = UPLOAD_DIR / avatar_url.split("/")[-1]
+    if path.exists():
+        path.unlink()
+        return True
+    return False
+
+
+# ================================
+# AVATAR
+# ================================
+@router.post("/me/avatar", response_model=dict)
+async def upload_avatar(
+    file: UploadFile = File(...),
+    current_user: dict = Depends(get_current_active_user),
+    db: AsyncIOMotorDatabase = Depends(get_database),
+):
+    avatar_url = await process_and_save_avatar(file, str(current_user["_id"]))
+    await db.users.update_one(
+        {"_id": current_user["_id"]},
+        {"$set": {"avatar_url": avatar_url, "updated_at": datetime.utcnow()}},
+    )
+    logger.info(f"✅ Avatar uploaded for user {current_user['_id']}")
+    return {"avatar_url": avatar_url, "message": "Avatar uploaded successfully"}
+
+@router.delete("/me/avatar", response_model=dict)
+async def delete_avatar(
+    current_user: dict = Depends(get_current_active_user),
+    db: AsyncIOMotorDatabase = Depends(get_database),
+):
+    old = current_user.get("avatar_url")
+    if not old:
+        raise HTTPException(404, "No avatar to delete")
+    await delete_avatar_file(old)
+    await db.users.update_one(
+        {"_id": current_user["_id"]},
+        {"$unset": {"avatar_url": ""}, "$set": {"updated_at": datetime.utcnow()}},
+    )
+    logger.info(f"✅ Avatar deleted for user {current_user['_id']}")
+    return {"message": "Avatar deleted successfully"}
+
+
+# ================================
+# TEST
+# ================================
+@router.get("/test")
+async def test():
+    return {"message": "Users router working"}
