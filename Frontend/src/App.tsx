@@ -13,6 +13,7 @@ import AIBookings from './Pages/admin/AIBookings'
 import Login from './Pages/auth/Login'
 import Register from './Pages/auth/Register'
 import ForgotPassword from './Pages/auth/ForgotPassword'
+import GoogleCallback from './Pages/auth/GoogleCallback'
 
 // ===== Dashboard =====
 import Dashboard from './Pages/dashboard/Dashboard'
@@ -138,6 +139,7 @@ function App() {
               <>
                 <Route path="/" element={<Navigate to="/login" replace />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/auth/callback" element={<GoogleCallback />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
 

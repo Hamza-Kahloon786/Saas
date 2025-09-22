@@ -14680,3 +14680,93 @@ Traceback (most recent call last):
   File "C:\Users\HH Traders\AppData\Local\Programs\Python\Python311\Lib\asyncio\proactor_events.py", line 165, in _call_connection_lost
     self._sock.shutdown(socket.SHUT_RDWR)
 ConnectionResetError: [WinError 10054] An existing connection was forcibly closed by the remote host
+2025-09-22 19:39:16,257 | ERROR    | dependencies.auth | 🔐 JWT decode error: Not enough segments
+2025-09-22 19:39:16,370 | ERROR    | dependencies.auth | 🔐 JWT decode error: Not enough segments
+2025-09-22 19:39:16,449 | ERROR    | dependencies.auth | 🔐 JWT decode error: Not enough segments
+2025-09-22 20:36:09,159 | ERROR    | app.api.v1.endpoints.auth | ❌ Google OAuth callback failed: 'Settings' object has no attribute 'FRONTEND_URL'
+2025-09-22 20:36:09,162 | ERROR    | app.middleware.logging_middleware | [536484e1-f315-46d1-8780-8ec1957ba436] GET /api/v1/auth/google/callback - ERROR - 2.54s - 'Settings' object has no attribute 'FRONTEND_URL'
+2025-09-22 20:36:09,163 | ERROR    | app.main        | Unhandled exception on GET /api/v1/auth/google/callback: 'Settings' object has no attribute 'FRONTEND_URL'
+Traceback (most recent call last):
+  File "C:\Users\HH Traders\AppData\Local\Programs\Python\Python311\Lib\site-packages\anyio\streams\memory.py", line 98, in receive
+    return self.receive_nowait()
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\HH Traders\AppData\Local\Programs\Python\Python311\Lib\site-packages\anyio\streams\memory.py", line 93, in receive_nowait
+    raise WouldBlock
+anyio.WouldBlock
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\HH Traders\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\middleware\base.py", line 78, in call_next
+    message = await recv_stream.receive()
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\HH Traders\AppData\Local\Programs\Python\Python311\Lib\site-packages\anyio\streams\memory.py", line 118, in receive
+    raise EndOfStream
+anyio.EndOfStream
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\HH Traders\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\middleware\errors.py", line 162, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\HH Traders\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\middleware\base.py", line 108, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\HH Traders\3D Objects\Saas\backend\app\middleware\logging_middleware.py", line 20, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\HH Traders\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\middleware\base.py", line 84, in call_next
+    raise app_exc
+  File "C:\Users\HH Traders\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\middleware\base.py", line 70, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "C:\Users\HH Traders\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\middleware\base.py", line 108, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\HH Traders\3D Objects\Saas\backend\app\main.py", line 81, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\HH Traders\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\middleware\base.py", line 84, in call_next
+    raise app_exc
+  File "C:\Users\HH Traders\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\middleware\base.py", line 70, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "C:\Users\HH Traders\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\middleware\base.py", line 108, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\HH Traders\3D Objects\Saas\backend\app\main.py", line 108, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\HH Traders\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\middleware\base.py", line 84, in call_next
+    raise app_exc
+  File "C:\Users\HH Traders\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\middleware\base.py", line 70, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "C:\Users\HH Traders\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\middleware\trustedhost.py", line 34, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\HH Traders\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\middleware\cors.py", line 83, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\HH Traders\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\middleware\exceptions.py", line 79, in __call__
+    raise exc
+  File "C:\Users\HH Traders\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\middleware\exceptions.py", line 68, in __call__
+    await self.app(scope, receive, sender)
+  File "C:\Users\HH Traders\AppData\Local\Programs\Python\Python311\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 20, in __call__
+    raise e
+  File "C:\Users\HH Traders\AppData\Local\Programs\Python\Python311\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 17, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\HH Traders\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\routing.py", line 718, in __call__
+    await route.handle(scope, receive, send)
+  File "C:\Users\HH Traders\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\routing.py", line 276, in handle
+    await self.app(scope, receive, send)
+  File "C:\Users\HH Traders\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\routing.py", line 66, in app
+    response = await func(request)
+               ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\HH Traders\AppData\Local\Programs\Python\Python311\Lib\site-packages\fastapi\routing.py", line 274, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\HH Traders\AppData\Local\Programs\Python\Python311\Lib\site-packages\fastapi\routing.py", line 191, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\HH Traders\3D Objects\Saas\backend\app\api\v1\endpoints\auth.py", line 373, in google_oauth_callback
+    error_url = f"{settings.FRONTEND_URL}/auth/callback?error=server_error"
+                   ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\HH Traders\AppData\Local\Programs\Python\Python311\Lib\site-packages\pydantic\main.py", line 761, in __getattr__
+    raise AttributeError(f'{type(self).__name__!r} object has no attribute {item!r}')
+AttributeError: 'Settings' object has no attribute 'FRONTEND_URL'

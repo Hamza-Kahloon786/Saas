@@ -59,3 +59,8 @@ aiohttp>=3.9.0
 
 aiofiles==23.2.1  # ✅ NEW - For async file operations
 mimetypes==1.0.0  # ✅ NEW - For MIME type detection (built-in but explicit)
+
+google-auth==2.25.2
+google-auth-oauthlib==1.2.0
+google-auth-httplib2==0.2.0
+httpx==0.25.2

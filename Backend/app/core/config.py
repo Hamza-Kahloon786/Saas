@@ -129,6 +129,18 @@ class Settings(PydanticBaseSettings):
     DOCUMENT_THUMBNAIL_SIZE: int = 200  # Thumbnail size in pixels
     DOCUMENT_OCR_ENABLED: bool = False  # Enable OCR for text extraction (requires additional setup)
     
+
+    # Add this to your Settings class, around line 95-100 after the Google Services section:
+
+    # Google Services
+    GOOGLE_CLIENT_ID: Optional[str] = None
+    GOOGLE_CLIENT_SECRET: Optional[str] = None
+    GOOGLE_REDIRECT_URI: Optional[str] = None
+    
+    # Frontend URL for OAuth redirects
+    FRONTEND_URL: str = "http://localhost:5173"
+
+    
     @field_validator("ALLOWED_DOCUMENT_EXTENSIONS", mode="before")
     @classmethod
     def assemble_document_extensions(cls, v: Union[str, List[str]]) -> List[str]:
