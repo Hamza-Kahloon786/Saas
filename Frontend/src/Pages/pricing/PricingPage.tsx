@@ -339,51 +339,88 @@ const PricingPage = () => {
       price: price
     })
   }
-
-  const handlePaymentSuccess = async () => {
-    setLoading(paymentModal.planId)
-    
-    try {
-      // Call your backend to create subscription after successful payment
-      const response = await fetch('http://localhost:8000/api/v1/auth/subscription/update', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('access_token') || localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          plan_id: paymentModal.planId,
-          billing_cycle: billingCycle
-        })
+const handlePaymentSuccess = async () => {
+  setLoading(paymentModal.planId)
+  
+  try {
+    const response = await fetch('http://localhost:8000/api/v1/auth/subscription/update', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('access_token') || localStorage.getItem('token')}`
+      },
+      body: JSON.stringify({
+        plan_id: paymentModal.planId,
+        billing_cycle: billingCycle
       })
-      
-      if (!response.ok) {
-        const errorText = await response.text()
-        console.error('Response error:', response.status, errorText)
-        throw new Error(`HTTP ${response.status}: ${errorText}`)
-      }
-      
-      const data = await response.json()
-      
-      // Success! Navigate to customer dashboard
-      console.log(`✅ Payment successful! Subscription activated for ${paymentModal.planName}`)
-      
-      // Show success message
-      setTimeout(() => {
-        alert(`🎉 Welcome to ${paymentModal.planName}! Taking you to your dashboard...`)
-        
-        // Navigate to customer dashboard
-        // In real app: navigate('/customer-portal/dashboard', { replace: true })
-        console.log('🎯 Navigating to customer dashboard...')
-      }, 1000)
-      
-    } catch (error: any) {
-      console.error('❌ Subscription activation failed:', error)
-      alert(`Failed to activate subscription: ${error.message}`)
-    } finally {
-      setLoading(null)
+    })
+    
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(`HTTP ${response.status}: ${errorText}`)
     }
+    
+    const data = await response.json()
+    
+    // Update auth store with new subscription
+    // useAuthStore.getState().updateSubscription(data.subscription)
+    
+    console.log('Payment successful! Subscription activated for', paymentModal.planName)
+    
+    // Navigate to customer dashboard
+    window.location.href = '/customer-portal/dashboard'
+    
+  } catch (error: any) {
+    console.error('Subscription activation failed:', error)
+    alert(`Failed to activate subscription: ${error.message}`)
+  } finally {
+    setLoading(null)
   }
+}
+  // const handlePaymentSuccess = async () => {
+  //   setLoading(paymentModal.planId)
+    
+  //   try {
+  //     // Call your backend to create subscription after successful payment
+  //     const response = await fetch('http://localhost:8000/api/v1/auth/subscription/update', {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         'Authorization': `Bearer ${localStorage.getItem('access_token') || localStorage.getItem('token')}`
+  //       },
+  //       body: JSON.stringify({
+  //         plan_id: paymentModal.planId,
+  //         billing_cycle: billingCycle
+  //       })
+  //     })
+      
+  //     if (!response.ok) {
+  //       const errorText = await response.text()
+  //       console.error('Response error:', response.status, errorText)
+  //       throw new Error(`HTTP ${response.status}: ${errorText}`)
+  //     }
+      
+  //     const data = await response.json()
+      
+  //     // Success! Navigate to customer dashboard
+  //     console.log(`✅ Payment successful! Subscription activated for ${paymentModal.planName}`)
+      
+  //     // Show success message
+  //     setTimeout(() => {
+  //       alert(`🎉 Welcome to ${paymentModal.planName}! Taking you to your dashboard...`)
+        
+  //       // Navigate to customer dashboard
+  //       // In real app: navigate('/customer-portal/dashboard', { replace: true })
+  //       console.log('🎯 Navigating to customer dashboard...')
+  //     }, 1000)
+      
+  //   } catch (error: any) {
+  //     console.error('❌ Subscription activation failed:', error)
+  //     alert(`Failed to activate subscription: ${error.message}`)
+  //   } finally {
+  //     setLoading(null)
+  //   }
+  // }
 
   const closePaymentModal = () => {
     setPaymentModal({

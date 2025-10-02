@@ -1,3 +1,5 @@
+# backend/app/utils/user_serializer.py
+
 from datetime import datetime
 from bson import ObjectId
 
@@ -6,17 +8,23 @@ def serialize_user(user: dict) -> dict:
     if not user:
         return {}
 
+    def serialize_value(value):
+        """Recursively serialize values including nested dicts"""
+        if isinstance(value, ObjectId):
+            return str(value)
+        elif isinstance(value, datetime):
+            return value.isoformat()
+        elif isinstance(value, dict):
+            return {k: serialize_value(v) for k, v in value.items()}
+        elif isinstance(value, list):
+            return [serialize_value(item) for item in value]
+        else:
+            return value
+
     serialized = {}
 
     for key, value in user.items():
-        # Convert ObjectId → string
-        if isinstance(value, ObjectId):
-            serialized[key] = str(value)
-        # Convert datetime → isoformat
-        elif isinstance(value, datetime):
-            serialized[key] = value.isoformat()
-        else:
-            serialized[key] = value
+        serialized[key] = serialize_value(value)
 
     # Remove sensitive fields
     serialized.pop("hashed_password", None)

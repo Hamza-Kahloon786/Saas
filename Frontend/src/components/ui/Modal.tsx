@@ -1,4 +1,4 @@
-// src/components/ui/Modal.tsx - Responsive Modal Components
+// src/components/ui/Modal.tsx - FIXED VERSION WITH Z-INDEX
 
 import React, { Fragment, forwardRef } from 'react'
 import { Dialog, Transition } from '@headlessui/react'
@@ -99,10 +99,10 @@ export const Modal = forwardRef<HTMLDivElement, ModalProps>(
       <Transition appear show={isOpen} as={Fragment}>
         <Dialog 
           as="div" 
-          className="modal-responsive safe-area-inset-top safe-area-inset-bottom" 
+          className="relative z-[99999] modal-responsive safe-area-inset-top safe-area-inset-bottom" 
           onClose={handleClose}
         >
-          {/* Overlay */}
+          {/* Overlay - FIXED: Added z-index */}
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-300"
@@ -114,14 +114,14 @@ export const Modal = forwardRef<HTMLDivElement, ModalProps>(
           >
             <div 
               className={cn(
-                "fixed inset-0 bg-black/50 backdrop-blur-sm",
+                "fixed inset-0 bg-black/50 backdrop-blur-sm z-[99998]",
                 overlayClassName
               )} 
             />
           </Transition.Child>
 
-          {/* Modal container */}
-          <div className="fixed inset-0 overflow-y-auto">
+          {/* Modal container - FIXED: Added z-index */}
+          <div className="fixed inset-0 overflow-y-auto z-[99999]">
             <div className={cn(
               "flex min-h-full items-center justify-center text-center",
               fullScreen ? "p-0" : "p-3 sm:p-4"
@@ -357,7 +357,7 @@ export const DrawerModal = ({
 
   return (
     <Transition appear show={props.isOpen} as={Fragment}>
-      <Dialog as="div" className="modal-responsive" onClose={props.onClose}>
+      <Dialog as="div" className="relative z-[99999] modal-responsive" onClose={props.onClose}>
         <Transition.Child
           as={Fragment}
           enter="ease-out duration-300"
@@ -367,7 +367,7 @@ export const DrawerModal = ({
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-black/50" />
+          <div className="fixed inset-0 bg-black/50 z-[99998]" />
         </Transition.Child>
 
         <Transition.Child
@@ -381,7 +381,7 @@ export const DrawerModal = ({
         >
           <Dialog.Panel className={cn(
             slideClasses[side],
-            "transform overflow-hidden bg-white shadow-xl transition-all",
+            "transform overflow-hidden bg-white shadow-xl transition-all z-[99999]",
             className
           )}>
             {children}

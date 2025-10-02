@@ -1,4 +1,4 @@
-// frontend/src/pages/field-service/Technicians.tsx
+// frontend/src/pages/field-service/Technicians.tsx - FIXED API ENDPOINTS
 import { useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
@@ -18,28 +18,17 @@ import { api } from '../../services/api'
 import Modal from '../../components/ui/Modal'
 import TechnicianForm from '../../components/forms/TechnicianForm'
 
-type ApiUser = {
+type Technician = {
   id: string
   first_name?: string
   last_name?: string
   email?: string
   phone?: string
-  role?: string
   status?: 'active' | 'inactive' | 'on_leave'
   specialty?: string
   hourly_rate?: number
   created_at?: string
-}
-
-type Technician = {
-  id: string
-  name: string
-  email: string
-  phone: string
-  status: 'active' | 'inactive' | 'on_leave'
-  specialty?: string
-  hourly_rate?: number
-  created_at?: string
+  is_available?: boolean
 }
 
 interface TechnicianStats {
@@ -50,7 +39,7 @@ interface TechnicianStats {
   isAvailable: boolean
 }
 
-const statusColors: Record<Technician['status'], string> = {
+const statusColors: Record<'active' | 'inactive' | 'on_leave', string> = {
   active: 'bg-green-100 text-green-800',
   inactive: 'bg-red-100 text-red-800',
   on_leave: 'bg-yellow-100 text-yellow-800',
@@ -64,85 +53,86 @@ const availabilityColors = {
 
 export default function Technicians() {
   const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'all' | Technician['status']>('all')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive' | 'on_leave'>('all')
   const [selected, setSelected] = useState<Technician | null>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
 
   const queryClient = useQueryClient()
 
-  // Fetch technicians from users endpoint
-  const { data: users, isLoading, isError, refetch } = useQuery({
-    queryKey: ['users-technicians'],
+  // ✅ FIXED: Use correct backend endpoint /technicians/
+  const { data: technicians, isLoading, isError, refetch } = useQuery({
+    queryKey: ['technicians', statusFilter],
     queryFn: async () => {
-      const resp = await api.get('/users/?role=technician')
-      return resp.data as ApiUser[]
+      const params = new URLSearchParams()
+      if (statusFilter !== 'all') {
+        params.append('status_filter', statusFilter)
+      }
+      
+      console.log('🔄 Fetching technicians from /technicians/')
+      const resp = await api.get(`/technicians/?${params.toString()}`)
+      console.log('✅ Technicians response:', resp.data)
+      
+      return resp.data as Technician[]
     },
-    staleTime: 30000, // Cache for 30 seconds
+    staleTime: 30000,
   })
 
-  // Fetch technician stats for availability and performance
+  // ✅ FIXED: Use correct endpoint /technicians/stats
   const { data: techStats } = useQuery({
     queryKey: ['technician-stats'],
     queryFn: async () => {
       try {
+        console.log('🔄 Fetching technician stats from /technicians/stats')
         const resp = await api.get('/technicians/stats')
+        console.log('✅ Stats response:', resp.data)
         return resp.data as TechnicianStats[]
       } catch (error) {
-        // If stats endpoint doesn't exist, return empty array
+        console.warn('⚠️ Stats endpoint not available, using defaults')
         return []
       }
     },
-    enabled: !!users && users.length > 0,
-    staleTime: 60000, // Cache for 1 minute
+    enabled: !!technicians && technicians.length > 0,
+    staleTime: 60000,
   })
 
-  // Create technician mutation
+  // ✅ FIXED: Use correct endpoint POST /technicians/
   const createTechnicianMutation = useMutation({
     mutationFn: async (technicianData: any) => {
-      const response = await api.post('/technicians', {
-        ...technicianData,
-        role: 'technician',
-        status: 'active'
-      })
+      console.log('🔄 Creating technician:', technicianData)
+      const response = await api.post('/technicians/', technicianData)
+      console.log('✅ Technician created:', response.data)
       return response.data
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users-technicians'] })
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['technicians'] })
       queryClient.invalidateQueries({ queryKey: ['technician-stats'] })
       setShowCreateModal(false)
-      toast.success('Technician created successfully!')
+      toast.success(data.message || 'Technician created successfully!')
     },
     onError: (error: any) => {
+      console.error('❌ Create technician error:', error)
       toast.error(error.response?.data?.detail || 'Failed to create technician')
     },
   })
 
-  // Map API users to lightweight Technician model for this page
-  const technicians: Technician[] = useMemo(() => {
-    const list = (users || []).map((u) => ({
-      id: u.id,
-      name: `${u.first_name ?? ''} ${u.last_name ?? ''}`.trim() || u.email || 'Unknown',
-      email: u.email || '—',
-      phone: u.phone || '—',
-      status: (u.status as Technician['status']) || 'active',
-      specialty: u.specialty,
-      hourly_rate: u.hourly_rate,
-      created_at: u.created_at,
-    }))
-
-    // Filter technicians
-    return list.filter((t) => {
-      const byStatus = statusFilter === 'all' || t.status === statusFilter
+  // Filter and search technicians
+  const filteredTechnicians = useMemo(() => {
+    if (!technicians) return []
+    
+    return technicians.filter((t) => {
       const term = searchTerm.toLowerCase()
-      const bySearch =
+      const fullName = `${t.first_name || ''} ${t.last_name || ''}`.toLowerCase()
+      
+      const matchesSearch =
         !term ||
-        t.name.toLowerCase().includes(term) ||
-        t.email.toLowerCase().includes(term) ||
-        t.phone.toLowerCase().includes(term) ||
-        (t.specialty && t.specialty.toLowerCase().includes(term))
-      return byStatus && bySearch
+        fullName.includes(term) ||
+        t.email?.toLowerCase().includes(term) ||
+        t.phone?.toLowerCase().includes(term) ||
+        t.specialty?.toLowerCase().includes(term)
+      
+      return matchesSearch
     })
-  }, [users, searchTerm, statusFilter])
+  }, [technicians, searchTerm])
 
   // Get stats for a specific technician
   const getTechnicianStats = (techId: string): TechnicianStats | null => {
@@ -153,13 +143,31 @@ export default function Technicians() {
     createTechnicianMutation.mutate(data)
   }
 
-  const getAvailabilityStatus = (techId: string) => {
-    const stats = getTechnicianStats(techId)
-    if (!stats) return { status: 'unknown', text: 'Unknown' }
+  const getAvailabilityStatus = (tech: Technician) => {
+    const stats = getTechnicianStats(tech.id)
     
-    if (!stats.isAvailable) return { status: 'unavailable', text: 'Unavailable' }
-    if (stats.activeJobs >= 5) return { status: 'busy', text: 'Busy' }
+    if (tech.status !== 'active') {
+      return { status: 'unavailable', text: 'Unavailable' }
+    }
+    
+    if (!tech.is_available) {
+      return { status: 'unavailable', text: 'Unavailable' }
+    }
+    
+    if (!stats) {
+      return { status: 'available', text: 'Available' }
+    }
+    
+    if (stats.activeJobs >= 5) {
+      return { status: 'busy', text: 'Busy' }
+    }
+    
     return { status: 'available', text: 'Available' }
+  }
+
+  const getTechnicianName = (tech: Technician) => {
+    const name = `${tech.first_name || ''} ${tech.last_name || ''}`.trim()
+    return name || tech.email || 'Unknown'
   }
 
   if (isLoading) {
@@ -181,6 +189,9 @@ export default function Technicians() {
     return (
       <div className="bg-red-50 border border-red-200 rounded-md p-4">
         <h3 className="text-red-800 font-medium">Error loading technicians</h3>
+        <p className="text-red-600 text-sm mt-1">
+          Please ensure the technicians endpoint is properly configured on the backend.
+        </p>
         <button
           onClick={() => refetch()}
           className="mt-2 px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
@@ -222,7 +233,7 @@ export default function Technicians() {
               <div className="ml-5 w-0 flex-1">
                 <dl>
                   <dt className="text-sm font-medium text-gray-500 truncate">Total Technicians</dt>
-                  <dd className="text-2xl font-semibold text-gray-900">{technicians.length}</dd>
+                  <dd className="text-2xl font-semibold text-gray-900">{filteredTechnicians.length}</dd>
                 </dl>
               </div>
             </div>
@@ -239,8 +250,8 @@ export default function Technicians() {
                 <dl>
                   <dt className="text-sm font-medium text-gray-500 truncate">Available</dt>
                   <dd className="text-2xl font-semibold text-gray-900">
-                    {technicians.filter(t => {
-                      const availability = getAvailabilityStatus(t.id)
+                    {filteredTechnicians.filter(t => {
+                      const availability = getAvailabilityStatus(t)
                       return availability.status === 'available'
                     }).length}
                   </dd>
@@ -260,8 +271,8 @@ export default function Technicians() {
                 <dl>
                   <dt className="text-sm font-medium text-gray-500 truncate">Busy</dt>
                   <dd className="text-2xl font-semibold text-gray-900">
-                    {technicians.filter(t => {
-                      const availability = getAvailabilityStatus(t.id)
+                    {filteredTechnicians.filter(t => {
+                      const availability = getAvailabilityStatus(t)
                       return availability.status === 'busy'
                     }).length}
                   </dd>
@@ -281,7 +292,7 @@ export default function Technicians() {
                 <dl>
                   <dt className="text-sm font-medium text-gray-500 truncate">Inactive</dt>
                   <dd className="text-2xl font-semibold text-gray-900">
-                    {technicians.filter(t => t.status === 'inactive' || t.status === 'on_leave').length}
+                    {filteredTechnicians.filter(t => t.status === 'inactive' || t.status === 'on_leave').length}
                   </dd>
                 </dl>
               </div>
@@ -314,15 +325,16 @@ export default function Technicians() {
         </select>
 
         <div className="ml-auto text-sm text-gray-500">
-          Showing <b>{technicians.length}</b> technician(s)
+          Showing <b>{filteredTechnicians.length}</b> technician(s)
         </div>
       </div>
 
       {/* Technician Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {technicians.map((t) => {
+        {filteredTechnicians.map((t) => {
           const stats = getTechnicianStats(t.id)
-          const availability = getAvailabilityStatus(t.id)
+          const availability = getAvailabilityStatus(t)
+          const techName = getTechnicianName(t)
           
           return (
             <div key={t.id} className="bg-white shadow rounded-lg p-6 hover:shadow-md transition-shadow">
@@ -330,14 +342,14 @@ export default function Technicians() {
                 <div className="flex items-center">
                   <div className="h-12 w-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
                     <span className="text-white font-semibold text-lg">
-                      {t.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+                      {techName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
                     </span>
                   </div>
                   <div className="ml-4">
-                    <div className="text-lg font-semibold text-gray-900">{t.name}</div>
+                    <div className="text-lg font-semibold text-gray-900">{techName}</div>
                     <div className="flex items-center space-x-2">
-                      <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${statusColors[t.status]}`}>
-                        {t.status.replace('_', ' ')}
+                      <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${statusColors[t.status || 'active']}`}>
+                        {(t.status || 'active').replace('_', ' ')}
                       </span>
                       <span className={`text-xs font-medium ${availabilityColors[availability.status as keyof typeof availabilityColors]}`}>
                         {availability.text}
@@ -354,14 +366,18 @@ export default function Technicians() {
               </div>
 
               <div className="mt-4 space-y-2 text-sm text-gray-700">
-                <div className="flex items-center">
-                  <EnvelopeIcon className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
-                  <a href={`mailto:${t.email}`} className="hover:underline truncate">{t.email}</a>
-                </div>
-                <div className="flex items-center">
-                  <PhoneIcon className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
-                  <a href={`tel:${t.phone}`} className="hover:underline">{t.phone}</a>
-                </div>
+                {t.email && (
+                  <div className="flex items-center">
+                    <EnvelopeIcon className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
+                    <a href={`mailto:${t.email}`} className="hover:underline truncate">{t.email}</a>
+                  </div>
+                )}
+                {t.phone && (
+                  <div className="flex items-center">
+                    <PhoneIcon className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
+                    <a href={`tel:${t.phone}`} className="hover:underline">{t.phone}</a>
+                  </div>
+                )}
                 {t.specialty && (
                   <div className="flex items-center">
                     <WrenchScrewdriverIcon className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
@@ -417,7 +433,7 @@ export default function Technicians() {
         <Modal
           isOpen={!!selected}
           onClose={() => setSelected(null)}
-          title={`${selected.name} - Technician Details`}
+          title={`${getTechnicianName(selected)} - Technician Details`}
           size="xl"
         >
           <div className="space-y-6">
@@ -426,18 +442,22 @@ export default function Technicians() {
               <div>
                 <h4 className="text-sm font-medium text-gray-900 mb-3">Contact Information</h4>
                 <div className="space-y-2 text-sm">
-                  <div className="flex items-center">
-                    <EnvelopeIcon className="h-4 w-4 text-gray-400 mr-2" />
-                    <a href={`mailto:${selected.email}`} className="text-primary-600 hover:underline">
-                      {selected.email}
-                    </a>
-                  </div>
-                  <div className="flex items-center">
-                    <PhoneIcon className="h-4 w-4 text-gray-400 mr-2" />
-                    <a href={`tel:${selected.phone}`} className="text-primary-600 hover:underline">
-                      {selected.phone}
-                    </a>
-                  </div>
+                  {selected.email && (
+                    <div className="flex items-center">
+                      <EnvelopeIcon className="h-4 w-4 text-gray-400 mr-2" />
+                      <a href={`mailto:${selected.email}`} className="text-primary-600 hover:underline">
+                        {selected.email}
+                      </a>
+                    </div>
+                  )}
+                  {selected.phone && (
+                    <div className="flex items-center">
+                      <PhoneIcon className="h-4 w-4 text-gray-400 mr-2" />
+                      <a href={`tel:${selected.phone}`} className="text-primary-600 hover:underline">
+                        {selected.phone}
+                      </a>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -446,8 +466,8 @@ export default function Technicians() {
                 <div className="space-y-2 text-sm">
                   <div>
                     <span className="text-gray-500">Status:</span>
-                    <span className={`ml-2 inline-flex px-2 py-0.5 rounded text-xs font-medium ${statusColors[selected.status]}`}>
-                      {selected.status.replace('_', ' ')}
+                    <span className={`ml-2 inline-flex px-2 py-0.5 rounded text-xs font-medium ${statusColors[selected.status || 'active']}`}>
+                      {(selected.status || 'active').replace('_', ' ')}
                     </span>
                   </div>
                   {selected.specialty && (
@@ -475,7 +495,7 @@ export default function Technicians() {
             {/* Performance Stats */}
             {(() => {
               const stats = getTechnicianStats(selected.id)
-              const availability = getAvailabilityStatus(selected.id)
+              const availability = getAvailabilityStatus(selected)
               
               return (
                 <div>

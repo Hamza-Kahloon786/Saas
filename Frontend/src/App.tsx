@@ -1,4 +1,6 @@
-// // frontend/src/App.tsx - UPDATED VERSION WITHOUT AUTHLAYOUT
+
+// // pricing plan
+// // frontend/src/App.tsx - CORRECTED VERSION WITH PROPER PRICING INTEGRATION
 // import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 // import { useEffect } from 'react'
 // import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -88,8 +90,34 @@
 //   },
 // })
 
+// // 🎯 PROTECTED PRICING COMPONENT
+// function ProtectedPricingPage() {
+//   const { user, hasActiveSubscription, needsPricingSelection } = useAuthStore()
+  
+//   // If user already has active subscription, redirect to appropriate dashboard
+//   if (hasActiveSubscription()) {
+//     const userRole = user?.role?.toLowerCase()
+//     switch (userRole) {
+//       case 'customer':
+//         return <Navigate to="/customer-portal/dashboard" replace />
+//       case 'technician':
+//         return <Navigate to="/technician-portal/dashboard" replace />
+//       default:
+//         return <Navigate to="/dashboard" replace />
+//     }
+//   }
+  
+//   // If user needs pricing selection, show pricing page
+//   if (needsPricingSelection()) {
+//     return <PricingPage />
+//   }
+  
+//   // Fallback redirect
+//   return <Navigate to="/dashboard" replace />
+// }
+
 // function App() {
-//   const { user, isAuthenticated, login } = useAuthStore()
+//   const { user, isAuthenticated, login, needsPricingSelection } = useAuthStore()
 //   const skipAuth = import.meta.env.VITE_SKIP_AUTH === 'true'
 
 //   // Dev bypass for easier development
@@ -99,12 +127,13 @@
 //         {
 //           id: 'dev-user-1',
 //           email: 'dev@servicecrm.com',
+//           first_name: 'Development',
+//           last_name: 'User',
 //           name: 'Development User',
 //           role: 'admin',
 //           company_id: 'dev-company-1',
 //           avatar_url: '',
 //           phone: '',
-//           is_active: true,
 //           created_at: new Date().toISOString(),
 //           updated_at: new Date().toISOString(),
 //           last_login: new Date().toISOString(),
@@ -117,10 +146,7 @@
 //               email: true,
 //               sms: true,
 //               push: true,
-//               job_updates: true,
-//               payment_updates: true,
 //             },
-//             dashboard_layout: {},
 //           },
 //         },
 //         'dev-token-123'
@@ -136,21 +162,21 @@
 //         <div className="min-h-screen bg-gray-50">
 //           <Routes>
 //             {!effectivelyAuthenticated ? (
-//               // ===== UNAUTHENTICATED ROUTES (WITHOUT AUTHLAYOUT) =====
+//               // ===== UNAUTHENTICATED ROUTES =====
 //               <>
 //                 <Route path="/" element={<Navigate to="/login" replace />} />
 //                 <Route path="/login" element={<Login />} />
 //                 <Route path="/auth/callback" element={<GoogleCallback />} />
 //                 <Route path="/register" element={<Register />} />
-//                 {/* // In your App.tsx or routing file */}
-// <Route path="/pricing" element={<PricingPage />} />
 //                 <Route path="/forgot-password" element={<ForgotPassword />} />
 
-//                 {/* Public Customer Portal */}
+//                 {/* 🚫 REMOVED: Pricing should not be accessible without auth */}
+//                 {/* <Route path="/pricing" element={<PricingPage />} /> */}
+
+//                 {/* Public Customer Portal (for customers who lost their login) */}
 //                 <Route path="/customer-portal/dashboard" element={<CustomerDashboard />} />
 //                 <Route path="/customer-portal/service-history" element={<ServiceHistory />} />
 //                 <Route path="/customer-portal/payment" element={<PaymentPortal />} />
-// {/* // CUSTOMER - Same Profile component, different route   */}
 //                 <Route path="/customer-portal/profile" element={<Profile />} />
 //                 <Route path="/customer-portal/settings" element={<Profile />} />
 //                 <Route path="/customer-portal" element={<Navigate to="/customer-portal/dashboard" replace />} />
@@ -161,24 +187,33 @@
 //             ) : (
 //               // ===== AUTHENTICATED ROUTES =====
 //               <>
+//                 {/* 🎯 PRICING PAGE - Protected and Smart Routing */}
+//                 <Route path="/pricing" element={<ProtectedPricingPage />} />
+                
 //                 <Route path="/" element={<DashboardLayout />}>
+//                   {/* 🎯 SMART ROOT REDIRECT - Check subscription status */}
+//                   <Route index element={
+//                     needsPricingSelection() ? 
+//                       <Navigate to="/pricing" replace /> : 
+//                       <Navigate to="/dashboard" replace />
+//                   } />
+                  
 //                   {/* Dashboard Routes */}
-//                   <Route index element={<Navigate to="/dashboard" replace />} />
 //                   <Route path="dashboard" element={<Dashboard />} />
 //                   <Route path="analytics" element={<Analytics />} />
 //                   <Route path="reports" element={<Reports />} />
 
-//                   {/* ADD THIS NEW ROUTE */}
-//                   <Route path="/admin/documents" element={<AdminDocuments />} />
+//                   {/* Admin Routes */}
+//                   <Route path="admin/documents" element={<AdminDocuments />} />
 //                   <Route path="admin/ai-bookings" element={<AIBookings />} />
-//                   <Route path="/admin/service-management" element={<ServiceManagement />} />
-//                   {/* <Route path="/admin/ai-analytics" element={<AIAnalytics />} /> */}
+//                   <Route path="admin/service-management" element={<ServiceManagement />} />
+//                   {/* <Route path="admin/ai-analytics" element={<AIAnalytics />} /> */}
 
 //                   {/* CRM Routes */}
 //                   <Route path="crm/contacts" element={<Contacts />} />
 //                   <Route path="crm/leads" element={<Leads />} />
 //                   <Route path="crm/pipeline" element={<Pipeline />} />
-//                    <Route path="crm/service-requests" element={<ServiceRequests />} />  {/* 🆕 NEW ROUTE */}
+//                   <Route path="crm/service-requests" element={<ServiceRequests />} />
 //                   <Route path="crm" element={<Navigate to="/crm/contacts" replace />} />
 
 //                   {/* Scheduling Routes */}
@@ -196,7 +231,7 @@
 
 //                   {/* Estimates & Invoices Routes */}
 //                   <Route path="estimates" element={<EstimateList />} />
-//                   <Route path="/estimates/new" element={<EstimateBuilder />} />
+//                   <Route path="estimates/new" element={<EstimateBuilder />} />
 //                   <Route path="estimates/:id/edit" element={<EstimateBuilder />} />
 //                   <Route path="estimates/:estimateId/invoice" element={<InvoiceGenerator />} />
                   
@@ -229,9 +264,8 @@
 //                       <Route path="customer-portal/job-tracking/:jobId" element={<JobTracking />} />
 //                       <Route path="customer-portal/payments" element={<PaymentsDashboard />} />
 //                       <Route path="customer-portal/payments/:invoiceId" element={<PaymentPortal />} />
-//                       {/* // CUSTOMER - Same Profile component, different route   */}
-// <Route path="/customer-portal/profile" element={<Profile />} />
-// <Route path="/customer-portal/settings" element={<Profile />} />
+//                       <Route path="customer-portal/profile" element={<Profile />} />
+//                       <Route path="customer-portal/settings" element={<Profile />} />
 //                       <Route path="customer-portal" element={<Navigate to="/customer-portal/dashboard" replace />} />
 //                     </>
 //                   )}
@@ -245,10 +279,8 @@
 //                       <Route path="technician-portal/route" element={<TechRouteOptimization />} />
 //                       <Route path="technician-portal/schedule" element={<TechnicianSchedule />} />
 //                       <Route path="technician-portal/stats" element={<TechnicianStats />} />
-//                       {/* <Route path="technician-portal/settings" element={<TechnicianSettings />} /> */}
-//                       {/* // TECHNICIAN - Same Profile component, different route */}
-// <Route path="/technician-portal/profile" element={<Profile />} />
-// <Route path="/technician-portal/settings" element={<Profile />} />
+//                       <Route path="technician-portal/profile" element={<Profile />} />
+//                       <Route path="technician-portal/settings" element={<Profile />} />
 //                       <Route path="technician-portal" element={<Navigate to="/technician-portal/dashboard" replace />} />
 //                     </>
 //                   )}
@@ -262,14 +294,18 @@
 //                     </>
 //                   )}
 
-//                   {/* Redirect based on role */}
-//                   {user?.role === 'customer' ? (
-//                     <Route path="*" element={<Navigate to="/customer-portal/dashboard" replace />} />
-//                   ) : user?.role === 'technician' ? (
-//                     <Route path="*" element={<Navigate to="/technician-portal/dashboard" replace />} />
-//                   ) : (
-//                     <Route path="*" element={<Navigate to="/dashboard" replace />} />
-//                   )}
+//                   {/* 🎯 SMART FALLBACK REDIRECTS BASED ON SUBSCRIPTION STATUS */}
+//                   <Route path="*" element={
+//                     needsPricingSelection() ? (
+//                       <Navigate to="/pricing" replace />
+//                     ) : user?.role === 'customer' ? (
+//                       <Navigate to="/customer-portal/dashboard" replace />
+//                     ) : user?.role === 'technician' ? (
+//                       <Navigate to="/technician-portal/dashboard" replace />
+//                     ) : (
+//                       <Navigate to="/dashboard" replace />
+//                     )
+//                   } />
 //                 </Route>
 //               </>
 //             )}
@@ -306,8 +342,7 @@
 // export default App
 
 
-// pricing plan
-// frontend/src/App.tsx - CORRECTED VERSION WITH PROPER PRICING INTEGRATION
+// frontend/src/App.tsx - FIXED VERSION WITH SUBSCRIPTION PROTECTION
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { useEffect } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -315,7 +350,6 @@ import { Toaster } from 'react-hot-toast'
 import { useAuthStore } from './store/authStore'
 import DashboardLayout from './components/layout/DashboardLayout'
 
-// Add this import at the top with other imports
 import AIBookings from './Pages/admin/AIBookings'
 
 // ===== Auth Pages =====
@@ -354,7 +388,6 @@ import InvoiceGenerator from './Pages/estimates/InvoiceGenerator'
 import InvoiceList from './Pages/estimates/InvoiceList'
 
 // ===== AI Automation =====
-// import AIFlows from './Pages/ai_automation/AIFlows'
 import SMSCampaigns from './Pages/ai_automation/SMSCampaigns'
 import LeadScoring from './Pages/ai_automation/LeadScoring'
 import AutomationBuilder from './Pages/ai_automation/AutomationBuilder'
@@ -384,18 +417,32 @@ import Integrations from './Pages/settings/Integration'
 
 import ServiceManagement from './Pages/admin/ServiceManagement'
 import AdminDocuments from './Pages/admin/AdminDocuments'
-// import AIAnalytics from './Pages/admin/AIAnalytics'
 
 // Create QueryClient for React Query
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
+      staleTime: 5 * 60 * 1000,
       retry: 1,
       refetchOnWindowFocus: false,
     },
   },
 })
+
+// 🛡️ SUBSCRIPTION GUARD - Protects customer routes
+function SubscriptionGuard({ children }: { children: React.ReactNode }) {
+  const { user } = useAuthStore()
+  
+  const userRole = user?.role?.toLowerCase()
+  const hasActiveSubscription = user?.subscription?.status === 'active'
+  
+  // Only customers need subscription check
+  if (userRole === 'customer' && !hasActiveSubscription) {
+    return <Navigate to="/pricing" replace />
+  }
+  
+  return <>{children}</>
+}
 
 // 🎯 PROTECTED PRICING COMPONENT
 function ProtectedPricingPage() {
@@ -477,18 +524,7 @@ function App() {
                 <Route path="/register" element={<Register />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
 
-                {/* 🚫 REMOVED: Pricing should not be accessible without auth */}
-                {/* <Route path="/pricing" element={<PricingPage />} /> */}
-
-                {/* Public Customer Portal (for customers who lost their login) */}
-                <Route path="/customer-portal/dashboard" element={<CustomerDashboard />} />
-                <Route path="/customer-portal/service-history" element={<ServiceHistory />} />
-                <Route path="/customer-portal/payment" element={<PaymentPortal />} />
-                <Route path="/customer-portal/profile" element={<Profile />} />
-                <Route path="/customer-portal/settings" element={<Profile />} />
-                <Route path="/customer-portal" element={<Navigate to="/customer-portal/dashboard" replace />} />
-
-                {/* Catch all - redirect to login */}
+                {/* 🚫 REMOVED: All protected routes require authentication */}
                 <Route path="*" element={<Navigate to="/login" replace />} />
               </>
             ) : (
@@ -514,7 +550,6 @@ function App() {
                   <Route path="admin/documents" element={<AdminDocuments />} />
                   <Route path="admin/ai-bookings" element={<AIBookings />} />
                   <Route path="admin/service-management" element={<ServiceManagement />} />
-                  {/* <Route path="admin/ai-analytics" element={<AIAnalytics />} /> */}
 
                   {/* CRM Routes */}
                   <Route path="crm/contacts" element={<Contacts />} />
@@ -548,11 +583,9 @@ function App() {
                   <Route path="invoices/:id/edit" element={<InvoiceGenerator />} />
 
                   {/* AI Automation Routes */}
-                  {/* <Route path="ai-automation/flows" element={<AIFlows />} /> */}
                   <Route path="ai-automation/sms-campaigns" element={<SMSCampaigns />} />
                   <Route path="ai-automation/lead-scoring" element={<LeadScoring />} />
                   <Route path="ai-automation/automation-builder" element={<AutomationBuilder />} />
-                  {/* <Route path="ai-automation" element={<Navigate to="/ai-automation/flows" replace />} /> */}
 
                   {/* Settings Routes */}
                   <Route path="settings/profile" element={<Profile />} />
@@ -561,23 +594,59 @@ function App() {
                   <Route path="settings/integrations" element={<Integrations />} />
                   <Route path="settings" element={<Navigate to="/settings/profile" replace />} />
 
-                  {/* Customer Portal for authenticated customers */}
+                  {/* 🛡️ CUSTOMER PORTAL - PROTECTED WITH SUBSCRIPTION GUARD */}
                   {(user?.role === 'customer' || skipAuth) && (
                     <>
-                      <Route path="customer-portal/dashboard" element={<CustomerDashboard />} />
-                      <Route path="customer-portal/service-history" element={<ServiceHistory />} />
-                      <Route path="customer-portal/documents" element={<CustomerDocuments />} />
-                      <Route path="customer-portal/job-tracking" element={<JobTracking />} />
-                      <Route path="customer-portal/job-tracking/:jobId" element={<JobTracking />} />
-                      <Route path="customer-portal/payments" element={<PaymentsDashboard />} />
-                      <Route path="customer-portal/payments/:invoiceId" element={<PaymentPortal />} />
-                      <Route path="customer-portal/profile" element={<Profile />} />
-                      <Route path="customer-portal/settings" element={<Profile />} />
+                      <Route path="customer-portal/dashboard" element={
+                        <SubscriptionGuard>
+                          <CustomerDashboard />
+                        </SubscriptionGuard>
+                      } />
+                      <Route path="customer-portal/service-history" element={
+                        <SubscriptionGuard>
+                          <ServiceHistory />
+                        </SubscriptionGuard>
+                      } />
+                      <Route path="customer-portal/documents" element={
+                        <SubscriptionGuard>
+                          <CustomerDocuments />
+                        </SubscriptionGuard>
+                      } />
+                      <Route path="customer-portal/job-tracking" element={
+                        <SubscriptionGuard>
+                          <JobTracking />
+                        </SubscriptionGuard>
+                      } />
+                      <Route path="customer-portal/job-tracking/:jobId" element={
+                        <SubscriptionGuard>
+                          <JobTracking />
+                        </SubscriptionGuard>
+                      } />
+                      <Route path="customer-portal/payments" element={
+                        <SubscriptionGuard>
+                          <PaymentsDashboard />
+                        </SubscriptionGuard>
+                      } />
+                      <Route path="customer-portal/payments/:invoiceId" element={
+                        <SubscriptionGuard>
+                          <PaymentPortal />
+                        </SubscriptionGuard>
+                      } />
+                      <Route path="customer-portal/profile" element={
+                        <SubscriptionGuard>
+                          <Profile />
+                        </SubscriptionGuard>
+                      } />
+                      <Route path="customer-portal/settings" element={
+                        <SubscriptionGuard>
+                          <Profile />
+                        </SubscriptionGuard>
+                      } />
                       <Route path="customer-portal" element={<Navigate to="/customer-portal/dashboard" replace />} />
                     </>
                   )}
                   
-                  {/* Technician Portal for technicians */}
+                  {/* Technician Portal for technicians - NO SUBSCRIPTION REQUIRED */}
                   {(user?.role === 'technician' || skipAuth) && (
                     <>
                       <Route path="technician-portal/dashboard" element={<TechnicianDashboard />} />

@@ -1,4 +1,6 @@
-// // frontend/src/pages/field-service/Jobs.tsx
+
+
+// // frontend/src/pages/field-service/Jobs.tsx - FIXED VERSION
 // import { useState } from 'react'
 // import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 // import {
@@ -51,6 +53,14 @@
 //   updated_at: string
 // }
 
+// interface JobsResponse {
+//   jobs: Job[]
+//   total: number
+//   page: number
+//   limit: number
+//   has_more?: boolean
+// }
+
 // const statusColors = {
 //   scheduled: 'bg-blue-100 text-blue-800',
 //   in_progress: 'bg-yellow-100 text-yellow-800',
@@ -75,27 +85,37 @@
 
 //   const queryClient = useQueryClient()
 
-//   // In Jobs.tsx, around line 87 where you build the query parameters:
+//   // ✅ FIXED: Updated query to handle the backend response format
+//   const { data: jobsResponse, isLoading, error } = useQuery<JobsResponse>({
+//     queryKey: ['field-jobs', searchTerm, statusFilter, technicianFilter, dateFilter],
+//     queryFn: async () => {
+//       const params = new URLSearchParams()
+//       if (searchTerm) params.append('search', searchTerm)
+//       if (statusFilter !== 'all') params.append('status', statusFilter)
+//       if (technicianFilter !== 'all') params.append('technician_id', technicianFilter)
+//       if (dateFilter !== 'all') params.append('date', dateFilter)
+      
+//       console.log('🔄 Making API request to:', `/jobs?${params.toString()}`)
+      
+//       const response = await api.get(`/jobs`)
+//       console.log('✅ API Response:', response.data)
+      
+//       return response.data as JobsResponse
+//     },
+//     retry: 2,
+//     onError: (error: any) => {
+//       console.error('❌ Jobs API Error:', error)
+//       toast.error(error.response?.data?.detail || 'Failed to fetch jobs')
+//     }
+//   })
 
-// const { data: jobs, isLoading } = useQuery({
-//   queryKey: ['field-jobs', searchTerm, statusFilter, technicianFilter, dateFilter],
-//   queryFn: async () => {
-//     const params = new URLSearchParams()
-//     if (searchTerm) params.append('search', searchTerm)
-//     if (statusFilter !== 'all') params.append('status', statusFilter)
-//     if (technicianFilter !== 'all') params.append('technician_id', technicianFilter)
-//     // 🔧 FIX: Change 'date_filter' to 'date'
-//     if (dateFilter !== 'all') params.append('date', dateFilter)  // Changed from 'date_filter' to 'date'
-    
-//     const response = await api.get(`/jobs?${params.toString()}`)
-//     return response.data
-//   },
-// })
+//   // Extract jobs array from response
+//   const jobs = jobsResponse?.jobs || []
 
 //   const { data: technicians } = useQuery({
 //     queryKey: ['technicians'],
 //     queryFn: async () => {
-//       const response = await api.get('/users?role=technician')
+//       const response = await api.get('/users/?role=technician')
 //       return response.data
 //     },
 //   })
@@ -140,22 +160,34 @@
 //   }
 
 //   const formatTime = (timeString: string) => {
-//     return new Date(`2000-01-01T${timeString}`).toLocaleTimeString([], { 
-//       hour: '2-digit', 
-//       minute: '2-digit' 
-//     })
+//     if (!timeString) return 'N/A'
+//     try {
+//       return new Date(`2000-01-01T${timeString}`).toLocaleTimeString([], { 
+//         hour: '2-digit', 
+//         minute: '2-digit' 
+//       })
+//     } catch {
+//       return timeString
+//     }
 //   }
 
 //   const formatDate = (dateString: string) => {
-//     return new Date(dateString).toLocaleDateString('en-US', {
-//       weekday: 'short',
-//       month: 'short',
-//       day: 'numeric'
-//     })
+//     if (!dateString) return 'N/A'
+//     try {
+//       return new Date(dateString).toLocaleDateString('en-US', {
+//         weekday: 'short',
+//         month: 'short',
+//         day: 'numeric'
+//       })
+//     } catch {
+//       return dateString
+//     }
 //   }
 
 //   const getJobStats = () => {
-//     if (!jobs) return { total: 0, scheduled: 0, inProgress: 0, completed: 0, cancelled: 0 }
+//     if (!jobs || jobs.length === 0) {
+//       return { total: 0, scheduled: 0, inProgress: 0, completed: 0, cancelled: 0 }
+//     }
     
 //     return {
 //       total: jobs.length,
@@ -168,6 +200,56 @@
 
 //   const stats = getJobStats()
 
+//   // Show loading state
+//   if (isLoading) {
+//     return (
+//       <div className="space-y-6">
+//         <div className="flex justify-between items-center">
+//           <div>
+//             <h1 className="text-2xl font-bold text-gray-900">Field Service Jobs</h1>
+//             <p className="mt-1 text-sm text-gray-500">Loading jobs...</p>
+//           </div>
+//         </div>
+//         <div className="bg-white shadow rounded-lg p-6">
+//           <div className="animate-pulse space-y-4">
+//             {[...Array(5)].map((_, i) => (
+//               <div key={i} className="h-24 bg-gray-200 rounded"></div>
+//             ))}
+//           </div>
+//         </div>
+//       </div>
+//     )
+//   }
+
+//   // Show error state
+//   if (error) {
+//     return (
+//       <div className="space-y-6">
+//         <div className="flex justify-between items-center">
+//           <div>
+//             <h1 className="text-2xl font-bold text-gray-900">Field Service Jobs</h1>
+//             <p className="mt-1 text-sm text-red-500">Error loading jobs</p>
+//           </div>
+//         </div>
+//         <div className="bg-white shadow rounded-lg p-6">
+//           <div className="text-center">
+//             <XCircleIcon className="h-12 w-12 text-red-500 mx-auto mb-4" />
+//             <h3 className="text-lg font-medium text-gray-900 mb-2">Unable to Load Jobs</h3>
+//             <p className="text-gray-500 mb-4">
+//               {(error as any)?.response?.data?.detail || 'An error occurred while loading jobs'}
+//             </p>
+//             <button
+//               onClick={() => queryClient.invalidateQueries({ queryKey: ['field-jobs'] })}
+//               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700"
+//             >
+//               Try Again
+//             </button>
+//           </div>
+//         </div>
+//       </div>
+//     )
+//   }
+
 //   return (
 //     <div className="space-y-6">
 //       {/* Header */}
@@ -175,7 +257,7 @@
 //         <div>
 //           <h1 className="text-2xl font-bold text-gray-900">Field Service Jobs</h1>
 //           <p className="mt-1 text-sm text-gray-500">
-//             Manage and track all field service jobs and assignments
+//             Manage and track all field service jobs and assignments ({jobs.length} jobs)
 //           </p>
 //         </div>
 //       </div>
@@ -334,24 +416,26 @@
 
 //       {/* Jobs List */}
 //       <div className="bg-white shadow overflow-hidden sm:rounded-md">
-//         {isLoading ? (
-//           <div className="p-6">
-//             <div className="animate-pulse space-y-4">
-//               {[...Array(5)].map((_, i) => (
-//                 <div key={i} className="h-24 bg-gray-200 rounded"></div>
-//               ))}
-//             </div>
+//         {jobs.length === 0 ? (
+//           <div className="p-6 text-center">
+//             <ClockIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+//             <h3 className="text-lg font-medium text-gray-900 mb-2">No Jobs Found</h3>
+//             <p className="text-gray-500">
+//               {searchTerm || statusFilter !== 'all' || technicianFilter !== 'all' || dateFilter !== 'all'
+//                 ? 'Try adjusting your filters to see more jobs.'
+//                 : 'There are no jobs scheduled for the selected time period.'}
+//             </p>
 //           </div>
 //         ) : (
 //           <ul className="divide-y divide-gray-200">
-//             {jobs?.map((job: Job) => (
+//             {jobs.map((job: Job) => (
 //               <li key={job.id}>
 //                 <div className="px-4 py-4">
 //                   <div className="flex items-center justify-between">
 //                     <div className="flex items-center flex-1">
 //                       <div className="flex-shrink-0">
 //                         <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-//                           statusColors[job.status].replace('text-', 'text-white bg-').replace('bg-', 'bg-').replace('-100', '-500')
+//                           (statusColors[job.status] || 'bg-gray-100 text-gray-800').replace('text-', 'text-white bg-').replace('bg-', 'bg-').replace('-100', '-500')
 //                         }`}>
 //                           {getStatusIcon(job.status)}
 //                         </div>
@@ -367,7 +451,7 @@
 //                               <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
 //                                 statusColors[job.status]
 //                               }`}>
-//                                 {job.status.replace('_', ' ')}
+//                                 {(job.status || 'unknown').replace('_', ' ')}
 //                               </span>
 //                               <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
 //                                 priorityColors[job.priority]
@@ -391,7 +475,7 @@
                               
 //                               <div className="flex items-center mr-4">
 //                                 <MapPinIcon className="h-4 w-4 mr-1" />
-//                                 {job.city}, {job.state}
+//                                 {job.city && job.state ? `${job.city}, ${job.state}` : job.address}
 //                               </div>
                               
 //                               {job.customer_phone && (
@@ -444,7 +528,7 @@
 //                           </div>
 //                         )}
                         
-//                         {job.equipment_needed.length > 0 && (
+//                         {job.equipment_needed && job.equipment_needed.length > 0 && (
 //                           <div className="mt-2 flex flex-wrap gap-1">
 //                             <span className="text-xs text-gray-500 mr-2">Equipment needed:</span>
 //                             {job.equipment_needed.map((item) => (
@@ -466,6 +550,31 @@
 //           </ul>
 //         )}
 //       </div>
+
+//       {/* Pagination */}
+//       {jobsResponse && jobsResponse.total > jobsResponse.limit && (
+//         <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+//           <div className="flex-1 flex justify-between sm:hidden">
+//             <button className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+//               Previous
+//             </button>
+//             <button className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+//               Next
+//             </button>
+//           </div>
+//           <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+//             <div>
+//               <p className="text-sm text-gray-700">
+//                 Showing <span className="font-medium">{(jobsResponse.page * jobsResponse.limit) + 1}</span> to{' '}
+//                 <span className="font-medium">
+//                   {Math.min((jobsResponse.page + 1) * jobsResponse.limit, jobsResponse.total)}
+//                 </span>{' '}
+//                 of <span className="font-medium">{jobsResponse.total}</span> results
+//               </p>
+//             </div>
+//           </div>
+//         </div>
+//       )}
 
 //       {/* Job Details Modal */}
 //       {selectedJob && (
@@ -516,7 +625,7 @@
 //                     <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
 //                       statusColors[selectedJob.status]
 //                     }`}>
-//                       {selectedJob.status.replace('_', ' ')}
+//                       {(selectedJob.status || 'unknown').replace('_', ' ')}
 //                     </span>
 //                   </div>
 //                   <div>
@@ -559,7 +668,7 @@
 //               </div>
 //             )}
             
-//             {selectedJob.equipment_needed.length > 0 && (
+//             {selectedJob.equipment_needed && selectedJob.equipment_needed.length > 0 && (
 //               <div>
 //                 <h4 className="text-sm font-medium text-gray-900 mb-2">Equipment Needed</h4>
 //                 <div className="flex flex-wrap gap-2">
@@ -599,35 +708,7 @@
 //     </div>
 //   )
 // }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// frontend/src/pages/field-service/Jobs.tsx - FIXED VERSION
+// frontend/src/pages/field-service/Jobs.tsx - FIXED DATA MAPPING
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
@@ -644,6 +725,7 @@ import {
   EyeIcon
 } from '@heroicons/react/24/outline'
 import toast from 'react-hot-toast'
+import moment from 'moment'
 
 import { api } from '../../services/api'
 import Modal from '../../components/ui/Modal'
@@ -665,7 +747,7 @@ interface Job {
   end_time: string
   estimated_duration: number
   actual_duration?: number
-  status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled' | 'on_hold'
+  status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled' | 'on_hold' | 'confirmed'
   priority: 'low' | 'medium' | 'high' | 'urgent'
   technician_id?: string
   technician_name?: string
@@ -680,16 +762,9 @@ interface Job {
   updated_at: string
 }
 
-interface JobsResponse {
-  jobs: Job[]
-  total: number
-  page: number
-  limit: number
-  has_more?: boolean
-}
-
 const statusColors = {
   scheduled: 'bg-blue-100 text-blue-800',
+  confirmed: 'bg-blue-100 text-blue-800',
   in_progress: 'bg-yellow-100 text-yellow-800',
   completed: 'bg-green-100 text-green-800',
   cancelled: 'bg-red-100 text-red-800',
@@ -703,6 +778,72 @@ const priorityColors = {
   urgent: 'bg-red-100 text-red-800'
 }
 
+// 🔧 HELPER FUNCTION: Transform API response to match Job interface
+const transformJobData = (apiJob: any): Job => {
+  // Extract dates and times from various possible formats
+  const scheduledStart = apiJob.scheduled_start || apiJob.time_tracking?.scheduled_start
+  const scheduledEnd = apiJob.scheduled_end || apiJob.time_tracking?.scheduled_end
+  
+  const startMoment = scheduledStart ? moment(scheduledStart) : moment()
+  const endMoment = scheduledEnd ? moment(scheduledEnd) : moment()
+  
+  return {
+    id: apiJob.id || apiJob._id,
+    job_number: apiJob.job_number || `JOB-${apiJob.id?.slice(-6)}`,
+    
+    // Customer info - handle nested structure
+    customer_name: apiJob.customer?.name || apiJob.customer_name || 'Unknown Customer',
+    customer_phone: apiJob.customer?.phone || apiJob.customer_phone || '',
+    customer_email: apiJob.customer?.email || apiJob.customer_email || '',
+    
+    // Service info
+    service_type: apiJob.job_type || apiJob.service_type || 'Service Call',
+    description: apiJob.description || apiJob.notes || '',
+    
+    // Location - handle nested structure
+    address: apiJob.location?.street || apiJob.address || '',
+    city: apiJob.location?.city || apiJob.city || '',
+    state: apiJob.location?.state || apiJob.state || '',
+    zip_code: apiJob.location?.postal_code || apiJob.zip_code || '',
+    
+    // Schedule - extract from datetime
+    scheduled_date: startMoment.format('YYYY-MM-DD'),
+    start_time: startMoment.format('HH:mm'),
+    end_time: endMoment.format('HH:mm'),
+    
+    // Duration
+    estimated_duration: apiJob.estimated_duration || 
+                       apiJob.time_tracking?.scheduled_duration || 
+                       endMoment.diff(startMoment, 'minutes') || 
+                       60,
+    actual_duration: apiJob.actual_duration || apiJob.time_tracking?.actual_duration,
+    
+    // Status and priority
+    status: (apiJob.status || 'scheduled').toLowerCase(),
+    priority: (apiJob.priority || 'medium').toLowerCase(),
+    
+    // Technician info - handle nested structure
+    technician_id: apiJob.technician?.id || apiJob.technician_id,
+    technician_name: apiJob.technician?.name || 
+                     (apiJob.technician?.first_name && apiJob.technician?.last_name 
+                       ? `${apiJob.technician.first_name} ${apiJob.technician.last_name}`
+                       : apiJob.technician_name) || '',
+    technician_phone: apiJob.technician?.phone || apiJob.technician_phone || '',
+    
+    // Additional info
+    notes: apiJob.notes || apiJob.description || '',
+    special_instructions: apiJob.special_instructions || '',
+    equipment_needed: apiJob.equipment_needed || [],
+    photos: apiJob.photos || [],
+    customer_signature: apiJob.customer_signature,
+    completion_notes: apiJob.completion_notes,
+    
+    // Timestamps
+    created_at: apiJob.created_at,
+    updated_at: apiJob.updated_at
+  }
+}
+
 export default function Jobs() {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -712,8 +853,8 @@ export default function Jobs() {
 
   const queryClient = useQueryClient()
 
-  // ✅ FIXED: Updated query to handle the backend response format
-  const { data: jobsResponse, isLoading, error } = useQuery<JobsResponse>({
+  // ✅ FIXED: Transform API response to match Job interface
+  const { data: jobs, isLoading, error } = useQuery<Job[]>({
     queryKey: ['field-jobs', searchTerm, statusFilter, technicianFilter, dateFilter],
     queryFn: async () => {
       const params = new URLSearchParams()
@@ -722,12 +863,31 @@ export default function Jobs() {
       if (technicianFilter !== 'all') params.append('technician_id', technicianFilter)
       if (dateFilter !== 'all') params.append('date', dateFilter)
       
-      console.log('🔄 Making API request to:', `/jobs?${params.toString()}`)
+      console.log('🔄 Fetching jobs from API...')
       
-      const response = await api.get(`/jobs`)
-      console.log('✅ API Response:', response.data)
+      const response = await api.get(`/jobs?${params.toString()}`)
+      console.log('✅ Raw API Response:', response.data)
       
-      return response.data as JobsResponse
+      // Handle different response structures
+      let jobsArray = []
+      
+      if (Array.isArray(response.data)) {
+        jobsArray = response.data
+      } else if (response.data.jobs && Array.isArray(response.data.jobs)) {
+        jobsArray = response.data.jobs
+      } else if (response.data.results && Array.isArray(response.data.results)) {
+        jobsArray = response.data.results
+      } else if (response.data.data && Array.isArray(response.data.data)) {
+        jobsArray = response.data.data
+      }
+      
+      console.log('📋 Found jobs:', jobsArray.length)
+      
+      // Transform each job to match our interface
+      const transformedJobs = jobsArray.map(transformJobData)
+      console.log('✅ Transformed jobs:', transformedJobs)
+      
+      return transformedJobs
     },
     retry: 2,
     onError: (error: any) => {
@@ -736,14 +896,27 @@ export default function Jobs() {
     }
   })
 
-  // Extract jobs array from response
-  const jobs = jobsResponse?.jobs || []
-
+  // ✅ FIXED: Try both endpoints with fallback
   const { data: technicians } = useQuery({
     queryKey: ['technicians'],
     queryFn: async () => {
-      const response = await api.get('/users/?role=technician')
-      return response.data
+      try {
+        // Try dedicated technicians endpoint first
+        const response = await api.get('/technicians/')
+        console.log('✅ Fetched from /technicians/', response.data)
+        return response.data || []
+      } catch (error1) {
+        console.warn('⚠️ /technicians/ failed, trying /users/?role=technician')
+        try {
+          // Fallback to users endpoint with role filter
+          const response = await api.get('/users/?role=technician')
+          console.log('✅ Fetched from /users/?role=technician', response.data)
+          return response.data || []
+        } catch (error2) {
+          console.error('❌ Both endpoints failed:', error1, error2)
+          return []
+        }
+      }
     },
   })
 
@@ -759,6 +932,7 @@ export default function Jobs() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['field-jobs'] })
       toast.success('Job status updated!')
+      setSelectedJob(null)
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.detail || 'Failed to update job')
@@ -772,6 +946,7 @@ export default function Jobs() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'scheduled':
+      case 'confirmed':
         return <ClockIcon className="h-4 w-4" />
       case 'in_progress':
         return <PlayIcon className="h-4 w-4" />
@@ -789,10 +964,11 @@ export default function Jobs() {
   const formatTime = (timeString: string) => {
     if (!timeString) return 'N/A'
     try {
-      return new Date(`2000-01-01T${timeString}`).toLocaleTimeString([], { 
-        hour: '2-digit', 
-        minute: '2-digit' 
-      })
+      // Handle both HH:mm and full datetime formats
+      if (timeString.includes('T')) {
+        return moment(timeString).format('h:mm A')
+      }
+      return moment(`2000-01-01T${timeString}`).format('h:mm A')
     } catch {
       return timeString
     }
@@ -801,11 +977,7 @@ export default function Jobs() {
   const formatDate = (dateString: string) => {
     if (!dateString) return 'N/A'
     try {
-      return new Date(dateString).toLocaleDateString('en-US', {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric'
-      })
+      return moment(dateString).format('MMM DD, YYYY')
     } catch {
       return dateString
     }
@@ -818,7 +990,7 @@ export default function Jobs() {
     
     return {
       total: jobs.length,
-      scheduled: jobs.filter((job: Job) => job.status === 'scheduled').length,
+      scheduled: jobs.filter((job: Job) => job.status === 'scheduled' || job.status === 'confirmed').length,
       inProgress: jobs.filter((job: Job) => job.status === 'in_progress').length,
       completed: jobs.filter((job: Job) => job.status === 'completed').length,
       cancelled: jobs.filter((job: Job) => job.status === 'cancelled').length
@@ -884,7 +1056,7 @@ export default function Jobs() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Field Service Jobs</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Manage and track all field service jobs and assignments ({jobs.length} jobs)
+            Manage and track all field service jobs and assignments ({jobs?.length || 0} jobs)
           </p>
         </div>
       </div>
@@ -1005,6 +1177,7 @@ export default function Jobs() {
           >
             <option value="all">All Statuses</option>
             <option value="scheduled">Scheduled</option>
+            <option value="confirmed">Confirmed</option>
             <option value="in_progress">In Progress</option>
             <option value="completed">Completed</option>
             <option value="cancelled">Cancelled</option>
@@ -1018,7 +1191,11 @@ export default function Jobs() {
           >
             <option value="all">All Technicians</option>
             {technicians?.map((tech: any) => (
-              <option key={tech.id} value={tech.id}>{tech.name}</option>
+              <option key={tech.id} value={tech.id}>
+                {tech.first_name && tech.last_name 
+                  ? `${tech.first_name} ${tech.last_name}` 
+                  : tech.name || 'Technician'}
+              </option>
             ))}
           </select>
 
@@ -1043,7 +1220,7 @@ export default function Jobs() {
 
       {/* Jobs List */}
       <div className="bg-white shadow overflow-hidden sm:rounded-md">
-        {jobs.length === 0 ? (
+        {!jobs || jobs.length === 0 ? (
           <div className="p-6 text-center">
             <ClockIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No Jobs Found</h3>
@@ -1057,50 +1234,53 @@ export default function Jobs() {
           <ul className="divide-y divide-gray-200">
             {jobs.map((job: Job) => (
               <li key={job.id}>
-                <div className="px-4 py-4">
+                <div className="px-4 py-4 hover:bg-gray-50 transition-colors">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center flex-1">
                       <div className="flex-shrink-0">
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                          (statusColors[job.status] || 'bg-gray-100 text-gray-800').replace('text-', 'text-white bg-').replace('bg-', 'bg-').replace('-100', '-500')
-                        }`}>
+                          job.status === 'scheduled' || job.status === 'confirmed' ? 'bg-blue-500' :
+                          job.status === 'in_progress' ? 'bg-yellow-500' :
+                          job.status === 'completed' ? 'bg-green-500' :
+                          job.status === 'cancelled' ? 'bg-red-500' : 'bg-gray-500'
+                        } text-white`}>
                           {getStatusIcon(job.status)}
                         </div>
                       </div>
                       
                       <div className="ml-4 flex-1">
                         <div className="flex items-center justify-between">
-                          <div>
-                            <div className="flex items-center">
+                          <div className="flex-1">
+                            <div className="flex items-center flex-wrap gap-2">
                               <p className="text-sm font-medium text-gray-900">
                                 #{job.job_number} - {job.customer_name}
                               </p>
-                              <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                                 statusColors[job.status]
                               }`}>
-                                {(job.status || 'unknown').replace('_', ' ')}
+                                {job.status.replace('_', ' ')}
                               </span>
-                              <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                                 priorityColors[job.priority]
                               }`}>
                                 {job.priority}
                               </span>
                             </div>
                             
-                            <div className="flex items-center mt-1 text-sm text-gray-500">
-                              <div className="flex items-center mr-4">
+                            <div className="flex flex-wrap items-center mt-1 text-sm text-gray-500 gap-4">
+                              <div className="flex items-center">
                                 <ClockIcon className="h-4 w-4 mr-1" />
                                 {formatDate(job.scheduled_date)} • {formatTime(job.start_time)} - {formatTime(job.end_time)}
                               </div>
                               
                               {job.technician_name && (
-                                <div className="flex items-center mr-4">
+                                <div className="flex items-center">
                                   <UserIcon className="h-4 w-4 mr-1" />
                                   {job.technician_name}
                                 </div>
                               )}
                               
-                              <div className="flex items-center mr-4">
+                              <div className="flex items-center">
                                 <MapPinIcon className="h-4 w-4 mr-1" />
                                 {job.city && job.state ? `${job.city}, ${job.state}` : job.address}
                               </div>
@@ -1116,25 +1296,25 @@ export default function Jobs() {
                             <div className="mt-1">
                               <span className="text-sm text-gray-600">{job.service_type}</span>
                               {job.description && (
-                                <span className="ml-2 text-sm text-gray-500">• {job.description}</span>
+                                <span className="ml-2 text-sm text-gray-500">• {job.description.substring(0, 100)}{job.description.length > 100 ? '...' : ''}</span>
                               )}
                             </div>
                           </div>
                           
-                          <div className="flex items-center space-x-2">
-                            {job.status === 'scheduled' && (
+                          <div className="flex items-center space-x-2 ml-4">
+                            {(job.status === 'scheduled' || job.status === 'confirmed') && (
                               <button
                                 onClick={() => handleStatusChange(job.id, 'in_progress')}
-                                className="text-blue-600 hover:text-blue-900 text-sm font-medium"
+                                className="px-3 py-1 text-sm font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded"
                               >
-                                Start Job
+                                Start
                               </button>
                             )}
                             
                             {job.status === 'in_progress' && (
                               <button
                                 onClick={() => handleStatusChange(job.id, 'completed')}
-                                className="text-green-600 hover:text-green-900 text-sm font-medium"
+                                className="px-3 py-1 text-sm font-medium text-green-600 hover:text-green-800 hover:bg-green-50 rounded"
                               >
                                 Complete
                               </button>
@@ -1142,9 +1322,9 @@ export default function Jobs() {
                             
                             <button
                               onClick={() => setSelectedJob(job)}
-                              className="text-primary-600 hover:text-primary-900 text-sm font-medium"
+                              className="p-1 text-primary-600 hover:text-primary-800 hover:bg-primary-50 rounded"
                             >
-                              <EyeIcon className="h-4 w-4" />
+                              <EyeIcon className="h-5 w-5" />
                             </button>
                           </div>
                         </div>
@@ -1157,10 +1337,10 @@ export default function Jobs() {
                         
                         {job.equipment_needed && job.equipment_needed.length > 0 && (
                           <div className="mt-2 flex flex-wrap gap-1">
-                            <span className="text-xs text-gray-500 mr-2">Equipment needed:</span>
-                            {job.equipment_needed.map((item) => (
+                            <span className="text-xs text-gray-500 mr-2">Equipment:</span>
+                            {job.equipment_needed.map((item, idx) => (
                               <span
-                                key={item}
+                                key={idx}
                                 className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800"
                               >
                                 {item}
@@ -1177,31 +1357,6 @@ export default function Jobs() {
           </ul>
         )}
       </div>
-
-      {/* Pagination */}
-      {jobsResponse && jobsResponse.total > jobsResponse.limit && (
-        <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-          <div className="flex-1 flex justify-between sm:hidden">
-            <button className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-              Previous
-            </button>
-            <button className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-              Next
-            </button>
-          </div>
-          <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm text-gray-700">
-                Showing <span className="font-medium">{(jobsResponse.page * jobsResponse.limit) + 1}</span> to{' '}
-                <span className="font-medium">
-                  {Math.min((jobsResponse.page + 1) * jobsResponse.limit, jobsResponse.total)}
-                </span>{' '}
-                of <span className="font-medium">{jobsResponse.total}</span> results
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Job Details Modal */}
       {selectedJob && (
@@ -1233,9 +1388,9 @@ export default function Jobs() {
                       <span className="text-sm">📧 {selectedJob.customer_email}</span>
                     </div>
                   )}
-                  <div className="flex items-center">
-                    <MapPinIcon className="h-4 w-4 text-gray-400 mr-2" />
-                    <span>{selectedJob.address}, {selectedJob.city}, {selectedJob.state} {selectedJob.zip_code}</span>
+                  <div className="flex items-start">
+                    <MapPinIcon className="h-4 w-4 text-gray-400 mr-2 mt-0.5" />
+                    <span>{selectedJob.address}{selectedJob.city && `, ${selectedJob.city}`}{selectedJob.state && `, ${selectedJob.state}`} {selectedJob.zip_code}</span>
                   </div>
                 </div>
               </div>
@@ -1245,14 +1400,14 @@ export default function Jobs() {
                 <div className="space-y-2 text-sm">
                   <div>
                     <span className="text-gray-500">Service:</span>
-                    <span className="ml-2">{selectedJob.service_type}</span>
+                    <span className="ml-2 font-medium">{selectedJob.service_type}</span>
                   </div>
                   <div>
                     <span className="text-gray-500">Status:</span>
                     <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       statusColors[selectedJob.status]
                     }`}>
-                      {(selectedJob.status || 'unknown').replace('_', ' ')}
+                      {selectedJob.status.replace('_', ' ')}
                     </span>
                   </div>
                   <div>
@@ -1265,18 +1420,27 @@ export default function Jobs() {
                   </div>
                   <div>
                     <span className="text-gray-500">Scheduled:</span>
-                    <span className="ml-2">{formatDate(selectedJob.scheduled_date)} {formatTime(selectedJob.start_time)} - {formatTime(selectedJob.end_time)}</span>
+                    <span className="ml-2">{formatDate(selectedJob.scheduled_date)}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Time:</span>
+                    <span className="ml-2">{formatTime(selectedJob.start_time)} - {formatTime(selectedJob.end_time)}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Duration:</span>
+                    <span className="ml-2">{selectedJob.estimated_duration} minutes</span>
                   </div>
                   {selectedJob.technician_name && (
                     <div>
                       <span className="text-gray-500">Technician:</span>
                       <span className="ml-2">{selectedJob.technician_name}</span>
+                      {selectedJob.technician_phone && (
+                        <a href={`tel:${selectedJob.technician_phone}`} className="ml-2 text-primary-600 hover:text-primary-800">
+                          {selectedJob.technician_phone}
+                        </a>
+                      )}
                     </div>
                   )}
-                  <div>
-                    <span className="text-gray-500">Duration:</span>
-                    <span className="ml-2">{selectedJob.estimated_duration} minutes</span>
-                  </div>
                 </div>
               </div>
             </div>
@@ -1284,14 +1448,14 @@ export default function Jobs() {
             {selectedJob.description && (
               <div>
                 <h4 className="text-sm font-medium text-gray-900 mb-2">Description</h4>
-                <p className="text-sm text-gray-600">{selectedJob.description}</p>
+                <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-md">{selectedJob.description}</p>
               </div>
             )}
             
             {selectedJob.special_instructions && (
               <div>
                 <h4 className="text-sm font-medium text-gray-900 mb-2">Special Instructions</h4>
-                <p className="text-sm text-gray-600 bg-yellow-50 p-3 rounded-md">{selectedJob.special_instructions}</p>
+                <p className="text-sm text-gray-600 bg-yellow-50 p-3 rounded-md border border-yellow-200">{selectedJob.special_instructions}</p>
               </div>
             )}
             
@@ -1299,9 +1463,9 @@ export default function Jobs() {
               <div>
                 <h4 className="text-sm font-medium text-gray-900 mb-2">Equipment Needed</h4>
                 <div className="flex flex-wrap gap-2">
-                  {selectedJob.equipment_needed.map((item) => (
+                  {selectedJob.equipment_needed.map((item, idx) => (
                     <span
-                      key={item}
+                      key={idx}
                       className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
                     >
                       {item}
@@ -1314,11 +1478,11 @@ export default function Jobs() {
             {selectedJob.notes && (
               <div>
                 <h4 className="text-sm font-medium text-gray-900 mb-2">Notes</h4>
-                <p className="text-sm text-gray-600">{selectedJob.notes}</p>
+                <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-md">{selectedJob.notes}</p>
               </div>
             )}
             
-            <div className="flex justify-end space-x-3">
+            <div className="flex justify-end space-x-3 pt-4 border-t">
               <button
                 onClick={() => setSelectedJob(null)}
                 className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50"
