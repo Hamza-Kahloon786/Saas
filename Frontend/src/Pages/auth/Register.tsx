@@ -52,7 +52,22 @@ export default function Register() {
       login(data.user, data.access_token)
       toast.success(`Welcome, ${data.user.first_name}! Your customer account has been created.`)
 
-      // Always redirect customers to customer portal
+      // 🎯 NEW: Check subscription status first
+      const userRole = data.user.role?.toLowerCase()
+      const hasActiveSubscription = data.user.subscription?.status === 'active'
+      
+      console.log('📊 User role:', userRole)
+      console.log('💳 Has active subscription:', hasActiveSubscription)
+      
+      // If no active subscription, redirect to pricing
+      if (!hasActiveSubscription) {
+        console.log('🏷️ Redirecting to pricing page...')
+        navigate('/pricing', { replace: true })
+        return
+      }
+      
+      // If has active subscription, redirect to customer portal
+      console.log('🔄 Redirecting to customer portal dashboard')
       navigate('/customer-portal/dashboard', { replace: true })
     },
     onError: (error: any) => {

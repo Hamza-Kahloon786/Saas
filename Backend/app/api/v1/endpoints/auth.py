@@ -401,40 +401,25 @@ async def google_oauth_callback(
     
 
 
-
-# ADD TO: backend/app/api/v1/endpoints/auth.py
-
-# ===== ADD THESE IMPORTS AT THE TOP =====
-import stripe
-from app.core.config import settings
-
-# Initialize Stripe with YOUR secret key from .env
-stripe.api_key = settings.STRIPE_SECRET_KEY
-
-# ===== ADD THESE HELPER FUNCTIONS =====
-
+# Add this helper function first (if not already present)
 async def get_or_create_stripe_customer(user_data: dict, db: AsyncIOMotorDatabase):
     """Get or create Stripe customer for user"""
     try:
-        # Check if user already has a Stripe customer ID
         user_id = ObjectId(user_data["_id"])
         user = await db.users.find_one({"_id": user_id})
         
         if user and user.get("stripe_customer_id"):
-            # Return existing Stripe customer
             return stripe.Customer.retrieve(user["stripe_customer_id"])
         
-        # Create new Stripe customer
         stripe_customer = stripe.Customer.create(
             email=user_data["email"],
-            name=f"{user_data['first_name']} {user_data['last_name']}",
+            name=f"{user_data.get('first_name', '')} {user_data.get('last_name', '')}",
             metadata={
                 "user_id": str(user_id),
                 "company_id": str(user_data.get("company_id", ""))
             }
         )
         
-        # Save Stripe customer ID to user record
         await db.users.update_one(
             {"_id": user_id},
             {"$set": {"stripe_customer_id": stripe_customer.id}}
@@ -446,29 +431,23 @@ async def get_or_create_stripe_customer(user_data: dict, db: AsyncIOMotorDatabas
         logger.error(f"❌ Error creating Stripe customer: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to create payment customer: {str(e)}")
 
-# ===== REPLACE YOUR EXISTING update_subscription ENDPOINT WITH THIS =====
-# ADD TO: backend/app/api/v1/endpoints/auth.py
-
-# UPDATED SUBSCRIPTION ENDPOINT WITH REAL STRIPE INTEGRATION
-
 @router.post("/subscription/update")
 async def update_subscription(
     request: SubscriptionUpdateRequest,
     current_user: dict = Depends(get_current_user),
     db: AsyncIOMotorDatabase = Depends(get_database)
 ) -> Dict[str, Any]:
-    """Create subscription with Stripe payment"""
+    """Create subscription with real Stripe payment"""
     try:
         user_id = ObjectId(current_user["_id"])
         
-        # Plan definitions (you'll need to create these prices in Stripe Dashboard)
         plans = {
             "starter": {
                 "name": "Starter",
                 "monthly_price": 39,
                 "yearly_price": 375,
-                "stripe_monthly_price_id": "price_1234567890",  # ⚠️ REPLACE WITH YOUR ACTUAL STRIPE PRICE ID
-                "stripe_yearly_price_id": "price_0987654321",   # ⚠️ REPLACE WITH YOUR ACTUAL STRIPE PRICE ID
+                "stripe_monthly_price_id": "price_1SDaaKCcX0FmDNEaqwD3MVKd",
+                "stripe_yearly_price_id": "price_1SDaaKCcX0FmDNEaloarw6Xh",
                 "features": [
                     "Contact & Lead Management",
                     "Estimate & Invoice Builder",
@@ -485,8 +464,8 @@ async def update_subscription(
                 "name": "Growth",
                 "monthly_price": 79,
                 "yearly_price": 759,
-                "stripe_monthly_price_id": "price_2345678901",  # ⚠️ REPLACE WITH YOUR ACTUAL STRIPE PRICE ID
-                "stripe_yearly_price_id": "price_1098765432",   # ⚠️ REPLACE WITH YOUR ACTUAL STRIPE PRICE ID
+                "stripe_monthly_price_id": "price_1SDaceCcX0FmDNEaGVdmWpdX",
+                "stripe_yearly_price_id": "price_1SDad4CcX0FmDNEax5pbyQqB",
                 "features": [
                     "Everything in Starter",
                     "AI-Powered SMS Assistant",
@@ -503,20 +482,16 @@ async def update_subscription(
             raise HTTPException(status_code=400, detail="Invalid plan ID")
         
         plan = plans[request.plan_id]
-        
-        # Get or create Stripe customer
         stripe_customer = await get_or_create_stripe_customer(current_user, db)
         
-        # Select Stripe Price ID
         price_id = (plan["stripe_yearly_price_id"] 
                    if request.billing_cycle == "yearly" 
                    else plan["stripe_monthly_price_id"])
         
-        # Create Stripe subscription with trial
         stripe_subscription = stripe.Subscription.create(
             customer=stripe_customer.id,
             items=[{"price": price_id}],
-            trial_period_days=7,  # 7-day free trial
+            trial_period_days=7,
             payment_behavior="default_incomplete",
             payment_settings={"save_default_payment_method": "on_subscription"},
             expand=["latest_invoice.payment_intent"],
@@ -527,17 +502,12 @@ async def update_subscription(
             }
         )
         
-        # Calculate subscription period
-        if request.billing_cycle == "yearly":
-            expires_at = datetime.utcnow() + timedelta(days=365)
-        else:
-            expires_at = datetime.utcnow() + timedelta(days=30)
+        expires_at = datetime.utcnow() + timedelta(days=365 if request.billing_cycle == "yearly" else 30)
         
-        # Create subscription in database
         subscription = {
             "plan_id": request.plan_id,
             "plan_name": plan["name"],
-            "status": "trialing",  # 7-day trial starts immediately
+            "status": "trialing",
             "billing_cycle": request.billing_cycle,
             "price": plan["yearly_price"] if request.billing_cycle == "yearly" else plan["monthly_price"],
             "features": plan["features"],
@@ -549,38 +519,305 @@ async def update_subscription(
             "updated_at": datetime.utcnow()
         }
         
-        # Update user with subscription
         await db.users.update_one(
             {"_id": user_id},
-            {
-                "$set": {
-                    "subscription": subscription,
-                    "updated_at": datetime.utcnow()
-                }
-            }
+            {"$set": {"subscription": subscription, "updated_at": datetime.utcnow()}}
         )
         
-        # Get payment intent for frontend
-        payment_intent = stripe_subscription.latest_invoice.payment_intent
+        # Safely extract client_secret
+        client_secret = None
+        try:
+            if hasattr(stripe_subscription, 'latest_invoice') and stripe_subscription.latest_invoice:
+                invoice = stripe_subscription.latest_invoice
+                if hasattr(invoice, 'payment_intent') and invoice.payment_intent:
+                    payment_intent = invoice.payment_intent
+                    if hasattr(payment_intent, 'client_secret'):
+                        client_secret = payment_intent.client_secret
+        except (AttributeError, KeyError) as e:
+            logger.warning(f"No payment intent available during trial: {e}")
         
         logger.info(f"✅ Subscription created for {current_user['email']} - Plan: {plan['name']}")
         
         return {
             "message": f"Successfully subscribed to {plan['name']} plan",
             "subscription": subscription,
-            "requires_payment": True,
-            "client_secret": payment_intent.client_secret,
+            "requires_payment": False,  # No payment required during trial
+            "client_secret": client_secret,
             "stripe_subscription_id": stripe_subscription.id,
-            "trial_days": 7
+            "trial_days": 7,
+            "success": True
         }
         
     except stripe.error.StripeError as e:
         logger.error(f"❌ Stripe error: {e}")
         raise HTTPException(status_code=400, detail=f"Payment processing failed: {str(e)}")
     except Exception as e:
-        logger.error(f"❌ Error creating subscription: {e}")
+        logger.error(f"❌ Error creating subscription: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to create subscription")
+    
+# ADD TO: backend/app/api/v1/endpoints/auth.py
 
+# ===== ADD THESE IMPORTS AT THE TOP =====
+import stripe
+from app.core.config import settings
+
+# Initialize Stripe with YOUR secret key from .env
+stripe.api_key = settings.STRIPE_SECRET_KEY
+
+# ===== ADD THESE HELPER FUNCTIONS =====
+
+# async def get_or_create_stripe_customer(user_data: dict, db: AsyncIOMotorDatabase):
+#     """Get or create Stripe customer for user"""
+#     try:
+#         # Check if user already has a Stripe customer ID
+#         user_id = ObjectId(user_data["_id"])
+#         user = await db.users.find_one({"_id": user_id})
+        
+#         if user and user.get("stripe_customer_id"):
+#             # Return existing Stripe customer
+#             return stripe.Customer.retrieve(user["stripe_customer_id"])
+        
+#         # Create new Stripe customer
+#         stripe_customer = stripe.Customer.create(
+#             email=user_data["email"],
+#             name=f"{user_data['first_name']} {user_data['last_name']}",
+#             metadata={
+#                 "user_id": str(user_id),
+#                 "company_id": str(user_data.get("company_id", ""))
+#             }
+#         )
+        
+#         # Save Stripe customer ID to user record
+#         await db.users.update_one(
+#             {"_id": user_id},
+#             {"$set": {"stripe_customer_id": stripe_customer.id}}
+#         )
+        
+#         return stripe_customer
+        
+#     except Exception as e:
+#         logger.error(f"❌ Error creating Stripe customer: {e}")
+#         raise HTTPException(status_code=500, detail=f"Failed to create payment customer: {str(e)}")
+
+# # ===== REPLACE YOUR EXISTING update_subscription ENDPOINT WITH THIS =====
+# # ADD TO: backend/app/api/v1/endpoints/auth.py
+
+# # UPDATED SUBSCRIPTION ENDPOINT WITH REAL STRIPE INTEGRATION
+
+# @router.post("/subscription/update")
+# async def update_subscription(
+#     request: SubscriptionUpdateRequest,
+#     current_user: dict = Depends(get_current_user),
+#     db: AsyncIOMotorDatabase = Depends(get_database)
+# ) -> Dict[str, Any]:
+#     """Create subscription with Stripe payment"""
+#     try:
+#         user_id = ObjectId(current_user["_id"])
+        
+#         # Plan definitions (you'll need to create these prices in Stripe Dashboard)
+#         plans = {
+#             "starter": {
+#                 "name": "Starter",
+#                 "monthly_price": 39,
+#                 "yearly_price": 375,
+#                 "stripe_monthly_price_id": "price_1SDaaKCcX0FmDNEaqwD3MVKd",  # ⚠️ REPLACE WITH YOUR ACTUAL STRIPE PRICE ID
+#                 "stripe_yearly_price_id": "price_1SDaaKCcX0FmDNEaloarw6Xh",   # ⚠️ REPLACE WITH YOUR ACTUAL STRIPE PRICE ID
+#                 "features": [
+#                     "Contact & Lead Management",
+#                     "Estimate & Invoice Builder",
+#                     "Sales Dashboard & Conversion Reports",
+#                     "QuickBooks + Google Calendar Sync",
+#                     "Job Scheduling Calendar",
+#                     "Customer Notes & History",
+#                     "Customer Portal Access",
+#                     "Zapier Hooks + Custom AI Workflows",
+#                     "Email Notifications"
+#                 ]
+#             },
+#             "growth": {
+#                 "name": "Growth",
+#                 "monthly_price": 79,
+#                 "yearly_price": 759,
+#                 "stripe_monthly_price_id": "price_1SDaceCcX0FmDNEaGVdmWpdX",  # ⚠️ REPLACE WITH YOUR ACTUAL STRIPE PRICE ID
+#                 "stripe_yearly_price_id": "price_1SDad4CcX0FmDNEax5pbyQqB",   # ⚠️ REPLACE WITH YOUR ACTUAL STRIPE PRICE ID
+#                 "features": [
+#                     "Everything in Starter",
+#                     "AI-Powered SMS Assistant",
+#                     "Route Optimization",
+#                     "Technician Assignment",
+#                     "Role-Based User Permissions",
+#                     "Document Review & Management",
+#                     "Team & Department Reporting"
+#                 ]
+#             }
+#         }
+        
+#         if request.plan_id not in plans:
+#             raise HTTPException(status_code=400, detail="Invalid plan ID")
+        
+#         plan = plans[request.plan_id]
+        
+#         # Get or create Stripe customer
+#         stripe_customer = await get_or_create_stripe_customer(current_user, db)
+        
+#         # Select Stripe Price ID
+#         price_id = (plan["stripe_yearly_price_id"] 
+#                    if request.billing_cycle == "yearly" 
+#                    else plan["stripe_monthly_price_id"])
+        
+#         # Create Stripe subscription with trial
+#         stripe_subscription = stripe.Subscription.create(
+#             customer=stripe_customer.id,
+#             items=[{"price": price_id}],
+#             trial_period_days=7,  # 7-day free trial
+#             payment_behavior="default_incomplete",
+#             payment_settings={"save_default_payment_method": "on_subscription"},
+#             expand=["latest_invoice.payment_intent"],
+#             metadata={
+#                 "user_id": str(user_id),
+#                 "plan_id": request.plan_id,
+#                 "billing_cycle": request.billing_cycle
+#             }
+#         )
+        
+#         # Calculate subscription period
+#         if request.billing_cycle == "yearly":
+#             expires_at = datetime.utcnow() + timedelta(days=365)
+#         else:
+#             expires_at = datetime.utcnow() + timedelta(days=30)
+        
+#         # Create subscription in database
+#         subscription = {
+#             "plan_id": request.plan_id,
+#             "plan_name": plan["name"],
+#             "status": "trialing",  # 7-day trial starts immediately
+#             "billing_cycle": request.billing_cycle,
+#             "price": plan["yearly_price"] if request.billing_cycle == "yearly" else plan["monthly_price"],
+#             "features": plan["features"],
+#             "stripe_subscription_id": stripe_subscription.id,
+#             "stripe_customer_id": stripe_customer.id,
+#             "trial_end": datetime.utcnow() + timedelta(days=7),
+#             "expires_at": expires_at,
+#             "created_at": datetime.utcnow(),
+#             "updated_at": datetime.utcnow()
+#         }
+        
+#         # Update user with subscription
+#         await db.users.update_one(
+#             {"_id": user_id},
+#             {
+#                 "$set": {
+#                     "subscription": subscription,
+#                     "updated_at": datetime.utcnow()
+#                 }
+#             }
+#         )
+        
+#         # Get payment intent for frontend
+#         payment_intent = stripe_subscription.latest_invoice.payment_intent
+        
+#         logger.info(f"✅ Subscription created for {current_user['email']} - Plan: {plan['name']}")
+        
+#         return {
+#             "message": f"Successfully subscribed to {plan['name']} plan",
+#             "subscription": subscription,
+#             "requires_payment": True,
+#             "client_secret": payment_intent.client_secret,
+#             "stripe_subscription_id": stripe_subscription.id,
+#             "trial_days": 7
+#         }
+        
+#     except stripe.error.StripeError as e:
+#         logger.error(f"❌ Stripe error: {e}")
+#         raise HTTPException(status_code=400, detail=f"Payment processing failed: {str(e)}")
+#     except Exception as e:
+#         logger.error(f"❌ Error creating subscription: {e}")
+#         raise HTTPException(status_code=500, detail="Failed to create subscription")
+
+
+
+
+# @router.post("/subscription/update")
+# async def update_subscription(
+#     request: SubscriptionUpdateRequest,
+#     current_user: dict = Depends(get_current_user),
+#     db: AsyncIOMotorDatabase = Depends(get_database)
+# ) -> Dict[str, Any]:
+#     try:
+#         user_id = ObjectId(current_user["_id"])
+        
+#         plans = {
+#             "starter": {
+#                 "name": "Starter",
+#                 "monthly_price": 39,
+#                 "yearly_price": 375,
+#                 "features": [
+#                     "Contact & Lead Management",
+#                     "Estimate & Invoice Builder",
+#                     "Sales Dashboard & Conversion Reports",
+#                     "QuickBooks + Google Calendar Sync",
+#                     "Job Scheduling Calendar",
+#                     "Customer Notes & History",
+#                     "Customer Portal Access",
+#                     "Zapier Hooks + Custom AI Workflows",
+#                     "Email Notifications"
+#                 ]
+#             },
+#             "growth": {
+#                 "name": "Growth",
+#                 "monthly_price": 79,
+#                 "yearly_price": 759,
+#                 "features": [
+#                     "Everything in Starter",
+#                     "AI-Powered SMS Assistant",
+#                     "Route Optimization",
+#                     "Technician Assignment",
+#                     "Role-Based User Permissions",
+#                     "Document Review & Management",
+#                     "Team & Department Reporting"
+#                 ]
+#             }
+#         }
+        
+#         if request.plan_id not in plans:
+#             raise HTTPException(status_code=400, detail="Invalid plan")
+        
+#         plan = plans[request.plan_id]
+#         price = plan["yearly_price"] if request.billing_cycle == "yearly" else plan["monthly_price"]
+        
+#         subscription = {
+#             "plan_id": request.plan_id,
+#             "plan_name": plan["name"],
+#             "status": "active",
+#             "billing_cycle": request.billing_cycle,
+#             "price": price,
+#             "features": plan["features"],
+#             "expires_at": datetime.utcnow() + timedelta(days=365 if request.billing_cycle == "yearly" else 30),
+#             "created_at": datetime.utcnow(),
+#             "updated_at": datetime.utcnow()
+#         }
+        
+#         await db.users.update_one(
+#             {"_id": user_id},
+#             {"$set": {"subscription": subscription, "updated_at": datetime.utcnow()}}
+#         )
+        
+#         logger.info(f"Subscription updated for {current_user['email']} to {plan['name']}")
+        
+#         return {
+#             "message": f"Successfully subscribed to {plan['name']}",
+#             "subscription": subscription,
+#             "success": True
+#         }
+        
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         logger.error(f"Error: {e}")
+#         raise HTTPException(status_code=500, detail=str(e))
+
+
+        
 # ADD PAYMENT CONFIRMATION ENDPOINT
 @router.post("/subscription/confirm-payment")
 async def confirm_payment(

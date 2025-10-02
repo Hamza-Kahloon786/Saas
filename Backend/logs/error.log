@@ -14771,3 +14771,872 @@ Traceback (most recent call last):
     raise AttributeError(f'{type(self).__name__!r} object has no attribute {item!r}')
 AttributeError: 'Settings' object has no attribute 'FRONTEND_URL'
 2025-09-23 00:00:51,086 | ERROR    | auth            | ❌ Stripe error: Request req_K2UNfw7JHUPacT: No such price: 'price_1234567890'
+2025-09-23 01:14:19,983 | ERROR    | app.main        | Health check endpoint error: orjson must be installed to use ORJSONResponse
+2025-09-23 01:14:19,985 | ERROR    | app.middleware.logging_middleware | [16063747-3f2c-4a1e-81c3-d00e0046928c] GET /health - ERROR - 0.11s - orjson must be installed to use ORJSONResponse
+2025-09-23 01:14:19,986 | ERROR    | app.main        | Unhandled exception on GET /health: orjson must be installed to use ORJSONResponse
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\anyio\streams\memory.py", line 98, in receive
+    return self.receive_nowait()
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\anyio\streams\memory.py", line 93, in receive_nowait
+    raise WouldBlock
+anyio.WouldBlock
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 78, in call_next
+    message = await recv_stream.receive()
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\anyio\streams\memory.py", line 118, in receive
+    raise EndOfStream
+anyio.EndOfStream
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 162, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 108, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\3D Objects\job\Saas\Backend\app\middleware\logging_middleware.py", line 20, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 84, in call_next
+    raise app_exc
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 70, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 108, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\3D Objects\job\Saas\Backend\app\main.py", line 81, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 84, in call_next
+    raise app_exc
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 70, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 108, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\3D Objects\job\Saas\Backend\app\main.py", line 108, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 84, in call_next
+    raise app_exc
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 70, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\trustedhost.py", line 34, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\cors.py", line 91, in __call__
+    await self.simple_response(scope, receive, send, request_headers=headers)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\cors.py", line 146, in simple_response
+    await self.app(scope, receive, send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\exceptions.py", line 79, in __call__
+    raise exc
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\exceptions.py", line 68, in __call__
+    await self.app(scope, receive, sender)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 20, in __call__
+    raise e
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 17, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\routing.py", line 718, in __call__
+    await route.handle(scope, receive, send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\routing.py", line 276, in handle
+    await self.app(scope, receive, send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\routing.py", line 66, in app
+    response = await func(request)
+               ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\routing.py", line 274, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\routing.py", line 191, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\3D Objects\job\Saas\Backend\app\main.py", line 358, in health_check_endpoint
+    return ORJSONResponse(
+           ^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\responses.py", line 196, in __init__
+    super().__init__(content, status_code, headers, media_type, background)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\responses.py", line 55, in __init__
+    self.body = self.render(content)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\responses.py", line 45, in render
+    assert orjson is not None, "orjson must be installed to use ORJSONResponse"
+           ^^^^^^^^^^^^^^^^^^
+AssertionError: orjson must be installed to use ORJSONResponse
+2025-09-23 01:14:21,454 | ERROR    | app.main        | Health check endpoint error: orjson must be installed to use ORJSONResponse
+2025-09-23 01:14:21,456 | ERROR    | app.middleware.logging_middleware | [511ce82f-0f67-4631-9a30-ca4d7e5a57d9] GET /health - ERROR - 0.13s - orjson must be installed to use ORJSONResponse
+2025-09-23 01:14:21,460 | ERROR    | app.main        | Unhandled exception on GET /health: orjson must be installed to use ORJSONResponse
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\anyio\streams\memory.py", line 98, in receive
+    return self.receive_nowait()
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\anyio\streams\memory.py", line 93, in receive_nowait
+    raise WouldBlock
+anyio.WouldBlock
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 78, in call_next
+    message = await recv_stream.receive()
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\anyio\streams\memory.py", line 118, in receive
+    raise EndOfStream
+anyio.EndOfStream
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 162, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 108, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\3D Objects\job\Saas\Backend\app\middleware\logging_middleware.py", line 20, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 84, in call_next
+    raise app_exc
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 70, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 108, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\3D Objects\job\Saas\Backend\app\main.py", line 81, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 84, in call_next
+    raise app_exc
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 70, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 108, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\3D Objects\job\Saas\Backend\app\main.py", line 108, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 84, in call_next
+    raise app_exc
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 70, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\trustedhost.py", line 34, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\cors.py", line 91, in __call__
+    await self.simple_response(scope, receive, send, request_headers=headers)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\cors.py", line 146, in simple_response
+    await self.app(scope, receive, send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\exceptions.py", line 79, in __call__
+    raise exc
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\exceptions.py", line 68, in __call__
+    await self.app(scope, receive, sender)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 20, in __call__
+    raise e
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 17, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\routing.py", line 718, in __call__
+    await route.handle(scope, receive, send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\routing.py", line 276, in handle
+    await self.app(scope, receive, send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\routing.py", line 66, in app
+    response = await func(request)
+               ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\routing.py", line 274, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\routing.py", line 191, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\3D Objects\job\Saas\Backend\app\main.py", line 358, in health_check_endpoint
+    return ORJSONResponse(
+           ^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\responses.py", line 196, in __init__
+    super().__init__(content, status_code, headers, media_type, background)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\responses.py", line 55, in __init__
+    self.body = self.render(content)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\responses.py", line 45, in render
+    assert orjson is not None, "orjson must be installed to use ORJSONResponse"
+           ^^^^^^^^^^^^^^^^^^
+AssertionError: orjson must be installed to use ORJSONResponse
+2025-09-23 01:15:22,132 | ERROR    | app.main        | Health check endpoint error: orjson must be installed to use ORJSONResponse
+2025-09-23 01:15:22,133 | ERROR    | app.middleware.logging_middleware | [8cd530a6-5ca8-4a76-a30b-09fe08bf6023] GET /health - ERROR - 0.11s - orjson must be installed to use ORJSONResponse
+2025-09-23 01:15:22,134 | ERROR    | app.main        | Unhandled exception on GET /health: orjson must be installed to use ORJSONResponse
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\anyio\streams\memory.py", line 98, in receive
+    return self.receive_nowait()
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\anyio\streams\memory.py", line 93, in receive_nowait
+    raise WouldBlock
+anyio.WouldBlock
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 78, in call_next
+    message = await recv_stream.receive()
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\anyio\streams\memory.py", line 118, in receive
+    raise EndOfStream
+anyio.EndOfStream
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 162, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 108, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\3D Objects\job\Saas\Backend\app\middleware\logging_middleware.py", line 20, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 84, in call_next
+    raise app_exc
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 70, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 108, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\3D Objects\job\Saas\Backend\app\main.py", line 81, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 84, in call_next
+    raise app_exc
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 70, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 108, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\3D Objects\job\Saas\Backend\app\main.py", line 108, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 84, in call_next
+    raise app_exc
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 70, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\trustedhost.py", line 34, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\cors.py", line 91, in __call__
+    await self.simple_response(scope, receive, send, request_headers=headers)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\cors.py", line 146, in simple_response
+    await self.app(scope, receive, send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\exceptions.py", line 79, in __call__
+    raise exc
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\exceptions.py", line 68, in __call__
+    await self.app(scope, receive, sender)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 20, in __call__
+    raise e
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 17, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\routing.py", line 718, in __call__
+    await route.handle(scope, receive, send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\routing.py", line 276, in handle
+    await self.app(scope, receive, send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\routing.py", line 66, in app
+    response = await func(request)
+               ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\routing.py", line 274, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\routing.py", line 191, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\3D Objects\job\Saas\Backend\app\main.py", line 358, in health_check_endpoint
+    return ORJSONResponse(
+           ^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\responses.py", line 196, in __init__
+    super().__init__(content, status_code, headers, media_type, background)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\responses.py", line 55, in __init__
+    self.body = self.render(content)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\responses.py", line 45, in render
+    assert orjson is not None, "orjson must be installed to use ORJSONResponse"
+           ^^^^^^^^^^^^^^^^^^
+AssertionError: orjson must be installed to use ORJSONResponse
+2025-09-23 01:15:23,334 | ERROR    | app.main        | Health check endpoint error: orjson must be installed to use ORJSONResponse
+2025-09-23 01:15:23,375 | ERROR    | app.middleware.logging_middleware | [21f191e6-d123-4af0-8de1-ae4fdf48e339] GET /health - ERROR - 0.16s - orjson must be installed to use ORJSONResponse
+2025-09-23 01:15:23,402 | ERROR    | app.main        | Unhandled exception on GET /health: orjson must be installed to use ORJSONResponse
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\anyio\streams\memory.py", line 98, in receive
+    return self.receive_nowait()
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\anyio\streams\memory.py", line 93, in receive_nowait
+    raise WouldBlock
+anyio.WouldBlock
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 78, in call_next
+    message = await recv_stream.receive()
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\anyio\streams\memory.py", line 118, in receive
+    raise EndOfStream
+anyio.EndOfStream
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 162, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 108, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\3D Objects\job\Saas\Backend\app\middleware\logging_middleware.py", line 20, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 84, in call_next
+    raise app_exc
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 70, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 108, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\3D Objects\job\Saas\Backend\app\main.py", line 81, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 84, in call_next
+    raise app_exc
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 70, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 108, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\3D Objects\job\Saas\Backend\app\main.py", line 108, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 84, in call_next
+    raise app_exc
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 70, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\trustedhost.py", line 34, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\cors.py", line 91, in __call__
+    await self.simple_response(scope, receive, send, request_headers=headers)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\cors.py", line 146, in simple_response
+    await self.app(scope, receive, send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\exceptions.py", line 79, in __call__
+    raise exc
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\exceptions.py", line 68, in __call__
+    await self.app(scope, receive, sender)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 20, in __call__
+    raise e
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 17, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\routing.py", line 718, in __call__
+    await route.handle(scope, receive, send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\routing.py", line 276, in handle
+    await self.app(scope, receive, send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\routing.py", line 66, in app
+    response = await func(request)
+               ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\routing.py", line 274, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\routing.py", line 191, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\3D Objects\job\Saas\Backend\app\main.py", line 358, in health_check_endpoint
+    return ORJSONResponse(
+           ^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\responses.py", line 196, in __init__
+    super().__init__(content, status_code, headers, media_type, background)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\responses.py", line 55, in __init__
+    self.body = self.render(content)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\responses.py", line 45, in render
+    assert orjson is not None, "orjson must be installed to use ORJSONResponse"
+           ^^^^^^^^^^^^^^^^^^
+AssertionError: orjson must be installed to use ORJSONResponse
+2025-09-23 01:15:53,418 | ERROR    | app.main        | Health check endpoint error: orjson must be installed to use ORJSONResponse
+2025-09-23 01:15:53,424 | ERROR    | app.middleware.logging_middleware | [8d183cd0-0daf-4ea1-9a4b-5008a71f6454] GET /health - ERROR - 0.13s - orjson must be installed to use ORJSONResponse
+2025-09-23 01:15:53,431 | ERROR    | app.main        | Unhandled exception on GET /health: orjson must be installed to use ORJSONResponse
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\anyio\streams\memory.py", line 98, in receive
+    return self.receive_nowait()
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\anyio\streams\memory.py", line 93, in receive_nowait
+    raise WouldBlock
+anyio.WouldBlock
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 78, in call_next
+    message = await recv_stream.receive()
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\anyio\streams\memory.py", line 118, in receive
+    raise EndOfStream
+anyio.EndOfStream
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 162, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 108, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\3D Objects\job\Saas\Backend\app\middleware\logging_middleware.py", line 20, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 84, in call_next
+    raise app_exc
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 70, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 108, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\3D Objects\job\Saas\Backend\app\main.py", line 81, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 84, in call_next
+    raise app_exc
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 70, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 108, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\3D Objects\job\Saas\Backend\app\main.py", line 108, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 84, in call_next
+    raise app_exc
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 70, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\trustedhost.py", line 34, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\cors.py", line 91, in __call__
+    await self.simple_response(scope, receive, send, request_headers=headers)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\cors.py", line 146, in simple_response
+    await self.app(scope, receive, send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\exceptions.py", line 79, in __call__
+    raise exc
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\exceptions.py", line 68, in __call__
+    await self.app(scope, receive, sender)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 20, in __call__
+    raise e
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 17, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\routing.py", line 718, in __call__
+    await route.handle(scope, receive, send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\routing.py", line 276, in handle
+    await self.app(scope, receive, send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\routing.py", line 66, in app
+    response = await func(request)
+               ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\routing.py", line 274, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\routing.py", line 191, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\3D Objects\job\Saas\Backend\app\main.py", line 358, in health_check_endpoint
+    return ORJSONResponse(
+           ^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\responses.py", line 196, in __init__
+    super().__init__(content, status_code, headers, media_type, background)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\responses.py", line 55, in __init__
+    self.body = self.render(content)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\responses.py", line 45, in render
+    assert orjson is not None, "orjson must be installed to use ORJSONResponse"
+           ^^^^^^^^^^^^^^^^^^
+AssertionError: orjson must be installed to use ORJSONResponse
+2025-09-23 01:15:54,799 | ERROR    | app.main        | Health check endpoint error: orjson must be installed to use ORJSONResponse
+2025-09-23 01:15:54,813 | ERROR    | app.middleware.logging_middleware | [6978c064-98de-44fd-8145-719aa3570eb8] GET /health - ERROR - 0.13s - orjson must be installed to use ORJSONResponse
+2025-09-23 01:15:54,824 | ERROR    | app.main        | Unhandled exception on GET /health: orjson must be installed to use ORJSONResponse
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\anyio\streams\memory.py", line 98, in receive
+    return self.receive_nowait()
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\anyio\streams\memory.py", line 93, in receive_nowait
+    raise WouldBlock
+anyio.WouldBlock
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 78, in call_next
+    message = await recv_stream.receive()
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\anyio\streams\memory.py", line 118, in receive
+    raise EndOfStream
+anyio.EndOfStream
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 162, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 108, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\3D Objects\job\Saas\Backend\app\middleware\logging_middleware.py", line 20, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 84, in call_next
+    raise app_exc
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 70, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 108, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\3D Objects\job\Saas\Backend\app\main.py", line 81, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 84, in call_next
+    raise app_exc
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 70, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 108, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\3D Objects\job\Saas\Backend\app\main.py", line 108, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 84, in call_next
+    raise app_exc
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 70, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\trustedhost.py", line 34, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\cors.py", line 91, in __call__
+    await self.simple_response(scope, receive, send, request_headers=headers)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\cors.py", line 146, in simple_response
+    await self.app(scope, receive, send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\exceptions.py", line 79, in __call__
+    raise exc
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\exceptions.py", line 68, in __call__
+    await self.app(scope, receive, sender)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 20, in __call__
+    raise e
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 17, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\routing.py", line 718, in __call__
+    await route.handle(scope, receive, send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\routing.py", line 276, in handle
+    await self.app(scope, receive, send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\routing.py", line 66, in app
+    response = await func(request)
+               ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\routing.py", line 274, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\routing.py", line 191, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\3D Objects\job\Saas\Backend\app\main.py", line 358, in health_check_endpoint
+    return ORJSONResponse(
+           ^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\responses.py", line 196, in __init__
+    super().__init__(content, status_code, headers, media_type, background)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\responses.py", line 55, in __init__
+    self.body = self.render(content)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\responses.py", line 45, in render
+    assert orjson is not None, "orjson must be installed to use ORJSONResponse"
+           ^^^^^^^^^^^^^^^^^^
+AssertionError: orjson must be installed to use ORJSONResponse
+2025-09-23 01:16:43,321 | ERROR    | app.main        | Health check endpoint error: orjson must be installed to use ORJSONResponse
+2025-09-23 01:16:43,323 | ERROR    | app.middleware.logging_middleware | [8c326fbb-93e4-48d7-8499-7a446a2701b9] GET /health - ERROR - 0.13s - orjson must be installed to use ORJSONResponse
+2025-09-23 01:16:43,324 | ERROR    | app.main        | Unhandled exception on GET /health: orjson must be installed to use ORJSONResponse
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\anyio\streams\memory.py", line 98, in receive
+    return self.receive_nowait()
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\anyio\streams\memory.py", line 93, in receive_nowait
+    raise WouldBlock
+anyio.WouldBlock
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 78, in call_next
+    message = await recv_stream.receive()
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\anyio\streams\memory.py", line 118, in receive
+    raise EndOfStream
+anyio.EndOfStream
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 162, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 108, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\3D Objects\job\Saas\Backend\app\middleware\logging_middleware.py", line 20, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 84, in call_next
+    raise app_exc
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 70, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 108, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\3D Objects\job\Saas\Backend\app\main.py", line 81, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 84, in call_next
+    raise app_exc
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 70, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 108, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\3D Objects\job\Saas\Backend\app\main.py", line 108, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 84, in call_next
+    raise app_exc
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 70, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\trustedhost.py", line 34, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\cors.py", line 91, in __call__
+    await self.simple_response(scope, receive, send, request_headers=headers)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\cors.py", line 146, in simple_response
+    await self.app(scope, receive, send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\exceptions.py", line 79, in __call__
+    raise exc
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\exceptions.py", line 68, in __call__
+    await self.app(scope, receive, sender)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 20, in __call__
+    raise e
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 17, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\routing.py", line 718, in __call__
+    await route.handle(scope, receive, send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\routing.py", line 276, in handle
+    await self.app(scope, receive, send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\routing.py", line 66, in app
+    response = await func(request)
+               ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\routing.py", line 274, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\routing.py", line 191, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\3D Objects\job\Saas\Backend\app\main.py", line 358, in health_check_endpoint
+    return ORJSONResponse(
+           ^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\responses.py", line 196, in __init__
+    super().__init__(content, status_code, headers, media_type, background)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\responses.py", line 55, in __init__
+    self.body = self.render(content)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\responses.py", line 45, in render
+    assert orjson is not None, "orjson must be installed to use ORJSONResponse"
+           ^^^^^^^^^^^^^^^^^^
+AssertionError: orjson must be installed to use ORJSONResponse
+2025-09-23 01:16:44,560 | ERROR    | app.main        | Health check endpoint error: orjson must be installed to use ORJSONResponse
+2025-09-23 01:16:44,562 | ERROR    | app.middleware.logging_middleware | [ddb59575-4e74-4d53-b260-2809d7975b65] GET /health - ERROR - 0.12s - orjson must be installed to use ORJSONResponse
+2025-09-23 01:16:44,564 | ERROR    | app.main        | Unhandled exception on GET /health: orjson must be installed to use ORJSONResponse
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\anyio\streams\memory.py", line 98, in receive
+    return self.receive_nowait()
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\anyio\streams\memory.py", line 93, in receive_nowait
+    raise WouldBlock
+anyio.WouldBlock
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 78, in call_next
+    message = await recv_stream.receive()
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\anyio\streams\memory.py", line 118, in receive
+    raise EndOfStream
+anyio.EndOfStream
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 162, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 108, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\3D Objects\job\Saas\Backend\app\middleware\logging_middleware.py", line 20, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 84, in call_next
+    raise app_exc
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 70, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 108, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\3D Objects\job\Saas\Backend\app\main.py", line 81, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 84, in call_next
+    raise app_exc
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 70, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 108, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\3D Objects\job\Saas\Backend\app\main.py", line 108, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 84, in call_next
+    raise app_exc
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 70, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\trustedhost.py", line 34, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\cors.py", line 91, in __call__
+    await self.simple_response(scope, receive, send, request_headers=headers)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\cors.py", line 146, in simple_response
+    await self.app(scope, receive, send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\exceptions.py", line 79, in __call__
+    raise exc
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\exceptions.py", line 68, in __call__
+    await self.app(scope, receive, sender)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 20, in __call__
+    raise e
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 17, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\routing.py", line 718, in __call__
+    await route.handle(scope, receive, send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\routing.py", line 276, in handle
+    await self.app(scope, receive, send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\routing.py", line 66, in app
+    response = await func(request)
+               ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\routing.py", line 274, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\routing.py", line 191, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\3D Objects\job\Saas\Backend\app\main.py", line 358, in health_check_endpoint
+    return ORJSONResponse(
+           ^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\responses.py", line 196, in __init__
+    super().__init__(content, status_code, headers, media_type, background)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\responses.py", line 55, in __init__
+    self.body = self.render(content)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\responses.py", line 45, in render
+    assert orjson is not None, "orjson must be installed to use ORJSONResponse"
+           ^^^^^^^^^^^^^^^^^^
+AssertionError: orjson must be installed to use ORJSONResponse
+2025-09-23 01:17:30,624 | ERROR    | app.main        | Health check endpoint error: orjson must be installed to use ORJSONResponse
+2025-09-23 01:17:30,627 | ERROR    | app.middleware.logging_middleware | [8b5b0d9f-3eb2-4efe-8b51-9dec35835f3f] GET /health - ERROR - 0.12s - orjson must be installed to use ORJSONResponse
+2025-09-23 01:17:30,628 | ERROR    | app.main        | Unhandled exception on GET /health: orjson must be installed to use ORJSONResponse
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\anyio\streams\memory.py", line 98, in receive
+    return self.receive_nowait()
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\anyio\streams\memory.py", line 93, in receive_nowait
+    raise WouldBlock
+anyio.WouldBlock
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 78, in call_next
+    message = await recv_stream.receive()
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\anyio\streams\memory.py", line 118, in receive
+    raise EndOfStream
+anyio.EndOfStream
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 162, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 108, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\3D Objects\job\Saas\Backend\app\middleware\logging_middleware.py", line 20, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 84, in call_next
+    raise app_exc
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 70, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 108, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\3D Objects\job\Saas\Backend\app\main.py", line 81, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 84, in call_next
+    raise app_exc
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 70, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 108, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\3D Objects\job\Saas\Backend\app\main.py", line 108, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 84, in call_next
+    raise app_exc
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 70, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\trustedhost.py", line 34, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\cors.py", line 91, in __call__
+    await self.simple_response(scope, receive, send, request_headers=headers)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\cors.py", line 146, in simple_response
+    await self.app(scope, receive, send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\exceptions.py", line 79, in __call__
+    raise exc
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\exceptions.py", line 68, in __call__
+    await self.app(scope, receive, sender)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 20, in __call__
+    raise e
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 17, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\routing.py", line 718, in __call__
+    await route.handle(scope, receive, send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\routing.py", line 276, in handle
+    await self.app(scope, receive, send)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\routing.py", line 66, in app
+    response = await func(request)
+               ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\routing.py", line 274, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\routing.py", line 191, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\3D Objects\job\Saas\Backend\app\main.py", line 358, in health_check_endpoint
+    return ORJSONResponse(
+           ^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\responses.py", line 196, in __init__
+    super().__init__(content, status_code, headers, media_type, background)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\responses.py", line 55, in __init__
+    self.body = self.render(content)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\responses.py", line 45, in render
+    assert orjson is not None, "orjson must be installed to use ORJSONResponse"
+           ^^^^^^^^^^^^^^^^^^
+AssertionError: orjson must be installed to use ORJSONResponse
+2025-09-30 19:58:15,907 | ERROR    | auth            | ❌ Stripe error: Request req_NiXT7j56nE9qCe: No such price: 'price_1234567890'
+2025-09-30 19:59:38,575 | ERROR    | auth            | ❌ Stripe error: Request req_gBYyJi09xM6nqm: No such price: 'price_prod_SvuykKfmcfdlWS'
+2025-09-30 20:42:12,336 | ERROR    | auth            | ❌ Stripe error: Request req_rK14Z7Gm3jtNAV: No such price: 'price_1S038kCfot3Q60dLoiD52vB2'
+2025-09-30 20:57:33,279 | ERROR    | auth            | ❌ Google OAuth callback failed: Object of type datetime is not JSON serializable
+2025-10-02 20:03:31,604 | ERROR    | dependencies.auth | 🔐 JWT decode error: Signature has expired.
+2025-10-02 20:07:06,666 | ERROR    | dependencies.auth | 🔐 JWT decode error: Signature has expired.
+2025-10-02 20:09:14,675 | ERROR    | auth            | ❌ Google OAuth callback failed: Object of type datetime is not JSON serializable
+2025-10-02 20:10:02,579 | ERROR    | auth            | ❌ Google OAuth callback failed: Object of type datetime is not JSON serializable
+2025-10-02 20:32:00,727 | ERROR    | auth            | ❌ Error creating subscription: payment_intent
+2025-10-02 20:43:05,286 | ERROR    | dependencies.auth | 🔐 JWT decode error: Not enough segments
+2025-10-02 20:48:53,568 | ERROR    | auth            | ❌ Error creating subscription: cannot encode object: Ellipsis, of type: <class 'ellipsis'>
+2025-10-02 20:59:41,845 | ERROR    | auth            | ❌ Error creating subscription: payment_intent
+2025-10-02 21:26:41,495 | ERROR    | app.core.database | ❌ Failed to connect to MongoDB: SSL handshake failed: ac-cc0gq7e-shard-00-01.g1kgjye.mongodb.net:27017: [SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error (_ssl.c:1000) (configured timeouts: socketTimeoutMS: 10000.0ms, connectTimeoutMS: 10000.0ms),SSL handshake failed: ac-cc0gq7e-shard-00-00.g1kgjye.mongodb.net:27017: [SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error (_ssl.c:1000) (configured timeouts: socketTimeoutMS: 10000.0ms, connectTimeoutMS: 10000.0ms),SSL handshake failed: ac-cc0gq7e-shard-00-02.g1kgjye.mongodb.net:27017: [SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error (_ssl.c:1000) (configured timeouts: socketTimeoutMS: 10000.0ms, connectTimeoutMS: 10000.0ms), Timeout: 5.0s, Topology Description: <TopologyDescription id: 68dea7bc0ece5edbb87698d2, topology_type: ReplicaSetNoPrimary, servers: [<ServerDescription ('ac-cc0gq7e-shard-00-00.g1kgjye.mongodb.net', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('SSL handshake failed: ac-cc0gq7e-shard-00-00.g1kgjye.mongodb.net:27017: [SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error (_ssl.c:1000) (configured timeouts: socketTimeoutMS: 10000.0ms, connectTimeoutMS: 10000.0ms)')>, <ServerDescription ('ac-cc0gq7e-shard-00-01.g1kgjye.mongodb.net', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('SSL handshake failed: ac-cc0gq7e-shard-00-01.g1kgjye.mongodb.net:27017: [SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error (_ssl.c:1000) (configured timeouts: socketTimeoutMS: 10000.0ms, connectTimeoutMS: 10000.0ms)')>, <ServerDescription ('ac-cc0gq7e-shard-00-02.g1kgjye.mongodb.net', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('SSL handshake failed: ac-cc0gq7e-shard-00-02.g1kgjye.mongodb.net:27017: [SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error (_ssl.c:1000) (configured timeouts: socketTimeoutMS: 10000.0ms, connectTimeoutMS: 10000.0ms)')>]>
+2025-10-02 21:26:41,510 | ERROR    | app.main        | ❌ Failed to start application: SSL handshake failed: ac-cc0gq7e-shard-00-01.g1kgjye.mongodb.net:27017: [SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error (_ssl.c:1000) (configured timeouts: socketTimeoutMS: 10000.0ms, connectTimeoutMS: 10000.0ms),SSL handshake failed: ac-cc0gq7e-shard-00-00.g1kgjye.mongodb.net:27017: [SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error (_ssl.c:1000) (configured timeouts: socketTimeoutMS: 10000.0ms, connectTimeoutMS: 10000.0ms),SSL handshake failed: ac-cc0gq7e-shard-00-02.g1kgjye.mongodb.net:27017: [SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error (_ssl.c:1000) (configured timeouts: socketTimeoutMS: 10000.0ms, connectTimeoutMS: 10000.0ms), Timeout: 5.0s, Topology Description: <TopologyDescription id: 68dea7bc0ece5edbb87698d2, topology_type: ReplicaSetNoPrimary, servers: [<ServerDescription ('ac-cc0gq7e-shard-00-00.g1kgjye.mongodb.net', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('SSL handshake failed: ac-cc0gq7e-shard-00-00.g1kgjye.mongodb.net:27017: [SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error (_ssl.c:1000) (configured timeouts: socketTimeoutMS: 10000.0ms, connectTimeoutMS: 10000.0ms)')>, <ServerDescription ('ac-cc0gq7e-shard-00-01.g1kgjye.mongodb.net', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('SSL handshake failed: ac-cc0gq7e-shard-00-01.g1kgjye.mongodb.net:27017: [SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error (_ssl.c:1000) (configured timeouts: socketTimeoutMS: 10000.0ms, connectTimeoutMS: 10000.0ms)')>, <ServerDescription ('ac-cc0gq7e-shard-00-02.g1kgjye.mongodb.net', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('SSL handshake failed: ac-cc0gq7e-shard-00-02.g1kgjye.mongodb.net:27017: [SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error (_ssl.c:1000) (configured timeouts: socketTimeoutMS: 10000.0ms, connectTimeoutMS: 10000.0ms)')>]>
