@@ -1,5 +1,6 @@
 // frontend/src/pages/scheduling/Calendar.tsx - COMPLETE RESPONSIVE VERSION
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Calendar as BigCalendar, momentLocalizer, View } from 'react-big-calendar'
 import moment from 'moment'
@@ -72,7 +73,21 @@ const priorityColors = {
   high: '#F59E0B',
   urgent: '#EF4444'
 }
-
+// Line ~58 - ADD THIS BEFORE THE FUNCTION
+const modalStyles = `
+  .rbc-month-view {
+    position: relative;
+    z-index: 1;
+  }
+  
+  div[role="dialog"] {
+    z-index: 99999 !important;
+  }
+  
+  div[role="dialog"] ~ div {
+    z-index: 99998 !important;
+  }
+`
 export default function Calendar() {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [currentView, setCurrentView] = useState<View>('week')
@@ -593,7 +608,10 @@ export default function Calendar() {
   }
 
   return (
+     <>
+    <style dangerouslySetInnerHTML={{ __html: modalStyles }} />
     <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
+      
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start space-y-4 sm:space-y-0">
         <div className="min-w-0 flex-1">
@@ -652,7 +670,7 @@ export default function Calendar() {
       </div>
 
       {/* Job Creation Modal */}
-      {showCreateModal && (
+      {showCreateModal && createPortal(
         <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} title="Schedule New Job" size="xl">
           <JobForm
             onSubmit={handleCreateJob}
@@ -660,11 +678,12 @@ export default function Calendar() {
             isLoading={createJobMutation.isPending}
             mode="create"
           />
-        </Modal>
+        </Modal>,
+        document.body
       )}
 
       {/* Job Edit Modal */}
-      {showEditModal && editingJob && (
+      {showEditModal && editingJob && createPortal(
         <Modal
           isOpen={showEditModal}
           onClose={() => { setShowEditModal(false); setEditingJob(null) }}
@@ -678,11 +697,12 @@ export default function Calendar() {
             mode="edit"
             initialData={jobToFormData(editingJob)}
           />
-        </Modal>
+        </Modal>,
+        document.body
       )}
 
       {/* Technician Assignment Modal */}
-      {showTechnicianAssign && (
+      {showTechnicianAssign && createPortal(
         <Modal
           isOpen={showTechnicianAssign}
           onClose={() => { setShowTechnicianAssign(false); setAssigningJobId(null) }}
@@ -715,135 +735,145 @@ export default function Calendar() {
               </button>
             </div>
           </div>
-        </Modal>
+        </Modal>,
+        document.body
       )}
 
       {/* Job Details Modal */}
-      {selectedEvent && !showEditModal && !showTechnicianAssign && (
-        <Modal
-          isOpen={!!selectedEvent}
-          onClose={() => setSelectedEvent(null)}
-          title={`Job #${selectedEvent.job_number || selectedEvent.id.slice(-6)}`}
-          size="lg"
-        >
-          <div className="space-y-4 sm:space-y-6">
-            {/* Job Actions - Mobile: Bottom, Desktop: Top */}
-            <div className="order-last sm:order-first flex flex-col sm:flex-row sm:justify-between sm:items-center pt-4 sm:pt-6 border-t sm:border-t border-gray-200 space-y-3 sm:space-y-0">
-              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-                <button
-                  onClick={() => handleEditJob(selectedEvent)}
-                  className="inline-flex items-center justify-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                >
-                  <PencilIcon className="h-4 w-4 mr-2" />
-                  Edit Job
-                </button>
-                <button
-                  onClick={() => handleAssignTechnician(selectedEvent.id)}
-                  className="inline-flex items-center justify-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                >
-                  <UserIcon className="h-4 w-4 mr-2" />
-                  Assign Technician
-                </button>
-                <button
-                  onClick={handleCancelJob}
-                  className="inline-flex items-center justify-center px-3 py-2 border border-red-300 shadow-sm text-sm leading-4 font-medium rounded-md text-red-700 bg-white hover:bg-red-50"
-                >
-                  <TrashIcon className="h-4 w-4 mr-2" />
-                  Cancel
-                </button>
-              </div>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                      style={{ backgroundColor: statusColors[selectedEvent.status], color: 'white' }}>
-                  {selectedEvent.status.replace('_', ' ')}
-                </span>
-                <button
-                  onClick={() => setSelectedEvent(null)}
-                  className="w-full sm:w-auto bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50"
-                >
-                  Close
-                </button>
-              </div>
+      // Add this at the TOP of your Calendar.tsx file, right after imports
+import { createPortal } from 'react-dom'
+
+// Then modify your Modal rendering sections
+
+// Replace your Job Details Modal section (around line 750) with this:
+{selectedEvent && !showEditModal && !showTechnicianAssign && createPortal(
+  <Modal
+    isOpen={!!selectedEvent}
+    onClose={() => setSelectedEvent(null)}
+    title={`Job #${selectedEvent.job_number || selectedEvent.id.slice(-6)}`}
+    size="lg"
+  >
+    <div className="space-y-4 sm:space-y-6">
+      {/* Job Actions - Mobile: Bottom, Desktop: Top */}
+      <div className="order-last sm:order-first flex flex-col sm:flex-row sm:justify-between sm:items-center pt-4 sm:pt-6 border-t sm:border-t border-gray-200 space-y-3 sm:space-y-0">
+        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+          <button
+            onClick={() => handleEditJob(selectedEvent)}
+            className="inline-flex items-center justify-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+          >
+            <PencilIcon className="h-4 w-4 mr-2" />
+            Edit Job
+          </button>
+          <button
+            onClick={() => handleAssignTechnician(selectedEvent.id)}
+            className="inline-flex items-center justify-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+          >
+            <UserIcon className="h-4 w-4 mr-2" />
+            Assign Technician
+          </button>
+          <button
+            onClick={handleCancelJob}
+            className="inline-flex items-center justify-center px-3 py-2 border border-red-300 shadow-sm text-sm leading-4 font-medium rounded-md text-red-700 bg-white hover:bg-red-50"
+          >
+            <TrashIcon className="h-4 w-4 mr-2" />
+            Cancel
+          </button>
+        </div>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                style={{ backgroundColor: statusColors[selectedEvent.status], color: 'white' }}>
+            {selectedEvent.status.replace('_', ' ')}
+          </span>
+          <button
+            onClick={() => setSelectedEvent(null)}
+            className="w-full sm:w-auto bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+
+      {/* Job Information */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        <div>
+          <h4 className="text-sm font-medium text-gray-900 mb-3">Customer Information</h4>
+          <div className="space-y-2">
+            <div className="flex items-center">
+              <UserIcon className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
+              <span className="text-sm break-words">{selectedEvent.customer_name}</span>
             </div>
-
-            {/* Job Information */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-              <div>
-                <h4 className="text-sm font-medium text-gray-900 mb-3">Customer Information</h4>
-                <div className="space-y-2">
-                  <div className="flex items-center">
-                    <UserIcon className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
-                    <span className="text-sm break-words">{selectedEvent.customer_name}</span>
-                  </div>
-                  {selectedEvent.customer_phone && (
-                    <div className="flex items-center">
-                      <span className="text-sm ml-6">📞 {selectedEvent.customer_phone}</span>
-                    </div>
-                  )}
-                  <div className="flex items-start">
-                    <MapPinIcon className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm break-words">
-                      {selectedEvent.address}
-                      {selectedEvent.city && `, ${selectedEvent.city}`}
-                      {selectedEvent.state && `, ${selectedEvent.state}`}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <h4 className="text-sm font-medium text-gray-900 mb-3">Job Information</h4>
-                <div className="space-y-2">
-                  <div className="flex items-center">
-                    <CalendarIcon className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
-                    <span className="text-sm">
-                      {moment(selectedEvent.start_time).format('MMM DD, YYYY')}
-                    </span>
-                  </div>
-                  <div className="flex items-center">
-                    <ClockIcon className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
-                    <span className="text-sm">
-                      {moment(selectedEvent.start_time).format('h:mm A')} - {moment(selectedEvent.end_time).format('h:mm A')}
-                    </span>
-                  </div>
-                  <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0">
-                    <span className="text-sm text-gray-500">Service:</span>
-                    <span className="sm:ml-2 text-sm break-words">{selectedEvent.service_type}</span>
-                  </div>
-                  <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0">
-                    <span className="text-sm text-gray-500">Priority:</span>
-                    <span className="sm:ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                          style={{ backgroundColor: priorityColors[selectedEvent.priority], color: 'white' }}>
-                      {selectedEvent.priority}
-                    </span>
-                  </div>
-                  {selectedEvent.technician_name && (
-                    <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0">
-                      <span className="text-sm text-gray-500">Technician:</span>
-                      <span className="sm:ml-2 text-sm break-words">{selectedEvent.technician_name}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Notes and Instructions */}
-            {selectedEvent.notes && (
-              <div>
-                <h4 className="text-sm font-medium text-gray-900 mb-2">Notes</h4>
-                <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-md break-words">{selectedEvent.notes}</p>
+            {selectedEvent.customer_phone && (
+              <div className="flex items-center">
+                <span className="text-sm ml-6">📞 {selectedEvent.customer_phone}</span>
               </div>
             )}
+            <div className="flex items-start">
+              <MapPinIcon className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0 mt-0.5" />
+              <span className="text-sm break-words">
+                {selectedEvent.address}
+                {selectedEvent.city && `, ${selectedEvent.city}`}
+                {selectedEvent.state && `, ${selectedEvent.state}`}
+              </span>
+            </div>
+          </div>
+        </div>
 
-            {selectedEvent.special_instructions && (
-              <div>
-                <h4 className="text-sm font-medium text-gray-900 mb-2">Special Instructions</h4>
-                <p className="text-sm text-gray-600 bg-yellow-50 p-3 rounded-md border border-yellow-200 break-words">{selectedEvent.special_instructions}</p>
+        <div>
+          <h4 className="text-sm font-medium text-gray-900 mb-3">Job Information</h4>
+          <div className="space-y-2">
+            <div className="flex items-center">
+              <CalendarIcon className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
+              <span className="text-sm">
+                {moment(selectedEvent.start_time).format('MMM DD, YYYY')}
+              </span>
+            </div>
+            <div className="flex items-center">
+              <ClockIcon className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
+              <span className="text-sm">
+                {moment(selectedEvent.start_time).format('h:mm A')} - {moment(selectedEvent.end_time).format('h:mm A')}
+              </span>
+            </div>
+            <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0">
+              <span className="text-sm text-gray-500">Service:</span>
+              <span className="sm:ml-2 text-sm break-words">{selectedEvent.service_type}</span>
+            </div>
+            <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0">
+              <span className="text-sm text-gray-500">Priority:</span>
+              <span className="sm:ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                    style={{ backgroundColor: priorityColors[selectedEvent.priority], color: 'white' }}>
+                {selectedEvent.priority}
+              </span>
+            </div>
+            {selectedEvent.technician_name && (
+              <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0">
+                <span className="text-sm text-gray-500">Technician:</span>
+                <span className="sm:ml-2 text-sm break-words">{selectedEvent.technician_name}</span>
               </div>
             )}
           </div>
-        </Modal>
+        </div>
+      </div>
+
+      {/* Notes and Instructions */}
+      {selectedEvent.notes && (
+        <div>
+          <h4 className="text-sm font-medium text-gray-900 mb-2">Notes</h4>
+          <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-md break-words">{selectedEvent.notes}</p>
+        </div>
+      )}
+
+      {selectedEvent.special_instructions && (
+        <div>
+          <h4 className="text-sm font-medium text-gray-900 mb-2">Special Instructions</h4>
+          <p className="text-sm text-gray-600 bg-yellow-50 p-3 rounded-md border border-yellow-200 break-words">{selectedEvent.special_instructions}</p>
+        </div>
       )}
     </div>
+  </Modal>,
+  document.body
+
+      )}
+    </div>
+       </>
   )
 }
