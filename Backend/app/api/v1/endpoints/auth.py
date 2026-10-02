@@ -844,8 +844,10 @@ async def forgot_password(
     email = request.email.lower().strip()
     user = await db.users.find_one({"email": email})
 
-    # Accounts created via Google sign-in have no password to reset
-    if user and get_password_from_user(user):
+    # Google sign-in accounts have no password yet; the link lets them set one
+    if not user:
+        logger.info(f"Password reset requested for unknown email: {email}")
+    else:
         token = secrets.token_urlsafe(32)
         await db.users.update_one(
             {"_id": user["_id"]},
