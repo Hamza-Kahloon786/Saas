@@ -725,6 +725,7 @@ import AIBookings from './Pages/admin/AIBookings'
 import Login from './Pages/auth/Login'
 import Register from './Pages/auth/Register'
 import ForgotPassword from './Pages/auth/ForgotPassword'
+import ResetPassword from './Pages/auth/ResetPassword'
 import GoogleCallback from './Pages/auth/GoogleCallback'
 import PricingPage from './Pages/pricing/PricingPage'
 
@@ -925,6 +926,7 @@ function App() {
                 <Route path="/auth/callback" element={<GoogleCallback />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
 
                 {/* Catch all - redirect to landing page */}
                 <Route path="*" element={<Navigate to="/" replace />} />

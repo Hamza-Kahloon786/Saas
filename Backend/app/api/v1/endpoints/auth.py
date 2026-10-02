@@ -1,5 +1,8 @@
 # backend/app/api/v1/endpoints/auth.py - PERMANENT FIX
 
+import asyncio
+import hashlib
+import secrets
 from bson import ObjectId
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
@@ -808,3 +811,107 @@ async def stripe_webhook(
         logger.info(f"✅ Subscription cancelled: {subscription_id}")
     
     return {"status": "success"}
+
+
+# ========================================
+# PASSWORD RESET
+# ========================================
+RESET_TOKEN_TTL_MINUTES = 60
+FORGOT_PASSWORD_MESSAGE = "If an account exists for that email, a password reset link has been sent."
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    password: str
+    password_confirm: str
+
+
+def _hash_reset_token(token: str) -> str:
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+@router.post("/forgot-password")
+async def forgot_password(
+    request: ForgotPasswordRequest,
+    db: AsyncIOMotorDatabase = Depends(get_database),
+) -> Dict[str, Any]:
+    """Email a single-use password reset link. Always returns the same message so
+    the response doesn't reveal whether an email address is registered."""
+    email = request.email.lower().strip()
+    user = await db.users.find_one({"email": email})
+
+    # Accounts created via Google sign-in have no password to reset
+    if user and get_password_from_user(user):
+        token = secrets.token_urlsafe(32)
+        await db.users.update_one(
+            {"_id": user["_id"]},
+            {"$set": {
+                "password_reset_token_hash": _hash_reset_token(token),
+                "password_reset_expires": datetime.utcnow() + timedelta(minutes=RESET_TOKEN_TTL_MINUTES),
+                "updated_at": datetime.utcnow(),
+            }}
+        )
+
+        reset_url = f"{settings.FRONTEND_URL}/reset-password?token={token}"
+        name = user.get("first_name") or "there"
+        html = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: #f8f9fa; padding: 20px; text-align: center;">
+            <h1 style="color: #333; margin: 0;">Storm AI Services</h1>
+          </div>
+          <div style="padding: 30px;">
+            <p>Hi {name},</p>
+            <p>We received a request to reset your password. Click the button below to choose a new one.
+               This link expires in {RESET_TOKEN_TTL_MINUTES} minutes.</p>
+            <p style="text-align: center; margin: 30px 0;">
+              <a href="{reset_url}" style="background: #2563eb; color: #fff; padding: 12px 24px;
+                 border-radius: 6px; text-decoration: none;">Reset password</a>
+            </p>
+            <p style="color: #666; font-size: 13px;">If you didn't request this, you can safely ignore this email.</p>
+          </div>
+        </div>
+        """
+        try:
+            from app.utils.emailer import send_email
+            # smtplib is blocking; run it in a thread so it doesn't freeze the event loop
+            await asyncio.to_thread(send_email, user["email"], "Reset your Storm AI password", html)
+            logger.info(f"✉️ Password reset email sent to {user['email']}")
+        except Exception as e:
+            logger.error(f"❌ Failed to send password reset email to {user['email']}: {e}")
+
+    return {"message": FORGOT_PASSWORD_MESSAGE}
+
+
+@router.post("/reset-password")
+async def reset_password(
+    request: ResetPasswordRequest,
+    db: AsyncIOMotorDatabase = Depends(get_database),
+) -> Dict[str, Any]:
+    """Set a new password using a token from the reset email."""
+    if request.password != request.password_confirm:
+        raise HTTPException(status_code=400, detail="Passwords do not match")
+    if len(request.password) < 8:
+        raise HTTPException(status_code=400, detail="Password must be at least 8 characters")
+
+    user = await db.users.find_one({
+        "password_reset_token_hash": _hash_reset_token(request.token),
+        "password_reset_expires": {"$gt": datetime.utcnow()},
+    })
+    if not user:
+        raise HTTPException(status_code=400, detail="This reset link is invalid or has expired")
+
+    # Keep writing to whichever field the account already uses
+    password_field = "password_hash" if user.get("password_hash") and not user.get("hashed_password") else "hashed_password"
+    await db.users.update_one(
+        {"_id": user["_id"]},
+        {
+            "$set": {password_field: hash_password(request.password), "updated_at": datetime.utcnow()},
+            "$unset": {"password_reset_token_hash": "", "password_reset_expires": ""},
+        }
+    )
+    logger.info(f"🔑 Password reset for {user.get('email')}")
+    return {"message": "Password reset successful. You can now log in."}
