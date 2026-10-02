@@ -132,7 +132,7 @@ export default function DashboardLayout() {
           <nav className="bg-white border-b border-gray-200 px-3 py-2 sm:px-6 sm:py-3 overflow-x-auto">
             <ol className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm min-w-max">
               {breadcrumbs.map((crumb, index) => (
-                <li key={crumb.name} className="flex items-center flex-shrink-0">
+                <li key={`${index}-${crumb.name}`}className="flex items-center flex-shrink-0">
                   {index > 0 && (
                     <svg className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 mx-1 sm:mx-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />

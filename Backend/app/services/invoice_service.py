@@ -282,7 +282,8 @@ async def create_invoice(
     async def send_email_async():
         try:
             from app.utils.emailer import send_email
-            send_email(customer["email"], subject, html_content)
+            # smtplib is blocking; run it in a thread so it doesn't freeze the event loop
+            await asyncio.to_thread(send_email, customer["email"], subject, html_content)
             
             # Update invoice status to sent after email succeeds
             await db.invoices.update_one(

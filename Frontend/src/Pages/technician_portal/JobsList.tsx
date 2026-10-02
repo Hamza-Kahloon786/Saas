@@ -1,6 +1,7 @@
 // src/pages/technician_portal/JobsList.tsx
 import React, { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import toast from 'react-hot-toast'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   ClipboardDocumentListIcon,
@@ -19,6 +20,7 @@ import { api } from '../../services/api'
 
 export default function JobsList() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const [dateFilter, setDateFilter] = useState('today')
   const [statusFilter, setStatusFilter] = useState('all')
 
@@ -28,6 +30,25 @@ export default function JobsList() {
     queryFn: async () => {
       const response = await api.get(`/technician-portal/jobs?date_filter=${dateFilter}&status_filter=${statusFilter}`)
       return response.data
+    }
+  })
+
+  const startJobMutation = useMutation({
+    mutationFn: async (jobId: string) => {
+      const response = await api.patch(`/technician-portal/jobs/${jobId}/status`, {
+        status: 'in_progress',
+        notes: 'Job started by technician'
+      })
+      return response.data
+    },
+    onSuccess: (_data, jobId) => {
+      toast.success('Job started')
+      queryClient.invalidateQueries({ queryKey: ['technician-jobs'] })
+      queryClient.invalidateQueries({ queryKey: ['technician-dashboard'] })
+      navigate(`/technician-portal/jobs/${jobId}`)
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.detail || 'Failed to start job')
     }
   })
 
@@ -42,7 +63,11 @@ export default function JobsList() {
 
   const formatTime = (timeString) => {
     if (!timeString) return ''
-    return new Date(timeString).toLocaleTimeString('en-US', {
+    // Plain "HH:MM" values aren't parseable by Date
+    const hhmm = /^(\d{1,2}):(\d{2})/.exec(timeString)
+    const date = hhmm ? new Date(2000, 0, 1, Number(hhmm[1]), Number(hhmm[2])) : new Date(timeString)
+    if (isNaN(date.getTime())) return ''
+    return date.toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit'
     })
@@ -237,10 +262,12 @@ export default function JobsList() {
 
                     {(job.status === 'scheduled' || job.status === 'confirmed') && (
                       <button
-                        className="flex items-center px-3 py-1.5 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700"
+                        onClick={() => startJobMutation.mutate(job.id)}
+                        disabled={startJobMutation.isPending}
+                        className="flex items-center px-3 py-1.5 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <PlayIcon className="h-4 w-4 mr-1" />
-                        Start Job
+                        {startJobMutation.isPending && startJobMutation.variables === job.id ? 'Starting...' : 'Start Job'}
                       </button>
                     )}
 

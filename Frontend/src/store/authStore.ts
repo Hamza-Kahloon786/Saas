@@ -1,4 +1,4 @@
-// frontend/src/store/authStore.ts - Enhanced Version with Subscription Support
+// frontend/src/store/authStore.ts - FIXED VERSION
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
@@ -19,15 +19,15 @@ interface Subscription {
 
 interface User {
   id: string
-  _id?: string  // Support for MongoDB _id
+  _id?: string
   email: string
   first_name: string
   last_name: string
-  name?: string  // Computed full name
+  name?: string
   role: string
   company_id: string
   avatar?: string | null
-  avatar_url?: string | null  // Support for Google OAuth avatar
+  avatar_url?: string | null
   phone?: string
   last_login?: string
   created_at?: string
@@ -47,7 +47,6 @@ interface User {
     language?: string
     timezone?: string
   }
-  // Additional fields for compatibility
   is_email_verified?: boolean
   is_phone_verified?: boolean
   login_count?: number
@@ -66,6 +65,7 @@ interface AuthState {
   updateUser: (user: Partial<User>) => void
   setLoading: (loading: boolean) => void
   refreshAuthToken: () => Promise<void>
+  refreshUserData: () => Promise<void>  // NEW: Fetch latest user data
   
   // Subscription management
   updateSubscription: (subscription: Subscription) => void
@@ -101,7 +101,6 @@ export const useAuthStore = create<AuthState>()(
 
       // ===== CORE AUTH ACTIONS =====
       login: (user, token, refreshToken) => {
-        // Ensure name field is populated
         const enhancedUser = {
           ...user,
           name: user.name || `${user.first_name} ${user.last_name}`.trim()
@@ -121,7 +120,6 @@ export const useAuthStore = create<AuthState>()(
       logout: () => {
         console.log('👋 User logged out')
         
-        // Clear all auth data
         set({ 
           user: null, 
           token: null, 
@@ -130,15 +128,13 @@ export const useAuthStore = create<AuthState>()(
           isLoading: false 
         })
         
-        // Clear localStorage
         localStorage.removeItem('auth-storage')
         localStorage.removeItem('token')
         localStorage.removeItem('refreshToken')
         localStorage.removeItem('user')
         
-        // Redirect to login
         setTimeout(() => {
-          window.location.href = '/login'
+          window.location.href = '/'
         }, 100)
       },
 
@@ -148,7 +144,6 @@ export const useAuthStore = create<AuthState>()(
           
           const updatedUser = { ...state.user, ...userData }
           
-          // Update computed name if first_name or last_name changed
           if (userData.first_name || userData.last_name) {
             updatedUser.name = `${updatedUser.first_name} ${updatedUser.last_name}`.trim()
           }
@@ -206,6 +201,45 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
+      // In authStore.ts - around line 180-200
+refreshUserData: async () => {
+  const { token } = get()
+  
+  if (!token) {
+    console.warn('⚠️ No token available for refresh')
+    return
+  }
+
+  try {
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+    
+    const response = await fetch(`${API_URL}/api/v1/auth/me`, {  // ✅ FIXED PATH
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      }
+    })
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch user data')
+    }
+
+    const userData = await response.json()  // ✅ The response is the user object directly
+    
+    set((state) => ({
+      user: {
+        ...userData,
+        name: userData.name || `${userData.first_name} ${userData.last_name}`.trim()
+      }
+    }))
+    
+    console.log('✅ User data refreshed, subscription status:', userData.subscription?.status)
+  } catch (error) {
+    console.error('❌ Failed to refresh user data:', error)
+  }
+},
+
       // ===== SUBSCRIPTION MANAGEMENT =====
       updateSubscription: (subscription) => {
         set((state) => ({
@@ -214,7 +248,7 @@ export const useAuthStore = create<AuthState>()(
             subscription
           } : null
         }))
-        console.log('💳 Subscription updated:', subscription.plan_name)
+        console.log('💳 Subscription updated:', subscription.plan_name, subscription.status)
       },
 
       clearSubscription: () => {
@@ -226,60 +260,62 @@ export const useAuthStore = create<AuthState>()(
         }))
       },
 
-      // ===== SUBSCRIPTION HELPERS =====
-      hasActiveSubscription: () => {
-        const user = get().user
-        return user?.subscription?.status === 'active'
-      },
+      // ===== SUBSCRIPTION HELPERS (FIXED) =====
+     // ===== SUBSCRIPTION HELPERS (FIXED) =====
+hasActiveSubscription: () => {
+  const user = get().user
+  const status = user?.subscription?.status
+  
+  // ✅ FIX: Accept both 'active', 'trial', 'trialing', and 'pending_payment' as valid
+  return status === 'active' || 
+         status === 'trial' || 
+         status === 'trialing' ||  // ✅ Backend uses 'trialing' from Stripe
+         status === 'pending_payment'
+},
 
-      needsPricingSelection: () => {
-        const user = get().user
-        const subscription = user?.subscription
-        
-        // Show pricing if:
-        // 1. No subscription at all
-        // 2. Trial subscription
-        // 3. Expired/cancelled subscription
-        // 4. Payment failed
-        return !subscription || 
-               subscription.status === 'trial' || 
-               subscription.status === 'expired' ||
-               subscription.status === 'cancelled' ||
-               subscription.status === 'payment_failed'
-      },
+needsPricingSelection: () => {
+  const user = get().user
+  const subscription = user?.subscription
+  
+  // Show pricing only if no subscription or expired/cancelled/failed
+  if (!subscription) return true
+  
+  const invalidStatuses = ['expired', 'cancelled', 'payment_failed']
+  return invalidStatuses.includes(subscription.status)
+},
 
-      getSubscriptionStatus: () => {
-        const user = get().user
-        return user?.subscription?.status || 'none'
-      },
+getSubscriptionStatus: () => {
+  const user = get().user
+  return user?.subscription?.status || 'none'
+},
 
-      getPlanName: () => {
-        const user = get().user
-        return user?.subscription?.plan_name || 'No Plan'
-      },
+getPlanName: () => {
+  const user = get().user
+  return user?.subscription?.plan_name || 'No Plan'
+},
 
-      isTrialUser: () => {
-        const user = get().user
-        return user?.subscription?.status === 'trial'
-      },
+isTrialUser: () => {
+  const user = get().user
+  return user?.subscription?.status === 'trial' || 
+         user?.subscription?.status === 'trialing'  // ✅ ADD THIS
+},
 
-      canAccessFeature: (feature) => {
-        const user = get().user
-        const subscription = user?.subscription
-        
-        if (!subscription || subscription.status !== 'active') {
-          // Allow basic features for trial users
-          const basicFeatures = [
-            'Contact & Lead Management',
-            'Job Scheduling Calendar',
-            'Customer Portal Access'
-          ]
-          return subscription?.status === 'trial' && basicFeatures.includes(feature)
-        }
-        
-        return subscription.features.includes(feature) || 
-               subscription.features.includes('Everything in Starter')
-      },
+canAccessFeature: (feature) => {
+  const user = get().user
+  const subscription = user?.subscription
+  
+  if (!subscription) return false
+  
+  // ✅ Allow features for active, trial, and trialing users
+  const validStatuses = ['active', 'trial', 'trialing', 'pending_payment']
+  
+  if (validStatuses.includes(subscription.status)) {
+    return subscription.features.includes(feature) || 
+           subscription.features.includes('Everything in Starter')
+  }
+  
+  return false
+},
 
       getDaysUntilExpiry: () => {
         const user = get().user
@@ -326,8 +362,6 @@ export const useAuthStore = create<AuthState>()(
       getAvatarUrl: () => {
         const user = get().user
         if (!user) return null
-        
-        // Priority: avatar_url (Google), then avatar, then null
         return user.avatar_url || user.avatar || null
       },
 
@@ -357,9 +391,6 @@ export const useAuthStore = create<AuthState>()(
       onRehydrateStorage: () => (state) => {
         if (state?.token && state?.isAuthenticated) {
           console.log('🔄 Auth state rehydrated for:', state.user?.email)
-          
-          // Auto-refresh token if it's about to expire (optional)
-          // You can implement token expiry checking here
         }
       },
     }
@@ -390,7 +421,6 @@ export const getAvatarColor = (user: User | null): string => {
     'bg-sky-500'
   ]
   
-  // Create consistent hash based on user email for consistent colors
   const identifier = user.email + (user.id || user._id || '')
   const hash = identifier.split('').reduce((acc, char) => {
     return acc + char.charCodeAt(0)
@@ -441,6 +471,8 @@ export const formatSubscriptionStatus = (status: string): string => {
       return 'Active'
     case 'trial':
       return 'Free Trial'
+    case 'trialing':  // ✅ ADD THIS
+      return 'Free Trial'
     case 'pending_payment':
       return 'Payment Required'
     case 'payment_failed':
@@ -454,5 +486,4 @@ export const formatSubscriptionStatus = (status: string): string => {
   }
 }
 
-// ===== TYPE EXPORTS =====
 export type { User, Subscription, AuthState }

@@ -69,7 +69,16 @@ api_router.include_router(service_management.router, tags=["service-management"]
 # Add this line
 api_router.include_router(pipeline.router, prefix="/pipeline", tags=["pipeline"])
 
+# backend/app/api/v1/api.py (or wherever you register your routers)
 
+from app.api.v1.endpoints import contact_form
+
+# Add this line with your other router includes
+api_router.include_router(
+    contact_form.router,
+    prefix="/contact",
+    tags=["contact-form"]
+)
 
 
 

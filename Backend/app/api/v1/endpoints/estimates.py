@@ -1,4 +1,5 @@
 # backend/app/api/v1/endpoints/estimates.py
+import asyncio
 from typing import Any, Optional, Dict, List
 from datetime import datetime, timedelta
 
@@ -283,7 +284,8 @@ async def create_estimate(
         # Send email in background (async)
         async def send_email_async():
             try:
-                send_email(customer["email"], subject, html_content)
+                # smtplib is blocking; run it in a thread so it doesn't freeze the event loop
+                await asyncio.to_thread(send_email, customer["email"], subject, html_content)
                 
                 # Update estimate status to sent after email succeeds
                 await db.estimates.update_one(
@@ -584,7 +586,7 @@ async def send_estimate(
     """
 
     try:
-        send_email(customer["email"], subject, html)
+        await asyncio.to_thread(send_email, customer["email"], subject, html)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Email send failed: {e}")
 

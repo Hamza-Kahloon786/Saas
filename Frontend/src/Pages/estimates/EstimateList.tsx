@@ -60,6 +60,9 @@ const statusColors = {
   expired: 'bg-orange-100 text-orange-800'
 }
 
+const getStatusColor = (status?: string) =>
+  statusColors[status as keyof typeof statusColors] || statusColors.draft
+
 const statusIcons = {
   draft: DocumentTextIcon,
   sent: EnvelopeIcon,
@@ -375,7 +378,7 @@ export default function EstimateList() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className={`p-1 rounded-full ${
-                          statusColors[estimate.status].replace('text-', 'text-white bg-').replace('bg-', 'bg-').replace('-100', '-500')
+                          getStatusColor(estimate.status).replace('text-', 'text-white bg-').replace('bg-', 'bg-').replace('-100', '-500')
                         }`}>
                           {getStatusIcon(estimate.status)}
                         </div>
@@ -399,7 +402,7 @@ export default function EstimateList() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        statusColors[estimate.status]
+                        getStatusColor(estimate.status)
                       }`}>
                         {estimate.status}
                       </span>
@@ -503,7 +506,7 @@ export default function EstimateList() {
                   <div>
                     <span className="text-gray-500">Status:</span>
                     <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      statusColors[selectedEstimate.status]
+                      getStatusColor(selectedEstimate.status)
                     }`}>
                       {selectedEstimate.status}
                     </span>

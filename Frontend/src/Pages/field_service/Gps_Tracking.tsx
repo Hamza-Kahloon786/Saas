@@ -313,6 +313,8 @@ const OpenStreetMap = ({ technicians, selectedTechnician, onTechnicianClick }: {
   const fitMapToMarkers = () => {
     if (!mapInstanceRef.current || !window.L || technicians.length === 0) return
 
+    if (markersRef.current.size === 0) return
+
     const group = new window.L.featureGroup(Array.from(markersRef.current.values()))
     mapInstanceRef.current.fitBounds(group.getBounds().pad(0.1))
   }
@@ -374,6 +376,42 @@ const OpenStreetMap = ({ technicians, selectedTechnician, onTechnicianClick }: {
   )
 }
 
+// The /users/locations endpoint returns a flat shape (technician_id, latitude, longitude, ...);
+// adapt it to the nested TechnicianLocation shape the page renders.
+const normalizeTechnicianLocation = (raw: any): TechnicianLocation => {
+  const backendStatus = raw.status
+  const status: TechnicianLocation['status'] =
+    backendStatus === 'active' ? 'on_job'
+    : ['online', 'offline', 'idle', 'driving', 'on_job'].includes(backendStatus) ? backendStatus
+    : 'idle'
+
+  return {
+    ...raw,
+    id: raw.id ?? raw.technician_id ?? raw._id,
+    name: raw.name,
+    phone: raw.phone ?? '',
+    employee_id: raw.employee_id ?? raw.technician_id ?? '',
+    status,
+    current_location: raw.current_location ?? {
+      lat: raw.latitude,
+      lng: raw.longitude,
+      address: raw.address ?? '',
+      accuracy: raw.accuracy ?? 100,
+      last_updated: raw.last_updated,
+      speed: raw.speed ?? 0,
+      heading: raw.heading ?? 0,
+    },
+    todays_route: raw.todays_route ?? [],
+    performance: raw.performance ?? {
+      jobs_completed: 0,
+      miles_driven: 0,
+      hours_worked: 0,
+      on_time_percentage: 0,
+      avg_speed: raw.speed ?? 0,
+    },
+  }
+}
+
 const statusColors = {
   online: 'bg-green-100 text-green-800',
   offline: 'bg-red-100 text-red-800',
@@ -402,7 +440,7 @@ export default function GPSTracking() {
       console.log('🔍 Fetching technician locations...')
       const response = await api.get('/users/locations')
       console.log('📍 Technician locations response:', response.data)
-      return response.data as TechnicianLocation[]
+      return (Array.isArray(response.data) ? response.data : []).map(normalizeTechnicianLocation)
     },
     refetchInterval: autoRefresh ? refreshInterval * 1000 : false,
     refetchIntervalInBackground: true,

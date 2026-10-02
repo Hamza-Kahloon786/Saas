@@ -8,7 +8,7 @@ from typing import Optional
 import asyncio
 from fastapi import HTTPException
 from .config import settings
-
+import certifi
 logger = logging.getLogger(__name__)
 
 class DatabaseManager:
@@ -27,6 +27,7 @@ class DatabaseManager:
             # Create MongoDB client with connection options
             self.client = AsyncIOMotorClient(
                 settings.MONGODB_URL,
+                tlsCAFile=certifi.where(),
                 serverSelectionTimeoutMS=5000,  # 5 second timeout
                 connectTimeoutMS=10000,  # 10 second timeout
                 maxPoolSize=settings.MONGODB_MAX_POOL_SIZE,

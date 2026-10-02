@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-
+import { useAuthStore } from '../../store/authStore' 
 interface PricingPlan {
   id: string
   name: string
@@ -266,11 +266,13 @@ const PaymentModal = ({ isOpen, onClose, planId, planName, price, billingCycle, 
 }
 
 const PricingPage = () => {
+  const { token, user, refreshUserData, hasActiveSubscription } = useAuthStore()
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly')
   const [loading, setLoading] = useState<string | null>(null)
   const [hoveredCard, setHoveredCard] = useState<string | null>(null)
   const [isVisible, setIsVisible] = useState(false)
   
+  // const { refreshUserData, hasActiveSubscription, user } = useAuthStore()
   // Payment Modal State
   const [paymentModal, setPaymentModal] = useState({
     isOpen: false,
@@ -339,44 +341,66 @@ const PricingPage = () => {
       price: price
     })
   }
-const handlePaymentSuccess = async () => {
-  setLoading(paymentModal.planId)
-  
-  try {
-    const response = await fetch('http://localhost:8000/api/v1/auth/subscription/update', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('access_token') || localStorage.getItem('token')}`
-      },
-      body: JSON.stringify({
-        plan_id: paymentModal.planId,
-        billing_cycle: billingCycle
+// ✅ CORRECT: Now use the token that was extracted at component level
+  const handlePaymentSuccess = async () => {
+    setLoading(paymentModal.planId)
+    
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+      
+      // ✅ token is already available from the hook at the top
+      if (!token) {
+        throw new Error('No authentication token found. Please log in again.')
+      }
+      
+      console.log('💳 Creating subscription in backend...')
+      console.log('🔑 Using token:', token ? 'Token exists' : 'No token')
+      
+      const response = await fetch(`${API_URL}/api/v1/auth/subscription/update`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`  // ✅ Use token from component scope
+        },
+        body: JSON.stringify({
+          plan_id: paymentModal.planId,
+          billing_cycle: billingCycle
+        })
       })
-    })
-    
-    if (!response.ok) {
-      const errorText = await response.text()
-      throw new Error(`HTTP ${response.status}: ${errorText}`)
+      
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(`HTTP ${response.status}: ${errorText}`)
+      }
+      
+      const data = await response.json()
+      console.log('✅ Subscription created:', data)
+      
+      // Refresh user data
+      console.log('🔄 Refreshing user data...')
+      await refreshUserData()  // ✅ This is also from the hook at top
+      
+      // Small delay to ensure state is updated
+      await new Promise(resolve => setTimeout(resolve, 800))
+      
+      // Check subscription status
+      if (hasActiveSubscription()) {  // ✅ This too is from the hook at top
+        console.log('✅ Subscription verified!')
+        alert(`🎉 Welcome to ${paymentModal.planName}!`)
+        window.location.href = '/customer-portal/dashboard'
+      } else {
+        console.error('❌ Subscription not active')
+        console.log('Current subscription:', user?.subscription)
+        alert('Payment successful but subscription not activated. Please refresh.')
+      }
+      
+    } catch (error: any) {
+      console.error('❌ Subscription activation failed:', error)
+      alert(`Failed to activate subscription: ${error.message}`)
+    } finally {
+      setLoading(null)
     }
-    
-    const data = await response.json()
-    
-    // Update auth store with new subscription
-    // useAuthStore.getState().updateSubscription(data.subscription)
-    
-    console.log('Payment successful! Subscription activated for', paymentModal.planName)
-    
-    // Navigate to customer dashboard
-    window.location.href = '/customer-portal/dashboard'
-    
-  } catch (error: any) {
-    console.error('Subscription activation failed:', error)
-    alert(`Failed to activate subscription: ${error.message}`)
-  } finally {
-    setLoading(null)
   }
-}
   // const handlePaymentSuccess = async () => {
   //   setLoading(paymentModal.planId)
     
