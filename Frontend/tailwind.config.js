@@ -1,3 +1,9 @@
+var require = createRequire(import.meta.url);
+var module = { exports: {} };
+
+var require = createRequire(import.meta.url);
+var module = { exports: {} };
+
 // tailwind.config.js
 /** @type {import('tailwindcss').Config} */
 export default {
@@ -247,4 +253,4 @@ export default {
       addUtilities(newUtilities)
     }
   ],
-}
+};
