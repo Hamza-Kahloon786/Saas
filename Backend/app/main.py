@@ -304,6 +304,7 @@ async def general_exception_handler(request: Request, exc: Exception):
 
 # ✅ INCLUDE API ROUTER
 # Add this line in main.py after creating the FastAPI app
+os.makedirs("uploads/avatars", exist_ok=True)  # not in git; must exist before mounting
 app.mount("/static/avatars", StaticFiles(directory="uploads/avatars"), name="avatars")
 app.include_router(api_router, prefix=settings.API_V1_STR)
 

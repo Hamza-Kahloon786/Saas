@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "mock-api": "json-server --watch mock-api/db.json --port 3001",
-    "dev": "vite",
+    "dev": "node api.js && vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
