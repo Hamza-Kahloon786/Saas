@@ -35,7 +35,7 @@ export default function DashboardLayout() {
     queryFn: async () => {
       // Call the non-versioned root API for health
       const response = await api.get('/health', {
-        baseURL: (import.meta as any).env.VITE_API_ROOT || 'http://localhost:8000',
+        baseURL: (import.meta as any).env.VITE_API_ROOT || import.meta.env.VITE_API_URL || 'http://localhost:8000',
       })
       return response.data
     },
