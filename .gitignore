@@ -1,7 +1,4 @@
 # Environment files (secrets) - keep the .example templates
-.env
-.env.local
-.env.production
 .env.*.local
 Backend/.env
 Frontend/.env
@@ -34,10 +31,13 @@ yarn-debug.log*
 pnpm-debug.log*
 
 # Editor / OS
-.vscode/*
 !.vscode/extensions.json
 .idea/
 .DS_Store
 Thumbs.db
 *.suo
 *.sw?
+config.bat
+branch_structure.json
+temp_auto_push.bat
+temp_interactive_push.bat
